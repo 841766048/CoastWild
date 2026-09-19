@@ -4,11 +4,6 @@ final class TripsController: CoastController {
   var completed = false
   override func viewDidLoad() {
     super.viewDidLoad()
-    navigationItem.rightBarButtonItem = iconItem("plus", label: env.t("Create trip", "创建出游")) {
-      [weak self] in
-      guard let self else { return }
-      self.push(TripEditorController(self.env, trip: nil))
-    }
   }
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
@@ -17,7 +12,13 @@ final class TripsController: CoastController {
   func render() {
     reset()
     title = nil
-    heading(env.t("Trips", "出游"))
+    contentTop.constant = 18
+    stack.spacing = 12
+    add(editorRootHeader(env.t("Trips", "出游"), label: env.t("Create trip", "创建出游")) { [weak self] in
+      guard let self else { return }
+      self.push(TripEditorController(self.env, trip: nil))
+    })
+    stack.setCustomSpacing(20, after: stack.arrangedSubviews.last!)
     chips([env.t("Planned", "待出发"), env.t("Completed", "已完成")], selected: completed ? 1 : 0) {
       [weak self] i in
       self?.completed = i == 1
@@ -25,26 +26,22 @@ final class TripsController: CoastController {
     }
     let trips = env.store.ledger.trips.filter { $0.completed == completed }
     if trips.isEmpty {
-      empty(
-        env.t("Your next little adventure", "下一次小小的出走"),
-        env.t("Make room for the experiences you love.", "把想去的地方和体验，放进一次出游。"), icon: "trips")
-      add(
-        coastButton(env.t("Create trip", "创建出游")) { [weak self] in
-          guard let self else { return }
-          self.push(TripEditorController(self.env, trip: nil))
-        })
+      empty(env.t("Your next little adventure", "下一次小小的出走"),
+        env.t("Make room for the experiences you love.", "把想去的地方和体验，放进一次出游。"),
+        icon: "trips", actionTitle: env.t("Create trip", "创建出游")) { [weak self] in
+          guard let self else { return }; self.push(TripEditorController(self.env, trip: nil))
+        }
     }
-    trips.forEach { trip in
-      add(coastImage("camp", height: 210))
-      add(
-        row(
-          title: trip.name,
-          subtitle: trip.start.isEmpty
-            ? env.t("No dates yet", "日期待定") : trip.start + " – " + trip.end
-        ) { [weak self] in
-          guard let self else { return }
-          self.push(TripDetailController(self.env, id: trip.id))
-        })
+    for (index, trip) in trips.enumerated() {
+      let date = trip.start.isEmpty ? env.t("No dates yet", "日期待定") : trip.start + " – " + trip.end
+      let count = "\(trip.items.count) " + env.t("experiences", "个体验")
+      add(index == 0
+        ? tripHeroCard(title: trip.name, subtitle: date + " · " + count) { [weak self] in
+            guard let self else { return }; self.push(TripDetailController(self.env, id: trip.id))
+          }
+        : row(title: trip.name, subtitle: date + "\n" + count, image: "camp") { [weak self] in
+            guard let self else { return }; self.push(TripDetailController(self.env, id: trip.id))
+          })
     }
   }
 }
@@ -52,6 +49,9 @@ final class TripEditorController: CoastController {
   var trip: CoastTrip
   let original: CoastTrip?
   let pending: String?
+  var selectedRegion: String
+  var regionChanged = false
+  var regionButton: UIButton!
   var name: UITextField!, start: UITextField!, end: UITextField!, notes: UITextView!,
     errorLabel = coastLabel("", size: 14, color: CoastStyle.red)
   init(_ env: CoastEnvironment, trip: CoastTrip?, pending: String? = nil) {
@@ -62,6 +62,7 @@ final class TripEditorController: CoastController {
         timeZone: env.store.preferences.region == "CN" ? "Asia/Shanghai" : "America/Los_Angeles")
     self.original = trip
     self.pending = pending
+    self.selectedRegion = (trip?.timeZone == "Asia/Shanghai") ? "CN" : (trip == nil ? env.store.preferences.region : "US")
     super.init(env)
   }
   required init?(coder: NSCoder) { fatalError() }
@@ -71,26 +72,47 @@ final class TripEditorController: CoastController {
     navigationItem.hidesBackButton = true
     navigationItem.leftBarButtonItem = UIBarButtonItem(
       title: env.t("Cancel", "取消"), primaryAction: UIAction { [weak self] _ in self?.cancel() })
-    name = field(
-      env.t("Trip name", "出游名称"), placeholder: env.t("Give your trip a name", "给出游起个名字"),
-      value: trip.name, id: "trip.name")
-    start = field(env.t("Start date", "开始日期"), placeholder: "YYYY-MM-DD", value: trip.start)
-    end = field(env.t("End date", "结束日期"), placeholder: "YYYY-MM-DD", value: trip.end)
+    let saveItem = UIBarButtonItem(title: env.t("Save", "保存"), primaryAction: UIAction { [weak self] _ in self?.submit() })
+    saveItem.accessibilityIdentifier = "trip.save"
+    navigationItem.rightBarButtonItem = saveItem
+    contentTop.constant = 20; stack.spacing = 14
+    name = editorTextField(placeholder: env.t("Give your trip a name", "给出游起个名字"), value: trip.name)
+    name.accessibilityIdentifier = "trip.name"
+    add(coastPanel([editorFieldGroup(env.t("Trip name", "出游名称"), control: name)], inset: 14))
+    regionButton = coastSettingRow(env.t("Region", "地区"), value: regionTitle()) { [weak self] in self?.chooseRegion() }
+    add(coastPanel([regionButton], spacing: 0, inset: 0))
+    start = editorTextField(placeholder: "YYYY-MM-DD", value: trip.start)
+    end = editorTextField(placeholder: "YYYY-MM-DD", value: trip.end)
+    add(coastPanel([
+      editorFieldGroup(env.t("Start date", "开始日期"), control: start),
+      editorFieldGroup(env.t("End date", "结束日期"), control: end),
+    ], spacing: 18, inset: 14))
     start.keyboardType = .numbersAndPunctuation
     end.keyboardType = .numbersAndPunctuation
-    notes = textArea(env.t("Notes", "备注"), value: trip.notes)
+    notes = editorTextArea(placeholder: env.t("Write down your thoughts for this trip…", "写下这次出游的想法…"), value: trip.notes, height: 105)
+    add(coastPanel([editorFieldGroup(env.t("Notes", "备注"), control: notes)], inset: 14))
     errorLabel.isHidden = true
     add(errorLabel)
-    add(coastButton(env.t("Save trip", "保存出游")) { [weak self] in self?.submit() })
     note(
       env.t(
         "Leave both dates blank if undecided. Existing activities keep their relative day.",
         "日期未定可同时留空。编辑日期会保留已有活动的相对天序。"))
   }
+  func regionTitle() -> String { selectedRegion == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国") }
+  func chooseRegion() {
+    menu(env.t("Region", "地区"), choices: [
+      (env.t("United States", "美国"), { [weak self] in self?.setRegion("US") }),
+      (env.t("Mainland China", "中国大陆"), { [weak self] in self?.setRegion("CN") }),
+    ])
+  }
+  func setRegion(_ region: String) {
+    selectedRegion = region; regionChanged = true; regionButton.accessibilityValue = regionTitle()
+    regionButton.subviews.compactMap { $0 as? UIStackView }.first?.arrangedSubviews.compactMap { $0 as? UILabel }.last?.text = regionTitle()
+  }
   func cancel() {
     let changed =
       name.text != trip.name || start.text != trip.start || end.text != trip.end
-      || notes.text != trip.notes
+      || notes.text != trip.notes || regionChanged
     if changed {
       confirm(
         env.t("Discard changes?", "放弃本次修改？"), env.t("Unsaved edits will be lost.", "未保存的修改将丢失。")
@@ -104,6 +126,7 @@ final class TripEditorController: CoastController {
     trip.start = start.text ?? ""
     trip.end = end.text ?? ""
     trip.notes = notes.text ?? ""
+    if original == nil || regionChanged { trip.timeZone = selectedRegion == "CN" ? "Asia/Shanghai" : "America/Los_Angeles" }
     if let issue = CoastValidation.trip(trip) {
       errorLabel.text =
         env.t(
@@ -115,11 +138,14 @@ final class TripEditorController: CoastController {
     if save({ try env.store.saveTrip(trip) }) {
       var controllers = navigationController?.viewControllers ?? []
       controllers.removeLast()
-      controllers.append(TripDetailController(env, id: trip.id))
+      let detail = TripDetailController(env, id: trip.id)
+      detail.hidesBottomBarWhenPushed = true
+      controllers.append(detail)
       navigationController?.setViewControllers(controllers, animated: true)
       if let pending {
-        navigationController?.pushViewController(
-          ActivityPickerController(env, tripID: trip.id, pending: pending), animated: true)
+        let picker = ActivityPickerController(env, tripID: trip.id, pending: pending)
+        picker.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(picker, animated: true)
       }
     }
   }
@@ -148,24 +174,23 @@ final class TripDetailController: CoastController {
       guard let self else { return }
       self.push(TripEditorController(self.env, trip: trip))
     }
-    heading(trip.name)
-    add(coastImage("camp", height: 170))
+    contentTop.constant = 27; stack.spacing = 14
+    add(coastLabel(trip.name, size: 27, weight: .bold))
+    add(coastImage("camp", height: 163))
     note(trip.start.isEmpty ? env.t("No dates yet", "日期待定") : trip.start + " – " + trip.end)
     if trip.completed { note(env.t("Completed", "已完成出游")) }
-    add(
-      coastButton(env.t("Day ", "第 ") + "\(day+1)" + env.t("", " 天"), secondary: true) {
-        [weak self] in self?.selectDay(trip)
-      })
+    let days = tripDayCount(trip)
+    if days <= 7 {
+      let dayTitles = (0..<days).map { env.t("Day ", "第 ") + "\($0 + 1)" + env.t("", " 天") }
+      chips(dayTitles, selected: min(day, days - 1)) { [weak self] value in self?.day = value; self?.render() }
+    } else {
+      add(coastButton(env.t("Day ", "第 ") + "\(day + 1)" + env.t("", " 天"), secondary: true) { [weak self] in self?.selectDay(trip) })
+    }
     for item in trip.items.filter({ $0.day == day }) {
       let content = env.item(item.activityID)
-      add(
-        row(
-          title: content.map { env.text($0.title) } ?? item.titleSnapshot,
-          subtitle: (item.time.map { $0 + " · " } ?? "")
-            + (content.map { env.category($0.category) }
-              ?? env.t("Original content unavailable", "原内容不可用")),
-          image: content?.image
-        ) { [weak self] in self?.itemMenu(item, trip: trip) })
+      add(timelineRow(time: item.time ?? "—", title: content.map { env.text($0.title) } ?? item.titleSnapshot,
+        category: content.map { env.category($0.category) } ?? env.t("Original content unavailable", "原内容不可用"),
+        image: content?.image) { [weak self] in self?.itemMenu(item, trip: trip) })
     }
     add(
       coastButton(env.t("Add experience", "添加体验"), secondary: true) { [weak self] in
@@ -294,17 +319,20 @@ final class ActivityPickerController: CoastController {
     timeText = timeField?.text ?? timeText
     reset()
     title = env.t("Add experience", "添加体验")
+    contentTop.constant = 27; stack.spacing = 12
     guard let trip = env.store.ledger.trips.first(where: { $0.id == tripID }) else { return }
-    add(
-      coastButton(env.t("Day ", "第 ") + "\(day+1)" + env.t("", " 天"), secondary: true) {
+    add(coastLabel(env.t("Add experience", "添加体验"), size: 17, weight: .bold))
+    add(editorFieldGroup(env.t("Date", "日期"), control:
+      coastSettingRow(env.t("Day ", "第 ") + "\(day+1)" + env.t("", " 天"), value: nil) {
         [weak self] in
         guard let self else { return }
         chooseTripDay(from: self, trip: trip, selected: self.day) { [weak self] selected in
           self?.day = selected
           self?.render()
         }
-      })
-    timeField = field(env.t("Time (optional)", "时间（选填）"), placeholder: "HH:mm", value: timeText)
+      }))
+    timeField = editorTextField(placeholder: "HH:mm", value: timeText)
+    add(editorFieldGroup(env.t("Time (optional)", "时间（选填）"), control: timeField!))
     timeField?.keyboardType = .numbersAndPunctuation
     for item in env.catalog.items {
       add(
@@ -339,6 +367,49 @@ final class ActivityPickerController: CoastController {
         }
       })
   }
+}
+
+private func editorRootHeader(_ title: String, label: String, action: @escaping () -> Void) -> UIView {
+  let row = UIStackView(); row.axis = .horizontal; row.alignment = .center
+  row.addArrangedSubview(coastLabel(title, size: 32, weight: .bold)); row.addArrangedSubview(UIView())
+  let button = UIButton(type: .system); button.setImage(UIImage(systemName: "plus"), for: .normal)
+  button.tintColor = CoastStyle.ink; button.backgroundColor = CoastStyle.sand; button.layer.cornerRadius = 22
+  button.widthAnchor.constraint(equalToConstant: 44).isActive = true; button.heightAnchor.constraint(equalToConstant: 44).isActive = true
+  button.accessibilityLabel = label; button.addAction(UIAction { _ in action() }, for: .touchUpInside); row.addArrangedSubview(button)
+  return row
+}
+private func tripHeroCard(title: String, subtitle: String, action: @escaping () -> Void) -> UIView {
+  let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.borderWidth = 1
+  button.layer.borderColor = CoastStyle.border.cgColor; button.layer.cornerRadius = 16; button.clipsToBounds = true
+  let stack = UIStackView(); stack.axis = .vertical; stack.spacing = 0; stack.isUserInteractionEnabled = false; stack.translatesAutoresizingMaskIntoConstraints = false
+  let image = coastImage("camp", height: 264); image.layer.cornerRadius = 0; stack.addArrangedSubview(image)
+  let copy = UIStackView(arrangedSubviews: [coastLabel(title, size: 24, weight: .bold), coastLabel(subtitle, size: 13, color: CoastStyle.muted)])
+  copy.axis = .vertical; copy.spacing = 5; copy.isLayoutMarginsRelativeArrangement = true; copy.layoutMargins = UIEdgeInsets(top: 10, left: 15, bottom: 12, right: 15)
+  stack.addArrangedSubview(copy); button.addSubview(stack)
+  NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: button.topAnchor), stack.leadingAnchor.constraint(equalTo: button.leadingAnchor), stack.trailingAnchor.constraint(equalTo: button.trailingAnchor), stack.bottomAnchor.constraint(equalTo: button.bottomAnchor)])
+  button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
+}
+private func editorTextField(placeholder: String, value: String) -> UITextField {
+  let field = UITextField(); field.text = value; field.placeholder = placeholder; field.font = CoastStyle.font(14)
+  field.backgroundColor = CoastStyle.field; field.layer.cornerRadius = 10; field.heightAnchor.constraint(equalToConstant: 48).isActive = true
+  field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 1)); field.leftViewMode = .always; return field
+}
+private func editorTextArea(placeholder: String, value: String, height: CGFloat) -> UITextView {
+  let field = UITextView(); field.text = value; field.font = CoastStyle.font(14); field.backgroundColor = CoastStyle.field
+  field.layer.cornerRadius = 10; field.textContainerInset = UIEdgeInsets(top: 12, left: 8, bottom: 12, right: 8)
+  field.heightAnchor.constraint(equalToConstant: height).isActive = true; field.accessibilityLabel = placeholder; return field
+}
+private func editorFieldGroup(_ title: String, control: UIView) -> UIView {
+  let stack = UIStackView(arrangedSubviews: [coastLabel(title, size: 14), control]); stack.axis = .vertical; stack.spacing = 8; return stack
+}
+private func timelineRow(time: String, title: String, category: String, image: String?, action: @escaping () -> Void) -> UIView {
+  let button = UIButton(type: .system); let row = UIStackView(); row.axis = .horizontal; row.spacing = 12; row.alignment = .center
+  row.isUserInteractionEnabled = false; row.addArrangedSubview(coastLabel(time, size: 12))
+  if let image { let iv = coastImage(image, height: 52); iv.layer.cornerRadius = 10; iv.widthAnchor.constraint(equalToConstant: 52).isActive = true; row.addArrangedSubview(iv) }
+  let copy = UIStackView(arrangedSubviews: [coastLabel(title, size: 14, weight: .bold), coastLabel(category, size: 12, color: CoastStyle.muted)])
+  copy.axis = .vertical; copy.spacing = 3; row.addArrangedSubview(copy); button.addSubview(row); row.translatesAutoresizingMaskIntoConstraints = false
+  NSLayoutConstraint.activate([row.topAnchor.constraint(equalTo: button.topAnchor, constant: 6), row.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -6), row.leadingAnchor.constraint(equalTo: button.leadingAnchor), row.trailingAnchor.constraint(equalTo: button.trailingAnchor)])
+  button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
 }
 
 private func chooseTripDay(
