@@ -16,7 +16,7 @@ final class TripsController: CoastController {
   }
   func render() {
     reset()
-    title = env.t("Trips", "出游")
+    title = nil
     heading(env.t("Trips", "出游"))
     chips([env.t("Planned", "待出发"), env.t("Completed", "已完成")], selected: completed ? 1 : 0) {
       [weak self] i in
@@ -55,7 +55,8 @@ final class TripEditorController: CoastController {
   var name: UITextField!, start: UITextField!, end: UITextField!, notes: UITextView!,
     errorLabel = coastLabel("", size: 14, color: CoastStyle.red)
   init(_ env: CoastEnvironment, trip: CoastTrip?, pending: String? = nil) {
-    self.trip = trip ?? CoastTrip(name: "")
+    self.trip = trip ?? CoastTrip(
+      name: "", timeZone: env.store.preferences.region == "CN" ? "Asia/Shanghai" : "America/Los_Angeles")
     self.original = trip
     self.pending = pending
     super.init(env)
@@ -100,7 +101,6 @@ final class TripEditorController: CoastController {
     trip.start = start.text ?? ""
     trip.end = end.text ?? ""
     trip.notes = notes.text ?? ""
-    trip.timeZone = env.store.preferences.region == "CN" ? "Asia/Shanghai" : "America/Los_Angeles"
     if let issue = CoastValidation.trip(trip) {
       errorLabel.text =
         env.t(
@@ -178,17 +178,10 @@ final class TripDetailController: CoastController {
     if !trip.notes.isEmpty { note(trip.notes) }
   }
   func selectDay(_ trip: CoastTrip) {
-    menu(
-      env.t("Choose day", "选择日期"),
-      choices: (0..<tripDayCount(trip)).map { i in
-        (
-          env.t("Day ", "第 ") + "\(i+1)" + env.t("", " 天"),
-          { [weak self] in
-            self?.day = i
-            self?.render()
-          }
-        )
-      })
+    chooseTripDay(from: self, trip: trip, selected: day) { [weak self] selected in
+      self?.day = selected
+      self?.render()
+    }
   }
   func itemMenu(_ item: CoastTripItem, trip: CoastTrip) {
     menu(
@@ -200,7 +193,9 @@ final class TripDetailController: CoastController {
             guard let self, let content = self.env.item(item.activityID) else { return }
             self.push(ContentController(self.env, item: content))
           }
-        ), (env.t("Move up", "上移"), { [weak self] in self?.move(item, trip: trip, offset: -1) }),
+        ),
+        (env.t("Change day", "更改日期"), { [weak self] in self?.changeDay(item, trip: trip) }),
+        (env.t("Move up", "上移"), { [weak self] in self?.move(item, trip: trip, offset: -1) }),
         (env.t("Move down", "下移"), { [weak self] in self?.move(item, trip: trip, offset: 1) }),
         (
           env.t("Remove from trip", "从出游移除"),
@@ -212,6 +207,19 @@ final class TripDetailController: CoastController {
           }
         ),
       ])
+  }
+  func changeDay(_ item: CoastTripItem, trip: CoastTrip) {
+    chooseTripDay(from: self, trip: trip, selected: item.day) { [weak self] targetDay in
+      guard let self, targetDay != item.day,
+        let index = trip.items.firstIndex(where: { $0.id == item.id })
+      else { return }
+      var next = trip
+      next.items[index].day = targetDay
+      if self.save({ try self.env.store.saveTrip(next) }) {
+        self.day = targetDay
+        self.render()
+      }
+    }
   }
   func move(_ item: CoastTripItem, trip: CoastTrip, offset: Int) {
     var next = trip
@@ -286,17 +294,10 @@ final class ActivityPickerController: CoastController {
       coastButton(env.t("Day ", "第 ") + "\(day+1)" + env.t("", " 天"), secondary: true) {
         [weak self] in
         guard let self else { return }
-        self.menu(
-          self.env.t("Choose day", "选择日期"),
-          choices: (0..<tripDayCount(trip)).map { i in
-            (
-              "\(i+1)",
-              { [weak self] in
-                self?.day = i
-                self?.render()
-              }
-            )
-          })
+        chooseTripDay(from: self, trip: trip, selected: self.day) { [weak self] selected in
+          self?.day = selected
+          self?.render()
+        }
       })
     timeField = field(env.t("Time (optional)", "时间（选填）"), placeholder: "HH:mm", value: timeText)
     timeField?.keyboardType = .numbersAndPunctuation
@@ -333,4 +334,44 @@ final class ActivityPickerController: CoastController {
         }
       })
   }
+}
+
+private func chooseTripDay(
+  from controller: CoastController, trip: CoastTrip, selected: Int,
+  onSelect: @escaping (Int) -> Void
+) {
+  let count = tripDayCount(trip)
+  if count <= 14 {
+    controller.menu(
+      controller.env.t("Choose day", "选择日期"),
+      choices: (0..<count).map { day in
+        (
+          controller.env.t("Day ", "第 ") + "\(day + 1)" + controller.env.t("", " 天"),
+          { onSelect(day) }
+        )
+      })
+    return
+  }
+  let alert = UIAlertController(
+    title: controller.env.t("Choose day", "选择日期"),
+    message: controller.env.t("Enter a day from 1 to \(count).", "请输入 1 至 \(count) 之间的天数。"),
+    preferredStyle: .alert)
+  alert.addTextField { field in
+    field.keyboardType = .numberPad
+    field.text = "\(selected + 1)"
+    field.selectAll(nil)
+  }
+  alert.addAction(UIAlertAction(title: controller.env.t("Cancel", "取消"), style: .cancel))
+  alert.addAction(UIAlertAction(title: controller.env.t("Choose", "选择"), style: .default) { [weak alert] _ in
+    guard let text = alert?.textFields?.first?.text,
+      let value = Int(text), (1...count).contains(value)
+    else {
+      controller.message(
+        controller.env.t("Invalid day", "日期无效"),
+        controller.env.t("Enter a day from 1 to \(count).", "请输入 1 至 \(count) 之间的天数。"))
+      return
+    }
+    onSelect(value - 1)
+  })
+  controller.present(alert, animated: true)
 }

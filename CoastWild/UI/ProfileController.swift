@@ -144,9 +144,9 @@ final class PrivacyController: CoastController {
         "导出包含当前账号的业务数据及附件照片，不包含密码信息。清除前请自行保存副本。"))
   }
   func export() {
+    let folder = FileManager.default.temporaryDirectory.appendingPathComponent(
+      "CoastWild-export-" + UUID().uuidString)
     do {
-      let folder = FileManager.default.temporaryDirectory.appendingPathComponent(
-        "CoastWild-export-" + UUID().uuidString)
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
       let ledger = folder.appendingPathComponent("coast-wild.json")
       try env.store.exportData().write(to: ledger, options: .atomic)
@@ -163,7 +163,10 @@ final class PrivacyController: CoastController {
         try? FileManager.default.removeItem(at: folder)
       }
       present(share, animated: true)
-    } catch { self.error(error) }
+    } catch {
+      try? FileManager.default.removeItem(at: folder)
+      self.error(error)
+    }
   }
   func clear() {
     confirm(
@@ -174,11 +177,15 @@ final class PrivacyController: CoastController {
     ) { [weak self] in
       guard let self else { return }
       let photoFolder = self.env.photoURL("unused").deletingLastPathComponent()
-      if self.save({ try self.env.store.clearCurrentLedger() }) {
+      if self.save({
+        try self.env.store.clearCurrentLedger()
+        var preferences = self.env.store.preferences
+        preferences.onboardingDone = false
+        try self.env.store.updatePreferences(preferences)
+        try self.env.logout()
+      }) {
         try? FileManager.default.removeItem(at: photoFolder)
-        self.message(
-          self.env.t("Cleared", "已清除"),
-          self.env.t("Your local content has been cleared.", "当前账号的本地内容已清除。"))
+        self.env.showRoot()
       }
     }
   }
