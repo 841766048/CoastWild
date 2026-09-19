@@ -51,7 +51,8 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
 {
   var entry: CoastEntry
   let original: CoastEntry?
-  var titleField: UITextField!, dateField: UITextField!, bodyField: UITextView!,
+  var dateField: CoastDateField!
+  var titleField: UITextField!, bodyField: UITextView!,
     tripButton: UIButton!, status = coastLabel("", size: 13, color: CoastStyle.muted)
   var bodyPlaceholder: UILabel!
   var activityButton: UIButton!
@@ -75,7 +76,7 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
         self.entry = draft
       }
     } else {
-      self.entry = entry ?? CoastEntry()
+      self.entry = entry ?? CoastEntry(region: env.store.preferences.region)
     }
     if entry == nil { self.entry.tripID = tripID }
     super.init(env)
@@ -102,10 +103,9 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     titleField.heightAnchor.constraint(greaterThanOrEqualToConstant: 36).isActive = true
     titleField.accessibilityIdentifier = "journal.title"; add(titleField)
     stack.setCustomSpacing(31, after: titleField)
-    dateField = journalTextField(value: entry.date)
+    dateField = CoastDateField(self, title: env.t("Date", "日期"), value: entry.date, id: "journal.date", allowsClear: false)
     dateField.accessibilityLabel = env.t("Date", "日期"); add(dateField)
     stack.setCustomSpacing(24, after: dateField)
-    dateField.keyboardType = .numbersAndPunctuation
     let addPhotos = coastButton(env.t("Add photos", "添加照片"), secondary: true) { [weak self] in self?.pickPhotos() }
     addPhotos.configuration?.image = UIImage(named: "icon-photo"); addPhotos.configuration?.imagePadding = 8; add(addPhotos)
     stack.setCustomSpacing(11, after: addPhotos)
@@ -138,9 +138,8 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     status.font = CoastStyle.font(12)
     add(status)
     status.text = env.t("Your draft saves as you write.", "书写时自动保存草稿。")
-    [titleField, dateField].forEach {
-      $0?.addAction(UIAction { [weak self] _ in self?.scheduleDraft() }, for: .editingChanged)
-    }
+    titleField.addAction(UIAction { [weak self] _ in self?.scheduleDraft() }, for: .editingChanged)
+    dateField.addAction(UIAction { [weak self] _ in self?.scheduleDraft() }, for: .valueChanged)
   }
   func tripTitle() -> String {
     guard let trip = env.store.ledger.trips.first(where: { $0.id == entry.tripID }) else {
@@ -518,11 +517,6 @@ private func journalCard(entry: CoastEntry, image: UIImage?, linkedTrip: String?
   button.accessibilityLabel = ([title, entry.date, linkedTrip].compactMap { $0 }).joined(separator: ", ")
   button.accessibilityIdentifier = "journal.card.\(entry.id)"
   button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
-}
-private func journalTextField(value: String) -> UITextField {
-  let field = UITextField(); field.text = value; field.font = CoastStyle.font(14); field.backgroundColor = CoastStyle.inputFill
-  field.layer.cornerRadius = 9; field.heightAnchor.constraint(equalToConstant: 48).isActive = true
-  field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 1)); field.leftViewMode = .always; return field
 }
 private func journalFieldGroup(_ title: String, control: UIView) -> UIView {
   let stack = UIStackView(arrangedSubviews: [coastLabel(title, size: 14), control]); stack.axis = .vertical; stack.spacing = 8; return stack

@@ -98,6 +98,16 @@ public struct CoastEntry: Codable, Identifiable, Equatable {
         self.init(date: formatter.string(from: Date()))
     }
 
+    /// New entries follow the selected content region; persisted dates are unchanged.
+    public init(region: String, now: Date = Date()) {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: region == "CN" ? "Asia/Shanghai" : "America/Los_Angeles")
+        formatter.dateFormat = "yyyy-MM-dd"
+        self.init(date: formatter.string(from: now))
+    }
+
     public init(
         id: String = UUID().uuidString,
         title: String = "",

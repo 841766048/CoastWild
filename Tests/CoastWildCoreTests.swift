@@ -13,6 +13,15 @@ final class CoastWildCoreTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
+    func testNewJournalDateUsesContentRegionAcrossMidnight() {
+        let now = ISO8601DateFormatter().date(from: "2026-09-19T16:30:00Z")!
+        XCTAssertEqual(CoastEntry(region: "CN", now: now).date, "2026-09-20")
+        XCTAssertEqual(CoastEntry(region: "US", now: now).date, "2026-09-19")
+        let winter = ISO8601DateFormatter().date(from: "2026-01-01T07:30:00Z")!
+        XCTAssertEqual(CoastEntry(region: "US", now: winter).date, "2025-12-31")
+        XCTAssertEqual(CoastEntry(date: "2024-02-29").date, "2024-02-29")
+    }
+
     func testModelsExposeContractDefaults() {
         let preferences = CoastPreferences()
         XCTAssertEqual(preferences.language, "zh-Hans")

@@ -57,6 +57,7 @@ Figma： https://www.figma.com/design/sekErw6W2S4swqxlC0QPIj
 
 - CocoaPods 1.16.2（Gemfile/Gemfile.lock 固定工具版本）。
 - IQKeyboardManagerSwift 8.0.3 及其子依赖由 Podfile.lock 固定。
+- BRPickerView/DatePicker 3.0.0：出游起止日期、手记日期、活动日期和时刻使用统一的中英文滚轮选择器；支持取消、确认、可选项清空及起止范围约束。
 - 首次运行：`bundle install && bundle exec pod install`，随后打开 `CoastWild.xcworkspace`。
 - 如需根据 project.yml 重生成工程，运行 `./scripts/bootstrap.sh`，它会在 XcodeGen 后重新集成 Pods。
 - UIKit 表单统一由 IQKeyboardManager 管理避让、上一项/下一项/完成和点击空白收起；不再叠加 keyboardLayoutGuide 或手写 inputAccessoryView。

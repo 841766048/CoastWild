@@ -52,7 +52,8 @@ final class TripEditorController: CoastController {
   var selectedRegion: String
   var regionChanged = false
   var regionButton: UIButton!
-  var name: UITextField!, start: UITextField!, end: UITextField!, notes: UITextView!,
+  var start: CoastDateField!, end: CoastDateField!
+  var name: UITextField!, notes: UITextView!,
     errorLabel = coastLabel("", size: 14, color: CoastStyle.red)
   init(_ env: CoastEnvironment, trip: CoastTrip?, pending: String? = nil) {
     self.trip =
@@ -82,14 +83,14 @@ final class TripEditorController: CoastController {
     add(editorFormPanel([editorFieldGroup(env.t("Trip name", "出游名称"), control: name)], height: 113))
     regionButton = editorSelectButton(regionTitle()) { [weak self] in self?.chooseRegion() }
     add(editorFormPanel([editorFieldGroup(env.t("Region", "地区"), control: regionButton)], height: 113))
-    start = editorTextField(placeholder: "YYYY-MM-DD", value: trip.start)
-    end = editorTextField(placeholder: "YYYY-MM-DD", value: trip.end)
+    start = CoastDateField(self, title: env.t("Start date", "开始日期"), value: trip.start, id: "trip.start")
+    end = CoastDateField(self, title: env.t("End date", "结束日期"), value: trip.end, id: "trip.end")
+    start.maximum = { [weak self] in CoastValidation.parseDate(self?.end.text ?? "") }
+    end.minimum = { [weak self] in CoastValidation.parseDate(self?.start.text ?? "") }
     add(editorFormPanel([
       editorFieldGroup(env.t("Start date", "开始日期"), control: start),
       editorFieldGroup(env.t("End date", "结束日期"), control: end),
     ], spacing: 18, height: 210))
-    start.keyboardType = .numbersAndPunctuation
-    end.keyboardType = .numbersAndPunctuation
     notes = editorTextArea(placeholder: env.t("Write down your thoughts for this trip…", "写下这次出游的想法…"), value: trip.notes, height: 105)
     add(editorFormPanel([editorFieldGroup(env.t("Notes", "备注"), control: notes)], height: 170))
     errorLabel.isHidden = true
@@ -314,7 +315,7 @@ final class ActivityPickerController: CoastController {
   let tripID: String
   var chosen: String?
   var timeText = ""
-  var timeField: UITextField?
+  var timeField: CoastDateField?
   var day: Int
   init(_ env: CoastEnvironment, tripID: String, pending: String? = nil, initialDay: Int = 0) {
     self.tripID = tripID
@@ -343,9 +344,8 @@ final class ActivityPickerController: CoastController {
           self?.render()
         }
       }))
-    timeField = editorTextField(placeholder: "HH:mm", value: timeText)
+    timeField = CoastDateField(self, title: env.t("Time (optional)", "时间（选填）"), value: timeText, id: "trip.time", time: true)
     add(editorFieldGroup(env.t("Time (optional)", "时间（选填）"), control: timeField!))
-    timeField?.keyboardType = .numbersAndPunctuation
     for item in env.catalog.items {
       add(pickerCard(id: item.key, title: env.text(item.title),
           subtitle: env.category(item.category) + " · \(item.minutes) " + env.t("min", "分钟"), image: item.image,
@@ -474,39 +474,15 @@ private func chooseTripDay(
   from controller: CoastController, trip: CoastTrip, selected: Int,
   onSelect: @escaping (Int) -> Void
 ) {
-  let count = tripDayCount(trip)
-  if count <= 14 {
-    controller.menu(
-      controller.env.t("Choose day", "选择日期"),
-      choices: (0..<count).map { day in
-        (
-          controller.env.t("Day ", "第 ") + "\(day + 1)" + controller.env.t("", " 天"),
-          { onSelect(day) }
-        )
-      })
+  guard let start = CoastValidation.parseDate(trip.start), let end = CoastValidation.parseDate(trip.end) else {
+    onSelect(0)
     return
   }
-  let alert = UIAlertController(
-    title: controller.env.t("Choose day", "选择日期"),
-    message: controller.env.t("Enter a day from 1 to \(count).", "请输入 1 至 \(count) 之间的天数。"),
-    preferredStyle: .alert)
-  alert.addTextField { field in
-    field.keyboardType = .numberPad
-    field.text = "\(selected + 1)"
-    field.selectAll(nil)
+  let current = start.addingTimeInterval(Double(selected) * 86400)
+  CoastDatePicker.show(from: controller, title: controller.env.t("Choose date", "选择日期"),
+    value: CoastDatePicker.formatter().string(from: current), minimum: start, maximum: end
+  ) { value in
+    guard let date = CoastValidation.parseDate(value) else { return }
+    onSelect(Int(date.timeIntervalSince(start) / 86400))
   }
-  alert.addAction(UIAlertAction(title: controller.env.t("Cancel", "取消"), style: .cancel))
-  alert.addAction(
-    UIAlertAction(title: controller.env.t("Choose", "选择"), style: .default) { [weak alert] _ in
-      guard let text = alert?.textFields?.first?.text,
-        let value = Int(text), (1...count).contains(value)
-      else {
-        controller.message(
-          controller.env.t("Invalid day", "日期无效"),
-          controller.env.t("Enter a day from 1 to \(count).", "请输入 1 至 \(count) 之间的天数。"))
-        return
-      }
-      onSelect(value - 1)
-    })
-  controller.present(alert, animated: true)
 }
