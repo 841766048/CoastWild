@@ -1,0 +1,315 @@
+{
+  "items": [
+    {
+      "key": "coastal-story",
+      "kind": "story",
+      "category": "surf",
+      "title": {
+        "en": "A coastal morning",
+        "zh-Hans": "海岸上的清晨"
+      },
+      "subtitle": {
+        "en": "A slower start by the sea",
+        "zh-Hans": "在海边，慢慢开始一天"
+      },
+      "photo": "public/assets/coast-hiker.webp",
+      "minutes": 30,
+      "level": "easy",
+      "region": "both",
+      "page": "EX03",
+      "body": {
+        "en": "There’s something about the coast that helps everything feel a little clearer. The sound of waves, the fresh air and wide horizons create space to slow down and be present.\n\nTake time to notice the details — the patterns in the sand, the shapes of the cliffs, the wildlife along the shore. Sketch what you see, breathe it in, and help keep it special by carrying your own litter out.",
+        "zh-Hans": "海岸总能让思绪变得清晰一些。海浪的声音、新鲜的空气和开阔的地平线，给了我们慢下来、感受当下的空间。\n\n留意沙地的纹理、岩壁的轮廓，以及岸边的自然生灵。画下你看到的风景，感受海风，并带走自己的垃圾，让这片海岸保持美好。"
+      }
+    },
+    {
+      "key": "shoreline",
+      "kind": "experience",
+      "category": "hike",
+      "title": {
+        "en": "Shoreline walk",
+        "zh-Hans": "海岸步道"
+      },
+      "subtitle": {
+        "en": "A scenic coastal trail with big views.",
+        "zh-Hans": "沿着海岸线，慢慢感受风景。"
+      },
+      "photo": "public/assets/shoreline.webp",
+      "minutes": 60,
+      "level": "easy",
+      "distanceKm": 3.22,
+      "region": "both",
+      "page": "EX05"
+    },
+    {
+      "key": "coastal-afternoon",
+      "kind": "experience",
+      "category": "surf",
+      "title": {
+        "en": "Coastal afternoon",
+        "zh-Hans": "海边慢时光"
+      },
+      "subtitle": {
+        "en": "Surf culture, beach time and coastal views.",
+        "zh-Hans": "冲浪文化、海滩时光与开阔海景。"
+      },
+      "photo": "public/assets/surf-coast.webp",
+      "minutes": 120,
+      "level": "easy",
+      "region": "both",
+      "page": "EX05"
+    },
+    {
+      "key": "pine-camp",
+      "kind": "experience",
+      "category": "camp",
+      "title": {
+        "en": "Pine camp evening",
+        "zh-Hans": "松林露营"
+      },
+      "subtitle": {
+        "en": "Relax by the trees with ocean views.",
+        "zh-Hans": "在松林间安营，享受海岸的宁静。"
+      },
+      "photo": "public/assets/camp.webp",
+      "minutes": 90,
+      "level": "easy",
+      "region": "both",
+      "page": "EX05"
+    },
+    {
+      "key": "headlands",
+      "kind": "destination",
+      "category": "hike",
+      "title": {
+        "en": "Coastal headlands",
+        "zh-Hans": "海岸岬角"
+      },
+      "subtitle": {
+        "en": "A sample destination",
+        "zh-Hans": "示例目的地"
+      },
+      "photo": "public/assets/coast-wide.webp",
+      "minutes": 180,
+      "level": "moderate",
+      "region": "both",
+      "page": "EX04"
+    },
+    {
+      "key": "trail-notes",
+      "kind": "story",
+      "category": "hike",
+      "title": {
+        "en": "Into the hills",
+        "zh-Hans": "走进山野"
+      },
+      "subtitle": {
+        "en": "Notice a little more along the way.",
+        "zh-Hans": "留意路上的每一处细节。"
+      },
+      "photo": "public/assets/hills.webp",
+      "minutes": 15,
+      "level": "easy",
+      "region": "both",
+      "page": "EX03",
+      "body": {
+        "en": "A walk is an invitation to pay attention. Find a comfortable pace and stop where the landscape opens up.\n\nBring what you need, leave plants and stones where they belong, and make a few notes about the colors, sounds and textures you notice. Before leaving, check current access information for your chosen place.",
+        "zh-Hans": "行走是一份观察自然的邀请。找到舒服的节奏，在风景开阔的地方停一停。\n\n带好所需物品，让植物与石头留在原处，记下沿途的色彩、声音和质感。出发前，请核实目的地当前的开放情况。"
+      }
+    }
+  ],
+  "lessons": [
+    {
+      "key": "board-basics",
+      "category": "surf",
+      "title": {
+        "en": "Meet your board",
+        "zh-Hans": "认识你的冲浪板"
+      },
+      "group": {
+        "en": "Before your first surf",
+        "zh-Hans": "第一次冲浪之前"
+      },
+      "photo": "public/assets/surf-lesson.webp",
+      "steps": [
+        {
+          "title": {
+            "en": "Start on the shore",
+            "zh-Hans": "从岸上开始"
+          },
+          "body": {
+            "en": "Begin with a quiet look at your equipment on dry land. This short introduction names the main parts of a surfboard before guided practice.",
+            "zh-Hans": "先在岸上观察你的装备。这组入门内容帮助你在接受现场指导前认识冲浪板的主要部位。"
+          },
+          "photo": "public/assets/surf-lesson.webp"
+        },
+        {
+          "title": {
+            "en": "Know the shape",
+            "zh-Hans": "认识板型"
+          },
+          "body": {
+            "en": "Before you get in the water, take a moment to identify the main parts of your board. Knowing the basics will help you feel more comfortable during guided practice.",
+            "zh-Hans": "先花一点时间辨认冲浪板的主要部位。认识基础结构，有助于你在现场指导中更清楚地理解动作与提示。"
+          },
+          "photo": "public/assets/board-diagram.webp"
+        },
+        {
+          "title": {
+            "en": "Look after your board",
+            "zh-Hans": "照顾你的冲浪板"
+          },
+          "body": {
+            "en": "Notice the nose, rails and tail. Carry the board carefully and keep it away from sharp edges. Follow the care instructions for your own equipment.",
+            "zh-Hans": "辨认板头、板缘与板尾。搬运时保持留意，避开尖锐边缘，并遵循自己装备的养护说明。"
+          },
+          "photo": "public/assets/board-diagram.webp"
+        },
+        {
+          "title": {
+            "en": "Make room to learn",
+            "zh-Hans": "给学习留出空间"
+          },
+          "body": {
+            "en": "Keep your first session simple. Ask a qualified local instructor about suitable conditions and equipment. This guide is an introduction, not a substitute for supervised practice.",
+            "zh-Hans": "第一次体验不必安排太多。向当地合格教练了解适合的条件与装备。本内容是基础介绍，不能替代现场指导。"
+          },
+          "photo": "public/assets/surf-coast.webp"
+        }
+      ]
+    },
+    {
+      "key": "shore-respect",
+      "category": "surf",
+      "title": {
+        "en": "Respect the shoreline",
+        "zh-Hans": "尊重海岸"
+      },
+      "group": {
+        "en": "Before your first surf",
+        "zh-Hans": "第一次冲浪之前"
+      },
+      "photo": "public/assets/coast-wide.webp",
+      "steps": [
+        {
+          "title": {
+            "en": "Observe before entering",
+            "zh-Hans": "先观察"
+          },
+          "body": {
+            "en": "Read posted information and keep to permitted access points. Ask locally when you are unsure about access.",
+            "zh-Hans": "阅读现场说明，从允许的入口进入。不确定开放情况时，请向当地管理人员询问。"
+          },
+          "photo": "public/assets/coast-wide.webp"
+        },
+        {
+          "title": {
+            "en": "Leave it as you found it",
+            "zh-Hans": "让自然保持原样"
+          },
+          "body": {
+            "en": "Pack out your own litter and give wildlife plenty of space. A thoughtful visit leaves room for the next person.",
+            "zh-Hans": "带走自己的垃圾，与野生动物保持距离。用心的到访，也为下一位访客留出空间。"
+          },
+          "photo": "public/assets/shoreline.webp"
+        }
+      ]
+    },
+    {
+      "key": "trail-looking",
+      "category": "hike",
+      "title": {
+        "en": "Read the trail",
+        "zh-Hans": "认识步道"
+      },
+      "group": {
+        "en": "Your first coastal walk",
+        "zh-Hans": "第一次海岸徒步"
+      },
+      "photo": "public/assets/shoreline.webp",
+      "steps": [
+        {
+          "title": {
+            "en": "Choose your pace",
+            "zh-Hans": "选择舒服的节奏"
+          },
+          "body": {
+            "en": "Start with a short, permitted route that suits your experience. Review current local access information before you leave.",
+            "zh-Hans": "从适合自己经验的短程开放路线开始。出发前查看当地最新开放信息。"
+          },
+          "photo": "public/assets/shoreline.webp"
+        },
+        {
+          "title": {
+            "en": "Notice the small things",
+            "zh-Hans": "观察细小之处"
+          },
+          "body": {
+            "en": "Stop in a safe place to notice colors and textures. A photo or a few words can help you remember what made the walk yours.",
+            "zh-Hans": "在合适的地方停下，观察色彩与质感。用一张照片或几句话，记住属于自己的路上片刻。"
+          },
+          "photo": "public/assets/coast-hiker.webp"
+        },
+        {
+          "title": {
+            "en": "Close the loop",
+            "zh-Hans": "好好结束一次行走"
+          },
+          "body": {
+            "en": "Return with everything you brought. Add a short reflection to your journal and link it to the day’s trip.",
+            "zh-Hans": "把带来的物品一并带回。在手记中写下简短回顾，并关联今天的出游。"
+          },
+          "photo": "public/assets/hills.webp"
+        }
+      ]
+    },
+    {
+      "key": "camp-evening",
+      "category": "camp",
+      "title": {
+        "en": "A thoughtful camp evening",
+        "zh-Hans": "用心的露营夜晚"
+      },
+      "group": {
+        "en": "At home outdoors",
+        "zh-Hans": "自在户外"
+      },
+      "photo": "public/assets/camp.webp",
+      "steps": [
+        {
+          "title": {
+            "en": "Find an allowed place",
+            "zh-Hans": "选择允许露营的地点"
+          },
+          "body": {
+            "en": "Check local access and camping rules before making plans. Use established areas where camping is allowed.",
+            "zh-Hans": "计划前核实当地开放情况与露营规定，使用明确允许露营的区域。"
+          },
+          "photo": "public/assets/camp.webp"
+        },
+        {
+          "title": {
+            "en": "Keep a simple setup",
+            "zh-Hans": "让营地简单整洁"
+          },
+          "body": {
+            "en": "Keep belongings together and follow the instructions for your equipment. Leave space for others and the surrounding landscape.",
+            "zh-Hans": "把物品集中整理，遵循装备说明，为他人与周围环境留出空间。"
+          },
+          "photo": "public/assets/camp.webp"
+        },
+        {
+          "title": {
+            "en": "Carry the memory home",
+            "zh-Hans": "带回回忆"
+          },
+          "body": {
+            "en": "Before leaving, check your space for belongings and litter. Keep the view in a photograph, then write a few words about the evening.",
+            "zh-Hans": "离开前检查是否遗留物品与垃圾。用照片留下风景，再写几句夜晚的回忆。"
+          },
+          "photo": "public/assets/journal-coast.webp"
+        }
+      ]
+    }
+  ]
+}
