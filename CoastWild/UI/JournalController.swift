@@ -93,16 +93,20 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
       title: env.t("Cancel", "取消"), primaryAction: UIAction { [weak self] _ in self?.cancel() })
     navigationItem.rightBarButtonItem = UIBarButtonItem(
       title: env.t("Save", "保存"), primaryAction: UIAction { [weak self] _ in self?.submit() })
-    contentTop.constant = 20; stack.spacing = 14
+    contentTop.constant = 23; stack.spacing = 14
     titleField = UITextField(); titleField.text = entry.title
     titleField.placeholder = env.t("Give your memory a name", "给回忆起个名字")
     titleField.font = CoastStyle.font(26, .bold); titleField.textColor = CoastStyle.ink
     titleField.heightAnchor.constraint(greaterThanOrEqualToConstant: 36).isActive = true
     titleField.accessibilityIdentifier = "journal.title"; add(titleField)
+    stack.setCustomSpacing(31, after: titleField)
     dateField = journalTextField(value: entry.date)
-    add(journalFieldGroup(env.t("Date", "日期"), control: dateField))
+    dateField.accessibilityLabel = env.t("Date", "日期"); add(dateField)
+    stack.setCustomSpacing(24, after: dateField)
     dateField.keyboardType = .numbersAndPunctuation
-    add(coastButton(env.t("Add photos", "添加照片"), secondary: true) { [weak self] in self?.pickPhotos() })
+    let addPhotos = coastButton(env.t("Add photos", "添加照片"), secondary: true) { [weak self] in self?.pickPhotos() }
+    addPhotos.configuration?.image = UIImage(named: "icon-photo"); addPhotos.configuration?.imagePadding = 8; add(addPhotos)
+    stack.setCustomSpacing(11, after: addPhotos)
     photoStack.axis = .vertical
     photoStack.spacing = 12
     add(photoStack)
@@ -115,19 +119,16 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     bodyPlaceholder = coastLabel(env.t("What would you like to remember?", "有什么想要记住的？"), size: 16, color: UIColor(hex: 0x757575))
     bodyPlaceholder.translatesAutoresizingMaskIntoConstraints = false; bodyContainer.addSubview(bodyPlaceholder)
     NSLayoutConstraint.activate([
-      bodyContainer.heightAnchor.constraint(equalToConstant: 220), bodyField.topAnchor.constraint(equalTo: bodyContainer.topAnchor),
+      bodyContainer.heightAnchor.constraint(equalToConstant: 169), bodyField.topAnchor.constraint(equalTo: bodyContainer.topAnchor),
       bodyField.leadingAnchor.constraint(equalTo: bodyContainer.leadingAnchor), bodyField.trailingAnchor.constraint(equalTo: bodyContainer.trailingAnchor),
       bodyField.bottomAnchor.constraint(equalTo: bodyContainer.bottomAnchor), bodyPlaceholder.topAnchor.constraint(equalTo: bodyContainer.topAnchor),
       bodyPlaceholder.leadingAnchor.constraint(equalTo: bodyContainer.leadingAnchor)
     ]); bodyPlaceholder.isHidden = !entry.body.isEmpty; add(bodyContainer)
     bodyField.accessibilityIdentifier = "journal.body"
     bodyField.delegate = self
-    tripButton = coastSettingRow(env.t("Link a trip", "关联出游"), value: tripTitle()) { [weak self] in self?.chooseTrip() }
-    add(coastPanel([tripButton], spacing: 0, inset: 0))
-    activityButton = coastSettingRow(env.t("Link experience", "关联体验"), value: activityTitle()) { [weak self] in
-      self?.chooseActivity()
-    }
-    add(coastPanel([activityButton], spacing: 0, inset: 0))
+    tripButton = journalSelectButton(tripTitle()) { [weak self] in self?.chooseTrip() }
+    add(journalFormPanel([journalFieldGroup(env.t("Link a trip", "关联出游"), control: tripButton)]))
+    activityButton = UIButton(type: .system)
     status.font = CoastStyle.font(12)
     add(status)
     status.text = env.t("Your draft saves as you write.", "书写时自动保存草稿。")
@@ -161,7 +162,7 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
               self?.updateTrip()
             }
           )
-        })
+        } + [(env.t("Link experience…", "关联体验…"), { [weak self] in self?.chooseActivity() })])
   }
   func activityTitle() -> String {
     guard let id = entry.activityID, let item = env.item(id) else {
@@ -193,12 +194,11 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
   }
   func updateActivity() {
     activityButton.accessibilityValue = activityTitle()
-    journalRowValue(in: activityButton)?.text = activityTitle()
     scheduleDraft()
   }
   func updateTrip() {
     tripButton.accessibilityValue = tripTitle()
-    journalRowValue(in: tripButton)?.text = tripTitle()
+    tripButton.configuration?.title = tripTitle()
     scheduleDraft()
   }
   @objc func flushDraft() {
@@ -392,6 +392,7 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
           })
       }
     }
+    photoStack.isHidden = photoStack.arrangedSubviews.isEmpty
   }
 }
 final class JournalDetailController: CoastController {
@@ -412,10 +413,7 @@ final class JournalDetailController: CoastController {
       return
     }
     title = env.t("Journal", "手记")
-    navigationItem.rightBarButtonItems = [
-      iconItem("more", label: env.t("More", "更多")) { [weak self] in self?.more(entry) },
-      iconItem("share", label: env.t("Share", "分享")) { [weak self] in self?.share(entry) },
-    ]
+    navigationItem.rightBarButtonItem = iconItem("more", label: env.t("More", "更多")) { [weak self] in self?.more(entry) }
     contentTop.constant = 27; stack.spacing = 14
     if let first = entry.photos.first, let image = env.photo(first) {
       let hero = UIImageView(image: image); hero.contentMode = .scaleAspectFill; hero.clipsToBounds = true
@@ -442,11 +440,21 @@ final class JournalDetailController: CoastController {
           self.push(TripDetailController(self.env, id: trip.id))
         }], spacing: 0, inset: 0))
     }
+    let actions = UIStackView(); actions.axis = .horizontal; actions.spacing = 10
+    let edit = coastButton(env.t("Edit entry", "编辑手记"), secondary: true) { [weak self] in
+      guard let self else { return }; self.push(JournalEditorController(self.env, entry: entry))
+    }
+    let delete = UIButton(type: .system); delete.setImage(UIImage(named: "icon-trash"), for: .normal); delete.tintColor = CoastStyle.red
+    delete.layer.cornerRadius = 10; delete.layer.borderWidth = 1; delete.layer.borderColor = CoastStyle.border.cgColor
+    delete.widthAnchor.constraint(equalToConstant: 50).isActive = true; delete.heightAnchor.constraint(equalToConstant: 50).isActive = true
+    delete.accessibilityLabel = env.t("Delete entry", "删除手记"); delete.addAction(UIAction { [weak self] _ in self?.delete(entry) }, for: .touchUpInside)
+    actions.addArrangedSubview(edit); actions.addArrangedSubview(delete); add(actions)
   }
   func more(_ entry: CoastEntry) {
     menu(
       env.t("Entry options", "手记选项"),
       choices: [
+        (env.t("Share", "分享"), { [weak self] in self?.share(entry) }),
         (
           env.t("Edit", "编辑"),
           { [weak self] in
@@ -456,22 +464,18 @@ final class JournalDetailController: CoastController {
         ),
         (
           env.t("Delete", "删除"),
-          { [weak self] in
-            guard let self else { return }
-            self.confirm(
-              self.env.t("Delete this entry?", "删除这篇手记？"),
-              self.env.t(
-                "Only app-owned copies are removed. Your photo library is unchanged.",
-                "只删除应用中的附件副本，不影响系统照片库原图。")
-            ) {
-              if self.save({ try self.env.store.deleteEntry(id: entry.id) }) {
-                self.env.cleanUnusedPhotos()
-                self.navigationController?.popViewController(animated: true)
-              }
-            }
-          }
+          { [weak self] in self?.delete(entry) }
         ),
       ])
+  }
+  func delete(_ entry: CoastEntry) {
+    confirm(env.t("Delete this entry?", "删除这篇手记？"),
+      env.t("Only app-owned copies are removed. Your photo library is unchanged.", "只删除应用中的附件副本，不影响系统照片库原图。")) { [weak self] in
+        guard let self else { return }
+        if self.save({ try self.env.store.deleteEntry(id: entry.id) }) {
+          self.env.cleanUnusedPhotos(); self.navigationController?.popViewController(animated: true)
+        }
+      }
   }
   func share(_ entry: CoastEntry) {
     var items: [Any] = [entry.title + "\n" + entry.body]
@@ -506,15 +510,25 @@ private func journalCard(entry: CoastEntry, image: UIImage?, linkedTrip: String?
   button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
 }
 private func journalTextField(value: String) -> UITextField {
-  let field = UITextField(); field.text = value; field.font = CoastStyle.font(14); field.backgroundColor = CoastStyle.field
-  field.layer.cornerRadius = 10; field.heightAnchor.constraint(equalToConstant: 48).isActive = true
+  let field = UITextField(); field.text = value; field.font = CoastStyle.font(14); field.backgroundColor = CoastStyle.inputFill
+  field.layer.cornerRadius = 9; field.heightAnchor.constraint(equalToConstant: 48).isActive = true
   field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 1)); field.leftViewMode = .always; return field
 }
 private func journalFieldGroup(_ title: String, control: UIView) -> UIView {
   let stack = UIStackView(arrangedSubviews: [coastLabel(title, size: 14), control]); stack.axis = .vertical; stack.spacing = 8; return stack
 }
-private func journalRowValue(in button: UIButton) -> UILabel? {
-  button.subviews.compactMap { $0 as? UIStackView }.first?.arrangedSubviews.compactMap { $0 as? UILabel }.last
+private func journalFormPanel(_ views: [UIView]) -> UIStackView {
+  let panel = coastPanel(views, inset: 14); panel.backgroundColor = UIColor(hex: 0xF3F8FA); panel.layer.borderWidth = 0
+  panel.heightAnchor.constraint(equalToConstant: 113).isActive = true; return panel
+}
+private func journalSelectButton(_ title: String, action: @escaping () -> Void) -> UIButton {
+  let button = UIButton(type: .system); var config = UIButton.Configuration.plain(); config.title = title
+  config.baseForegroundColor = CoastStyle.ink; config.background.backgroundColor = CoastStyle.inputFill; config.background.cornerRadius = 9
+  config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
+  config.image = UIImage(named: "icon-next"); config.imagePlacement = .trailing; config.imagePadding = 8
+  config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in var result = incoming; result.font = CoastStyle.font(14); return result }
+  button.configuration = config; button.contentHorizontalAlignment = .fill; button.heightAnchor.constraint(equalToConstant: 48).isActive = true
+  button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
 }
 private func journalParagraph(lineHeight: CGFloat) -> NSParagraphStyle {
   let paragraph = NSMutableParagraphStyle(); paragraph.minimumLineHeight = lineHeight; paragraph.maximumLineHeight = lineHeight

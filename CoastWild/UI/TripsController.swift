@@ -12,8 +12,8 @@ final class TripsController: CoastController {
   func render() {
     reset()
     title = nil
-    contentTop.constant = 18
-    stack.spacing = 12
+    contentTop.constant = 16
+    stack.spacing = 18
     add(editorRootHeader(env.t("Trips", "出游"), label: env.t("Create trip", "创建出游")) { [weak self] in
       guard let self else { return }
       self.push(TripEditorController(self.env, trip: nil))
@@ -75,22 +75,23 @@ final class TripEditorController: CoastController {
     let saveItem = UIBarButtonItem(title: env.t("Save", "保存"), primaryAction: UIAction { [weak self] _ in self?.submit() })
     saveItem.accessibilityIdentifier = "trip.save"
     navigationItem.rightBarButtonItem = saveItem
+    view.backgroundColor = UIColor(hex: 0xF3F8FA); scroll.backgroundColor = view.backgroundColor
     contentTop.constant = 20; stack.spacing = 14
     name = editorTextField(placeholder: env.t("Give your trip a name", "给出游起个名字"), value: trip.name)
     name.accessibilityIdentifier = "trip.name"
-    add(coastPanel([editorFieldGroup(env.t("Trip name", "出游名称"), control: name)], inset: 14))
-    regionButton = coastSettingRow(env.t("Region", "地区"), value: regionTitle()) { [weak self] in self?.chooseRegion() }
-    add(coastPanel([regionButton], spacing: 0, inset: 0))
+    add(editorFormPanel([editorFieldGroup(env.t("Trip name", "出游名称"), control: name)], height: 113))
+    regionButton = editorSelectButton(regionTitle()) { [weak self] in self?.chooseRegion() }
+    add(editorFormPanel([editorFieldGroup(env.t("Region", "地区"), control: regionButton)], height: 113))
     start = editorTextField(placeholder: "YYYY-MM-DD", value: trip.start)
     end = editorTextField(placeholder: "YYYY-MM-DD", value: trip.end)
-    add(coastPanel([
+    add(editorFormPanel([
       editorFieldGroup(env.t("Start date", "开始日期"), control: start),
       editorFieldGroup(env.t("End date", "结束日期"), control: end),
-    ], spacing: 18, inset: 14))
+    ], spacing: 18, height: 210))
     start.keyboardType = .numbersAndPunctuation
     end.keyboardType = .numbersAndPunctuation
     notes = editorTextArea(placeholder: env.t("Write down your thoughts for this trip…", "写下这次出游的想法…"), value: trip.notes, height: 105)
-    add(coastPanel([editorFieldGroup(env.t("Notes", "备注"), control: notes)], inset: 14))
+    add(editorFormPanel([editorFieldGroup(env.t("Notes", "备注"), control: notes)], height: 170))
     errorLabel.isHidden = true
     add(errorLabel)
     note(
@@ -107,7 +108,7 @@ final class TripEditorController: CoastController {
   }
   func setRegion(_ region: String) {
     selectedRegion = region; regionChanged = true; regionButton.accessibilityValue = regionTitle()
-    regionButton.subviews.compactMap { $0 as? UIStackView }.first?.arrangedSubviews.compactMap { $0 as? UILabel }.last?.text = regionTitle()
+    regionButton.configuration?.title = regionTitle()
   }
   func cancel() {
     let changed =
@@ -206,6 +207,15 @@ final class TripDetailController: CoastController {
       coastButton(env.t("More options", "更多选项"), secondary: true) { [weak self] in self?.more(trip)
       })
     if !trip.notes.isEmpty { note(trip.notes) }
+    let entries = env.store.ledger.entries.filter { !$0.isDraft && $0.tripID == trip.id }
+    if !entries.isEmpty {
+      add(coastLabel(env.t("Journal entries", "这次出游的回忆"), size: 23, weight: .bold))
+      for entry in entries {
+        add(tripJournalCard(entry: entry, image: entry.photos.first.flatMap { env.photo($0) }, tripName: trip.name) { [weak self] in
+          guard let self else { return }; self.push(JournalDetailController(self.env, id: entry.id))
+        })
+      }
+    }
   }
   func selectDay(_ trip: CoastTrip) {
     chooseTripDay(from: self, trip: trip, selected: day) { [weak self] selected in
@@ -335,12 +345,8 @@ final class ActivityPickerController: CoastController {
     add(editorFieldGroup(env.t("Time (optional)", "时间（选填）"), control: timeField!))
     timeField?.keyboardType = .numbersAndPunctuation
     for item in env.catalog.items {
-      add(
-        row(
-          title: (chosen == item.key ? "✓ " : "") + env.text(item.title),
-          subtitle: env.category(item.category) + " · \(item.minutes) " + env.t("min", "分钟"),
-          image: item.image
-        ) { [weak self] in
+      add(pickerCard(title: (chosen == item.key ? "✓ " : "") + env.text(item.title),
+          subtitle: env.category(item.category) + " · \(item.minutes) " + env.t("min", "分钟"), image: item.image) { [weak self] in
           self?.chosen = item.key
           self?.render()
         })
@@ -391,24 +397,63 @@ private func tripHeroCard(title: String, subtitle: String, action: @escaping () 
 }
 private func editorTextField(placeholder: String, value: String) -> UITextField {
   let field = UITextField(); field.text = value; field.placeholder = placeholder; field.font = CoastStyle.font(14)
-  field.backgroundColor = CoastStyle.field; field.layer.cornerRadius = 10; field.heightAnchor.constraint(equalToConstant: 48).isActive = true
+  field.backgroundColor = CoastStyle.inputFill; field.layer.cornerRadius = 9; field.heightAnchor.constraint(equalToConstant: 48).isActive = true
   field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 1)); field.leftViewMode = .always; return field
 }
 private func editorTextArea(placeholder: String, value: String, height: CGFloat) -> UITextView {
-  let field = UITextView(); field.text = value; field.font = CoastStyle.font(14); field.backgroundColor = CoastStyle.field
-  field.layer.cornerRadius = 10; field.textContainerInset = UIEdgeInsets(top: 12, left: 8, bottom: 12, right: 8)
+  let field = UITextView(); field.text = value; field.font = CoastStyle.font(14); field.backgroundColor = CoastStyle.inputFill
+  field.layer.cornerRadius = 9; field.textContainerInset = UIEdgeInsets(top: 12, left: 8, bottom: 12, right: 8)
   field.heightAnchor.constraint(equalToConstant: height).isActive = true; field.accessibilityLabel = placeholder; return field
 }
 private func editorFieldGroup(_ title: String, control: UIView) -> UIView {
   let stack = UIStackView(arrangedSubviews: [coastLabel(title, size: 14), control]); stack.axis = .vertical; stack.spacing = 8; return stack
 }
+private func editorFormPanel(_ views: [UIView], spacing: CGFloat = 16, height: CGFloat) -> UIStackView {
+  let panel = coastPanel(views, spacing: spacing, inset: 14); panel.layer.borderWidth = 0
+  panel.heightAnchor.constraint(equalToConstant: height).isActive = true; return panel
+}
+private func editorSelectButton(_ title: String, action: @escaping () -> Void) -> UIButton {
+  let button = UIButton(type: .system); var config = UIButton.Configuration.plain(); config.title = title
+  config.baseForegroundColor = CoastStyle.ink; config.background.backgroundColor = CoastStyle.inputFill; config.background.cornerRadius = 9
+  config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
+  config.image = UIImage(named: "icon-next"); config.imagePlacement = .trailing; config.imagePadding = 8
+  config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in var result = incoming; result.font = CoastStyle.font(14); return result }
+  button.configuration = config; button.contentHorizontalAlignment = .fill; button.heightAnchor.constraint(equalToConstant: 48).isActive = true
+  button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
+}
 private func timelineRow(time: String, title: String, category: String, image: String?, action: @escaping () -> Void) -> UIView {
-  let button = UIButton(type: .system); let row = UIStackView(); row.axis = .horizontal; row.spacing = 12; row.alignment = .center
-  row.isUserInteractionEnabled = false; row.addArrangedSubview(coastLabel(time, size: 12))
-  if let image { let iv = coastImage(image, height: 52); iv.layer.cornerRadius = 10; iv.widthAnchor.constraint(equalToConstant: 52).isActive = true; row.addArrangedSubview(iv) }
+  let container = UIView(); container.heightAnchor.constraint(equalToConstant: 64).isActive = true
+  let row = UIStackView(); row.axis = .horizontal; row.spacing = 10; row.alignment = .center; row.translatesAutoresizingMaskIntoConstraints = false
+  let timeLabel = coastLabel(time, size: 12); timeLabel.widthAnchor.constraint(equalToConstant: 42).isActive = true; row.addArrangedSubview(timeLabel)
+  let badge = UIView(); badge.backgroundColor = UIColor(hex: 0xF3F8FA); badge.layer.cornerRadius = 21
+  badge.widthAnchor.constraint(equalToConstant: 42).isActive = true; badge.heightAnchor.constraint(equalToConstant: 42).isActive = true
+  if let image { let iv = UIImageView(image: UIImage(named: image)); iv.contentMode = .scaleAspectFit; iv.layer.cornerRadius = 21; iv.clipsToBounds = true; iv.translatesAutoresizingMaskIntoConstraints = false; badge.addSubview(iv); NSLayoutConstraint.activate([iv.topAnchor.constraint(equalTo: badge.topAnchor), iv.leadingAnchor.constraint(equalTo: badge.leadingAnchor), iv.trailingAnchor.constraint(equalTo: badge.trailingAnchor), iv.bottomAnchor.constraint(equalTo: badge.bottomAnchor)]) }
+  row.addArrangedSubview(badge)
   let copy = UIStackView(arrangedSubviews: [coastLabel(title, size: 14, weight: .bold), coastLabel(category, size: 12, color: CoastStyle.muted)])
-  copy.axis = .vertical; copy.spacing = 3; row.addArrangedSubview(copy); button.addSubview(row); row.translatesAutoresizingMaskIntoConstraints = false
-  NSLayoutConstraint.activate([row.topAnchor.constraint(equalTo: button.topAnchor, constant: 6), row.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -6), row.leadingAnchor.constraint(equalTo: button.leadingAnchor), row.trailingAnchor.constraint(equalTo: button.trailingAnchor)])
+  copy.axis = .vertical; copy.spacing = 3; row.addArrangedSubview(copy)
+  let options = UIButton(type: .system); options.setImage(UIImage(named: "icon-more"), for: .normal); options.tintColor = CoastStyle.brand
+  options.widthAnchor.constraint(equalToConstant: 32).isActive = true; options.heightAnchor.constraint(equalToConstant: 44).isActive = true
+  options.addAction(UIAction { _ in action() }, for: .touchUpInside); row.addArrangedSubview(options); container.addSubview(row)
+  NSLayoutConstraint.activate([row.topAnchor.constraint(equalTo: container.topAnchor), row.bottomAnchor.constraint(equalTo: container.bottomAnchor), row.leadingAnchor.constraint(equalTo: container.leadingAnchor), row.trailingAnchor.constraint(equalTo: container.trailingAnchor)])
+  return container
+}
+private func pickerCard(title: String, subtitle: String, image: String, action: @escaping () -> Void) -> UIView {
+  let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.cornerRadius = 14; button.layer.borderWidth = 1; button.layer.borderColor = CoastStyle.border.cgColor
+  button.heightAnchor.constraint(equalToConstant: 91).isActive = true
+  let row = UIStackView(); row.axis = .horizontal; row.spacing = 13; row.alignment = .center; row.isUserInteractionEnabled = false; row.translatesAutoresizingMaskIntoConstraints = false
+  let iv = coastImage(image, height: 67); iv.widthAnchor.constraint(equalToConstant: 68).isActive = true; iv.layer.cornerRadius = 10; row.addArrangedSubview(iv)
+  let copy = UIStackView(arrangedSubviews: [coastLabel(title, size: 17, weight: .bold), coastLabel(subtitle, size: 13, color: CoastStyle.muted)]); copy.axis = .vertical; copy.spacing = 5; row.addArrangedSubview(copy)
+  let next = UIImageView(image: UIImage(named: "icon-next")); next.tintColor = CoastStyle.muted; next.widthAnchor.constraint(equalToConstant: 16).isActive = true; next.heightAnchor.constraint(equalToConstant: 16).isActive = true; row.addArrangedSubview(next)
+  button.addSubview(row); NSLayoutConstraint.activate([row.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12), row.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12), row.centerYAnchor.constraint(equalTo: button.centerYAnchor)])
+  button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
+}
+private func tripJournalCard(entry: CoastEntry, image: UIImage?, tripName: String, action: @escaping () -> Void) -> UIView {
+  let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.cornerRadius = 15; button.layer.borderWidth = 1; button.layer.borderColor = CoastStyle.border.cgColor; button.clipsToBounds = true
+  let stack = UIStackView(); stack.axis = .vertical; stack.translatesAutoresizingMaskIntoConstraints = false; stack.isUserInteractionEnabled = false
+  if let image { let iv = UIImageView(image: image); iv.contentMode = .scaleAspectFill; iv.clipsToBounds = true; iv.heightAnchor.constraint(equalToConstant: 210).isActive = true; stack.addArrangedSubview(iv) }
+  let title = entry.title.isEmpty ? "—" : entry.title; let copy = UIStackView(arrangedSubviews: [coastLabel(entry.date, size: 13, color: CoastStyle.muted), coastLabel(title, size: 22, weight: .bold), coastLabel(entry.body, size: 14, color: CoastStyle.muted), coastLabel(tripName, size: 13, color: CoastStyle.muted)])
+  copy.axis = .vertical; copy.spacing = 6; copy.isLayoutMarginsRelativeArrangement = true; copy.layoutMargins = UIEdgeInsets(top: 13, left: 15, bottom: 15, right: 15); stack.addArrangedSubview(copy); button.addSubview(stack)
+  NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: button.topAnchor), stack.leadingAnchor.constraint(equalTo: button.leadingAnchor), stack.trailingAnchor.constraint(equalTo: button.trailingAnchor), stack.bottomAnchor.constraint(equalTo: button.bottomAnchor)])
   button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
 }
 
