@@ -9,7 +9,7 @@
 ```sh
 ./scripts/bootstrap.sh
 xcodebuild -workspace CoastWild.xcworkspace -scheme CoastWild \
-  -destination 'platform=iOS Simulator,id=5D9E1931-9B36-479E-8448-2CA6F0F1D802' \
+  -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath build CODE_SIGN_IDENTITY=- build
 swift test
 ```
@@ -46,7 +46,7 @@ swift test
 
 Figma： https://www.figma.com/design/sekErw6W2S4swqxlC0QPIj
 
-开发时实际通过 Figma 电脑 App 查看中文登录、探索、出游详情、手记编辑页，并使用已导出的全量设计与素材核对。布局采用 Auto Layout 和原生导航，系统导航／弹窗／照片选择器会随 iOS 版本变化。尚未完成所有中英文页面的逐像素验收。
+开发时通过 Figma 电脑 App 查看设计，并用同版导入 JSON 核对字号、字重、行高、字距、颜色、间距、图片和原始图标。布局采用 Auto Layout；状态栏、安全区和系统照片选择器随设备及 iOS 变化。主要页面的原生截图与测试记录见 `docs/verification-2026-09-20.md`；全量中英文画面尚未完成逐像素差分验收。
 
 当前无远程服务器、真实邮件、云同步、付费、实时海况或精确导航。美中地区的内置内容仍为同一套原创示例；用户填写的数据不会随切换语言重建。正式发布还需内容核验、真实服务接入、真机及无障碍全量验收。
 

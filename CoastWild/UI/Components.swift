@@ -3,7 +3,7 @@ import UIKit
 enum CoastStyle {
   static let brand = UIColor(hex: 0x075E73), sand = UIColor(hex: 0xE8B86D),
     ink = UIColor(hex: 0x142E37), muted = UIColor(hex: 0x526871), field = UIColor(hex: 0xEDF3F5),
-    inputFill = UIColor(hex: 0xEFF4F6), border = UIColor(hex: 0xD7E2E6), red = UIColor(hex: 0xB42332)
+    inputFill = UIColor(hex: 0xEFF4F6), border = UIColor(hex: 0xDFE9ED), red = UIColor(hex: 0xB42332)
   static func font(_ size: CGFloat, _ weight: UIFont.Weight = .regular) -> UIFont {
     UIFontMetrics(forTextStyle: .body).scaledFont(for: .systemFont(ofSize: size, weight: weight))
   }
@@ -17,7 +17,7 @@ extension UIColor {
 }
 func coastLabel(
   _ text: String, size: CGFloat = 16, weight: UIFont.Weight = .regular,
-  color: UIColor = CoastStyle.ink
+  color: UIColor = CoastStyle.ink, lineHeight: CGFloat? = nil, letterSpacing: CGFloat? = nil
 ) -> UILabel {
   let label = UILabel()
   label.text = text
@@ -29,10 +29,10 @@ func coastLabel(
   let paragraph = NSMutableParagraphStyle()
   let titleLines: [CGFloat: CGFloat] = [17: 22.1, 18: 23.4, 19: 22.8, 21: 25.2, 22: 28.6, 23: 27.6, 24: 28.8, 27: 30.24, 30: 34.5, 32: 35.84, 38: 42.56]
   let titleTracking: [CGFloat: CGFloat] = [16: -0.3, 17: -0.3, 18: -0.3, 19: -0.5, 21: -0.5, 22: -0.3, 23: -0.5, 24: -0.5, 27: -1.2, 30: -1.2, 32: -1.2, 38: -1.5]
-  let lineHeight = weight >= .semibold ? (titleLines[size] ?? size * 1.5) : size * 1.5
-  paragraph.minimumLineHeight = UIFontMetrics(forTextStyle: .body).scaledValue(for: lineHeight)
+  let resolvedLineHeight = lineHeight ?? (weight >= .semibold ? (titleLines[size] ?? size * 1.5) : size * 1.5)
+  paragraph.minimumLineHeight = UIFontMetrics(forTextStyle: .body).scaledValue(for: resolvedLineHeight)
   paragraph.maximumLineHeight = paragraph.minimumLineHeight
-  label.attributedText = NSAttributedString(string: text, attributes: [.paragraphStyle: paragraph, .kern: weight >= .semibold ? (titleTracking[size] ?? 0) : 0])
+  label.attributedText = NSAttributedString(string: text, attributes: [.paragraphStyle: paragraph, .kern: letterSpacing ?? (weight >= .semibold ? (titleTracking[size] ?? 0) : 0)])
   label.textColor = color
   label.numberOfLines = 0
   label.adjustsFontForContentSizeCategory = true
@@ -309,13 +309,13 @@ func coastPanel(_ views: [UIView], spacing: CGFloat = 16, inset: CGFloat = 14) -
 }
 func coastSettingRow(_ title: String, value: String? = nil, icon: String? = nil, destructive: Bool = false, action: @escaping () -> Void) -> UIButton {
   let button = UIButton(type: .system)
-  let row = UIStackView(); row.axis = .horizontal; row.spacing = 14; row.alignment = .center
+  let row = UIStackView(); row.axis = .horizontal; row.spacing = 12; row.alignment = .center
   row.translatesAutoresizingMaskIntoConstraints = false; row.isUserInteractionEnabled = false
   if let icon {
     let image = UIImageView(image: UIImage(named: "icon-" + icon)); image.contentMode = .scaleAspectFit
     image.tintColor = destructive ? CoastStyle.red : CoastStyle.brand
-    image.widthAnchor.constraint(equalToConstant: 20).isActive = true
-    image.heightAnchor.constraint(equalToConstant: 20).isActive = true
+    image.widthAnchor.constraint(equalToConstant: 21).isActive = true
+    image.heightAnchor.constraint(equalToConstant: 24).isActive = true
     row.addArrangedSubview(image)
   }
   row.addArrangedSubview(coastLabel(title, size: 15, color: destructive ? CoastStyle.red : CoastStyle.ink))
@@ -323,14 +323,14 @@ func coastSettingRow(_ title: String, value: String? = nil, icon: String? = nil,
   if let value { row.addArrangedSubview(coastLabel(value, size: 12, color: CoastStyle.muted)) }
   let chevron = UIImageView(image: UIImage(named: "icon-next")); chevron.tintColor = CoastStyle.muted; chevron.contentMode = .scaleAspectFit
   chevron.widthAnchor.constraint(equalToConstant: 16).isActive = true
-  chevron.heightAnchor.constraint(equalToConstant: 16).isActive = true; row.addArrangedSubview(chevron)
+  chevron.heightAnchor.constraint(equalToConstant: 24).isActive = true; row.addArrangedSubview(chevron)
   button.addSubview(row)
   NSLayoutConstraint.activate([
     button.heightAnchor.constraint(greaterThanOrEqualToConstant: 59),
     row.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 14),
     row.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -14),
-    row.topAnchor.constraint(equalTo: button.topAnchor, constant: 16),
-    row.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -16)
+    row.topAnchor.constraint(equalTo: button.topAnchor, constant: 17.5),
+    row.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -17.5)
   ])
   button.accessibilityLabel = [title, value].compactMap { $0 }.joined(separator: ", ")
   button.addAction(UIAction { _ in action() }, for: .touchUpInside)
@@ -338,12 +338,17 @@ func coastSettingRow(_ title: String, value: String? = nil, icon: String? = nil,
 }
 func coastStats(_ values: [(String, String)]) -> UIView {
   let row = UIStackView(); row.axis = .horizontal; row.distribution = .fillEqually
-  row.backgroundColor = UIColor(hex: 0xF3F8FA); row.layer.cornerRadius = 12
-  row.isLayoutMarginsRelativeArrangement = true; row.layoutMargins = UIEdgeInsets(top: 17, left: 0, bottom: 17, right: 0)
+  row.backgroundColor = .clear
+  row.isLayoutMarginsRelativeArrangement = true; row.layoutMargins = UIEdgeInsets(top: 18, left: 0, bottom: 18, right: 0)
   for (value, title) in values {
     let group = UIStackView(); group.axis = .vertical; group.spacing = 5; group.alignment = .center
-    group.addArrangedSubview(coastLabel(value, size: 18, weight: .bold))
-    group.addArrangedSubview(coastLabel(title, size: 13, color: CoastStyle.muted)); row.addArrangedSubview(group)
+    group.addArrangedSubview(coastLabel(value, size: 18, weight: .bold, lineHeight: 21.5, letterSpacing: 0))
+    group.addArrangedSubview(coastLabel(title, size: 13, color: CoastStyle.muted, lineHeight: 18.85)); row.addArrangedSubview(group)
+  }
+  for edge in [true, false] {
+    let rule = UIView(); rule.backgroundColor = CoastStyle.border; rule.translatesAutoresizingMaskIntoConstraints = false
+    row.addSubview(rule)
+    NSLayoutConstraint.activate([rule.leadingAnchor.constraint(equalTo: row.leadingAnchor), rule.trailingAnchor.constraint(equalTo: row.trailingAnchor), rule.heightAnchor.constraint(equalToConstant: 1), edge ? rule.topAnchor.constraint(equalTo: row.topAnchor) : rule.bottomAnchor.constraint(equalTo: row.bottomAnchor)])
   }
   return row
 }
@@ -398,4 +403,36 @@ final class CoastDialog: UIViewController {
       card.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor)
     ])
   }
+}
+
+func coastNotice(_ text: String) -> UIView {
+  let group = UIStackView(); group.axis = .horizontal; group.spacing = 10; group.alignment = .top
+  group.isLayoutMarginsRelativeArrangement = true
+  group.layoutMargins = UIEdgeInsets(top: 15, left: 0, bottom: 15, right: 0)
+  let image = UIImageView(image: UIImage(named: "icon-info")); image.tintColor = CoastStyle.muted; image.contentMode = .scaleAspectFit
+  image.widthAnchor.constraint(equalToConstant: 19).isActive = true; image.heightAnchor.constraint(equalToConstant: 19).isActive = true
+  group.addArrangedSubview(image); group.addArrangedSubview(coastLabel(text, size: 13, color: CoastStyle.muted))
+  return group
+}
+func coastFormPanel(_ views: [UIView], spacing: CGFloat = 18) -> UIStackView {
+  let panel = coastPanel(views, spacing: spacing)
+  panel.layer.borderWidth = 0
+  panel.layoutMargins = UIEdgeInsets(top: 18, left: 14, bottom: 18, right: 14)
+  return panel
+}
+
+func coastPreviewBadge(_ env: CoastEnvironment) -> UIView {
+  let badge = UIView()
+  badge.backgroundColor = UIColor(hex: 0xF8EFDE)
+  badge.layer.cornerRadius = 6
+  let label = coastLabel(env.t("Local preview", "本地演示"), size: 11, color: UIColor(hex: 0x705523))
+  label.translatesAutoresizingMaskIntoConstraints = false; badge.addSubview(label)
+  NSLayoutConstraint.activate([
+    label.leadingAnchor.constraint(equalTo: badge.leadingAnchor, constant: 9),
+    label.trailingAnchor.constraint(equalTo: badge.trailingAnchor, constant: -9),
+    label.centerYAnchor.constraint(equalTo: badge.centerYAnchor),
+    badge.heightAnchor.constraint(greaterThanOrEqualToConstant: 25),
+    label.topAnchor.constraint(greaterThanOrEqualTo: badge.topAnchor, constant: 4)
+  ])
+  return badge
 }

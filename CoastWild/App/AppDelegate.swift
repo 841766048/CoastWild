@@ -103,6 +103,8 @@ final class CoastEnvironment {
       tabs.tabBar.tintColor = CoastStyle.brand
       tabs.tabBar.unselectedItemTintColor = UIColor(hex: 0x46525B)
       for item in [appearance.stackedLayoutAppearance, appearance.inlineLayoutAppearance, appearance.compactInlineLayoutAppearance] {
+        item.normal.iconColor = UIColor(hex: 0x46525B)
+        item.selected.iconColor = CoastStyle.brand
         item.normal.titleTextAttributes = [.font: CoastStyle.font(10), .foregroundColor: UIColor(hex: 0x46525B)]
         item.selected.titleTextAttributes = [.font: CoastStyle.font(10, .semibold), .foregroundColor: CoastStyle.brand]
       }

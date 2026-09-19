@@ -1,6 +1,9 @@
 import XCTest
 
 final class CoastWildUITests: XCTestCase {
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+  }
   func testOnboardingAndLoginGate() {
     let app = XCUIApplication()
     app.launchArguments = ["--ui-testing", "--reset-test-data"]
@@ -53,6 +56,10 @@ final class CoastWildUITests: XCTestCase {
     dismissKeyboard(app)
     tap(app.buttons["trip.save"], in: app)
     XCTAssertTrue(app.staticTexts["Coastal Weekend"].waitForExistence(timeout: 5))
+    tap(app.buttons["添加体验"], in: app)
+    tap(app.buttons["trip.activity.shoreline"], in: app)
+    tap(app.buttons["加入出游"], in: app)
+    XCTAssertTrue(app.staticTexts["海岸步道"].waitForExistence(timeout: 5))
     capture("02-Trip", app: app)
     tap(app.buttons["写一篇手记"], in: app)
     let title = app.textFields["journal.title"]
@@ -65,6 +72,17 @@ final class CoastWildUITests: XCTestCase {
     tap(body, in: app)
     body.typeText("A quiet walk beside the sea.")
     dismissKeyboard(app)
+    tap(app.buttons["journal.link.trip"], in: app)
+    app.sheets["关联出游"].buttons["关联体验…"].tap()
+    let experienceSheet = app.sheets["关联体验"]
+    XCTAssertTrue(experienceSheet.waitForExistence(timeout: 5))
+    let experience = experienceSheet.buttons["海岸步道"]
+    let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND hittable == true"), object: experience)
+    XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 5), .completed)
+    experience.tap()
+    XCTAssertTrue(app.buttons["journal.link.activity"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["journal.link.activity"].label.contains("海岸步道"))
+    capture("21-JournalLink", app: app)
     app.navigationBars.buttons["保存"].tap()
     XCTAssertTrue(app.staticTexts["Coastal Weekend"].waitForExistence(timeout: 5))
     app.navigationBars.buttons.element(boundBy: 0).tap()
@@ -136,10 +154,43 @@ final class CoastWildUITests: XCTestCase {
     XCTAssertEqual(app.textFields["auth.email"].value as? String, "keyboard@example.test")
     tap(app.buttons["auth.submit"], in: app)
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
+    app.buttons["个人空间"].tap()
+    tap(app.buttons["偏好设置"], in: app)
+    capture("12-Preferences", app: app)
+    app.buttons["简体中文"].tap()
+    app.buttons["English"].tap()
+    XCTAssertTrue(app.tabBars.buttons["Explore"].waitForExistence(timeout: 5))
+    capture("13-EnglishExplore", app: app)
+    app.buttons["explore.search"].tap()
+    capture("14-EnglishSearch", app: app)
+    app.navigationBars.buttons.element(boundBy: 0).tap()
+    app.tabBars.buttons["Learn"].tap()
+    capture("15-EnglishLearn", app: app)
+    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Meet your board")).firstMatch, in: app)
+    capture("16-EnglishLesson", app: app)
+    app.navigationBars.buttons.element(boundBy: 0).tap()
+    app.tabBars.buttons["Explore"].tap()
+    app.buttons["Your space"].tap()
+    tap(app.buttons["Data & privacy"], in: app)
+    capture("17-EnglishPrivacy", app: app)
+    app.navigationBars.buttons.element(boundBy: 0).tap()
+    tap(app.buttons["My account"], in: app)
+    capture("18-EnglishAccount", app: app)
+    tap(app.buttons["Log out"], in: app)
+    capture("19-EnglishLogin", app: app)
+    tap(app.buttons["Forgot password?"], in: app)
+    capture("20-EnglishRecovery", app: app)
+    app.textFields["auth.email"].tap()
+    app.textFields["auth.email"].typeText("keyboard@example.test")
+    dismissKeyboard(app)
+    tap(app.buttons["auth.submit"], in: app)
+    XCTAssertTrue(app.staticTexts["auth.recovery.email"].waitForExistence(timeout: 5))
+    XCTAssertEqual(app.staticTexts["auth.recovery.email"].label, "keyboard@example.test")
+    capture("22-EnglishReset", app: app)
   }
 
   private func dismissKeyboard(_ app: XCUIApplication) {
-    let done = app.toolbars.buttons["完成"]
+    let done = app.toolbars.buttons.matching(NSPredicate(format: "label IN %@", ["完成", "Done"])).firstMatch
     if done.waitForExistence(timeout: 1) { done.tap() }
   }
   private func tap(_ element: XCUIElement, in app: XCUIApplication) {
@@ -151,6 +202,8 @@ final class CoastWildUITests: XCTestCase {
     element.tap()
   }
   private func capture(_ name: String, app: XCUIApplication) {
+    // Record the settled navigation frame, not an in-flight UIKit transition.
+    Thread.sleep(forTimeInterval: 0.5)
     let attachment = XCTAttachment(screenshot: app.screenshot())
     attachment.name = name
     attachment.lifetime = .keepAlways
