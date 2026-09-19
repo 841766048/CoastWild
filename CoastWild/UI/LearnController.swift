@@ -96,6 +96,8 @@ final class LearnController: CoastController {
     copy.addArrangedSubview(learnLabel("\(lesson.steps.count) " + env.t("short steps", "个简短步骤") + " · " + state, size: 14, color: CoastStyle.muted, lineHeight: 20.3))
     content.addArrangedSubview(copy)
     NSLayoutConstraint.activate([content.topAnchor.constraint(equalTo: button.topAnchor), content.leadingAnchor.constraint(equalTo: button.leadingAnchor), content.trailingAnchor.constraint(equalTo: button.trailingAnchor), content.bottomAnchor.constraint(equalTo: button.bottomAnchor)])
+    button.accessibilityIdentifier = "learn.lesson.\(lesson.key)"
+    button.accessibilityLabel = [env.text(lesson.title), "\(lesson.steps.count) " + env.t("short steps", "个简短步骤"), state].joined(separator: ", ")
     button.addAction(UIAction { [weak self] _ in guard let self else { return }; self.push(LessonController(self.env, lesson: lesson)) }, for: .touchUpInside)
     return button
   }

@@ -224,6 +224,8 @@ final class SearchController: CoastController, UISearchBarDelegate {
     chevron.translatesAutoresizingMaskIntoConstraints = false
     button.addSubview(chevron)
     NSLayoutConstraint.activate([image.leadingAnchor.constraint(equalTo: button.leadingAnchor), image.centerYAnchor.constraint(equalTo: button.centerYAnchor), image.widthAnchor.constraint(equalToConstant: 124), text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 13), text.trailingAnchor.constraint(lessThanOrEqualTo: chevron.leadingAnchor, constant: -8), text.centerYAnchor.constraint(equalTo: button.centerYAnchor), chevron.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12), chevron.centerYAnchor.constraint(equalTo: button.centerYAnchor), chevron.widthAnchor.constraint(equalToConstant: 16), chevron.heightAnchor.constraint(equalToConstant: 24)])
+    button.accessibilityIdentifier = "explore.result.\(item.key)"
+    button.accessibilityLabel = [env.text(item.title), env.category(item.category), "\(item.minutes) " + env.t("min", "分钟")].joined(separator: ", ")
     button.addAction(UIAction { [weak self] _ in guard let self else { return }; self.push(ContentController(self.env, item: item)) }, for: .touchUpInside)
     return button
   }
@@ -296,6 +298,8 @@ final class ContentController: CoastController {
     text.addArrangedSubview(exploreLabel(env.text(related.title), size: 17, weight: .bold, lineHeight: 22.1)); text.addArrangedSubview(exploreLabel(env.category(related.category) + " · \(related.minutes) " + env.t("min", "分钟"), size: 13, color: CoastStyle.muted, lineHeight: 18.85)); button.addSubview(text)
     let chevron = UIImageView(image: UIImage(named: "icon-next")); chevron.tintColor = CoastStyle.muted; chevron.contentMode = .scaleAspectFit; chevron.translatesAutoresizingMaskIntoConstraints = false; button.addSubview(chevron)
     NSLayoutConstraint.activate([image.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12), image.centerYAnchor.constraint(equalTo: button.centerYAnchor), image.widthAnchor.constraint(equalToConstant: 88), text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 13), text.trailingAnchor.constraint(lessThanOrEqualTo: chevron.leadingAnchor, constant: -8), text.centerYAnchor.constraint(equalTo: button.centerYAnchor), chevron.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12), chevron.centerYAnchor.constraint(equalTo: button.centerYAnchor), chevron.widthAnchor.constraint(equalToConstant: 16), chevron.heightAnchor.constraint(equalToConstant: 24)])
+    button.accessibilityIdentifier = "explore.related.\(related.key)"
+    button.accessibilityLabel = [env.text(related.title), env.category(related.category), "\(related.minutes) " + env.t("min", "分钟")].joined(separator: ", ")
     button.addAction(UIAction { [weak self] _ in guard let self else { return }; self.push(ContentController(self.env, item: related)) }, for: .touchUpInside)
     return button
   }
