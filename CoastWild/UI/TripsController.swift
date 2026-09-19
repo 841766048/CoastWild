@@ -446,7 +446,8 @@ private func timelineRow(id: String, time: String, title: String, category: Stri
   return container
 }
 private func pickerCard(id: String, title: String, subtitle: String, image: String, selected: Bool, action: @escaping () -> Void) -> UIView {
-  let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.cornerRadius = 14; button.layer.borderWidth = 1; button.layer.borderColor = CoastStyle.border.cgColor
+  let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.cornerRadius = 14; button.layer.borderWidth = 1
+  button.layer.borderColor = (selected ? CoastStyle.brand : UIColor(hex: 0xDFE9ED)).cgColor
   button.heightAnchor.constraint(equalToConstant: 91).isActive = true
   let row = UIStackView(); row.axis = .horizontal; row.spacing = 13; row.alignment = .center; row.isUserInteractionEnabled = false; row.translatesAutoresizingMaskIntoConstraints = false
   let iv = coastImage(image, height: 67); iv.widthAnchor.constraint(equalToConstant: 68).isActive = true; iv.layer.cornerRadius = 10; row.addArrangedSubview(iv)
