@@ -25,7 +25,20 @@ final class CoastWildCoreTests: XCTestCase {
         XCTAssertFalse(trip.id.isEmpty)
         XCTAssertEqual(trip.timeZone, "Asia/Shanghai")
         XCTAssertEqual(trip.items, [])
-        XCTAssertNotNil(CoastValidation.parseDate(CoastEntry().date))
+        let entry = CoastEntry()
+        XCTAssertNotNil(CoastValidation.parseDate(entry.date))
+        XCTAssertNil(entry.activityID)
+        XCTAssertNil(CoastTripItem(activityID: "walk", titleSnapshot: "Walk").time)
+    }
+
+    func testOptionalContractFieldsDecodeFromLegacyJSONWhenAbsent() throws {
+        let itemData = Data(#"{"id":"item","activityID":"walk","day":0,"titleSnapshot":"Walk"}"#.utf8)
+        let item = try JSONDecoder().decode(CoastTripItem.self, from: itemData)
+        XCTAssertNil(item.time)
+
+        let entryData = Data(#"{"id":"entry","title":"Title","body":"Body","date":"2026-01-01","photos":[],"isDraft":false}"#.utf8)
+        let entry = try JSONDecoder().decode(CoastEntry.self, from: entryData)
+        XCTAssertNil(entry.activityID)
     }
 
     func testValidationUsesExactFieldLimitsAndDateRules() {
@@ -36,6 +49,13 @@ final class CoastWildCoreTests: XCTestCase {
         XCTAssertEqual(CoastValidation.trip(CoastTrip(name: "A", start: "2026-02-30", end: "2026-03-01")), "trip.date.invalid")
         XCTAssertEqual(CoastValidation.trip(CoastTrip(name: "A", notes: String(repeating: "n", count: 1001))), "trip.notes.tooLong")
         XCTAssertNil(CoastValidation.trip(CoastTrip(name: " A ", start: "2026-01-01", end: "2026-01-01", notes: String(repeating: "n", count: 1000))))
+
+        let validTimeItem = CoastTripItem(activityID: "x", titleSnapshot: "X", time: "23:59")
+        XCTAssertNil(CoastValidation.trip(CoastTrip(name: "A", items: [validTimeItem])))
+        for invalidTime in ["24:00", "12:60", "9:30", "09:3", ""] {
+            let item = CoastTripItem(activityID: "x", titleSnapshot: "X", time: invalidTime)
+            XCTAssertEqual(CoastValidation.trip(CoastTrip(name: "A", items: [item])), "trip.activity.time.invalid")
+        }
 
         XCTAssertEqual(CoastValidation.entry(CoastEntry(title: String(repeating: "t", count: 81), body: "x", date: "2026-01-01", isDraft: false)), "entry.title.tooLong")
         XCTAssertEqual(CoastValidation.entry(CoastEntry(body: String(repeating: "b", count: 10001), date: "2026-01-01", isDraft: false)), "entry.body.tooLong")
@@ -207,11 +227,22 @@ final class CoastWildCoreTests: XCTestCase {
         XCTAssertNil(store.ledger.entries[0].tripID)
     }
 
-    func testProgressAndBookmarksAreIdempotentAndExportIsDecodable() throws {
+    func testProgressPersistsBackwardNavigationAcrossReloadAndCompletionIsSticky() throws {
         let store = try activeStore()
         try store.setProgress(lessonID: "lesson", step: 3, completed: true)
         try store.setProgress(lessonID: "lesson", step: 2, completed: false)
-        XCTAssertEqual(store.ledger.progress["lesson"], CoastProgress(step: 3, completed: true))
+        XCTAssertEqual(store.ledger.progress["lesson"], CoastProgress(step: 2, completed: true))
+
+        let reloaded = try CoastStore(directory: directory)
+        try reloaded.activate(accountID: "account")
+        XCTAssertEqual(reloaded.ledger.progress["lesson"], CoastProgress(step: 2, completed: true))
+        XCTAssertThrowsError(try reloaded.setProgress(lessonID: "lesson", step: -1, completed: false)) {
+            XCTAssertEqual(($0 as? LocalizedError)?.errorDescription, "progress.step.invalid")
+        }
+    }
+
+    func testBookmarksAreIdempotentAndExportIsDecodable() throws {
+        let store = try activeStore()
         try store.toggleBookmark("item")
         try store.toggleBookmark("item")
         XCTAssertFalse(store.ledger.bookmarks.contains("item"))

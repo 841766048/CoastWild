@@ -169,10 +169,11 @@ public final class CoastStore {
 
     public func setProgress(lessonID: String, step: Int, completed: Bool) throws {
         try requireAccount()
+        guard step >= 0 else { throw CoastStoreError("progress.step.invalid") }
         var next = ledger
         let current = next.progress[lessonID] ?? CoastProgress()
         next.progress[lessonID] = CoastProgress(
-            step: max(current.step, step),
+            step: step,
             completed: current.completed || completed
         )
         try commit(next)

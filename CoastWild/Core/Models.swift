@@ -58,17 +58,20 @@ public struct CoastTripItem: Codable, Identifiable, Equatable {
     public var activityID: String
     public var day: Int
     public var titleSnapshot: String
+    public var time: String?
 
     public init(
         id: String = UUID().uuidString,
         activityID: String,
         day: Int = 0,
-        titleSnapshot: String
+        titleSnapshot: String,
+        time: String? = nil
     ) {
         self.id = id
         self.activityID = activityID
         self.day = day
         self.titleSnapshot = titleSnapshot
+        self.time = time
     }
 }
 
@@ -78,6 +81,7 @@ public struct CoastEntry: Codable, Identifiable, Equatable {
     public var body: String
     public var date: String
     public var tripID: String?
+    public var activityID: String?
     public var photos: [String]
     public var isDraft: Bool
 
@@ -96,6 +100,7 @@ public struct CoastEntry: Codable, Identifiable, Equatable {
         body: String = "",
         date: String,
         tripID: String? = nil,
+        activityID: String? = nil,
         photos: [String] = [],
         isDraft: Bool = true
     ) {
@@ -104,6 +109,7 @@ public struct CoastEntry: Codable, Identifiable, Equatable {
         self.body = body
         self.date = date
         self.tripID = tripID
+        self.activityID = activityID
         self.photos = photos
         self.isDraft = isDraft
     }
@@ -144,6 +150,12 @@ public enum CoastValidation {
         if name.isEmpty { return "trip.name.required" }
         if name.count > 60 { return "trip.name.tooLong" }
         if value.notes.count > 1_000 { return "trip.notes.tooLong" }
+        if value.items.contains(where: { item in
+            guard let time = item.time else { return false }
+            return time.range(of: #"^(?:[01]\d|2[0-3]):[0-5]\d$"#, options: .regularExpression) == nil
+        }) {
+            return "trip.activity.time.invalid"
+        }
         if value.start.isEmpty != value.end.isEmpty { return "trip.date.incomplete" }
         if !value.start.isEmpty {
             guard let start = parseDate(value.start), let end = parseDate(value.end) else {

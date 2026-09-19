@@ -20,7 +20,7 @@
 
 ## Verification
 
-`swift test` passes 18 tests with 0 failures. Coverage includes model defaults, exact limits, strict dates, auth field validation, account denial/isolation/reload, path traversal resistance, failed-write rollback, corrupt-data rollback, duplicate activities through both write paths, activity date bounds, draft/final journal behavior, trip deletion references, preferences, bookmarks, progress, clearing, and export decoding.
+`swift test` passes 20 tests with 0 failures. Coverage includes model defaults, legacy JSON compatibility, exact limits, strict dates and times, auth field validation, account denial/isolation/reload, path traversal resistance, failed-write rollback, corrupt-data rollback, duplicate activities through both write paths, activity date bounds, draft/final journal behavior, trip deletion references, preferences, bookmarks, backward lesson navigation and reload, sticky completion, clearing, and export decoding.
 
 ## API notes
 
@@ -36,5 +36,12 @@ Stable keys currently emitted by the core are:
 
 - Account: `account.required`
 - Storage: `storage.directory`, `storage.read`, `storage.decode`, `storage.encode`, `storage.write`
-- Trip: `trip.name.required`, `trip.name.tooLong`, `trip.notes.tooLong`, `trip.date.incomplete`, `trip.date.invalid`, `trip.date.range`, `trip.date.excludesItems`, `trip.notFound`, `trip.activity.dayOutOfRange`, `trip.activity.duplicate`
+- Trip: `trip.name.required`, `trip.name.tooLong`, `trip.notes.tooLong`, `trip.date.incomplete`, `trip.date.invalid`, `trip.date.range`, `trip.date.excludesItems`, `trip.notFound`, `trip.activity.dayOutOfRange`, `trip.activity.duplicate`, `trip.activity.time.invalid`
 - Entry: `entry.title.tooLong`, `entry.body.tooLong`, `entry.photos.tooMany`, `entry.content.required`, `entry.date.invalid`, `entry.trip.notFound`
+- Progress: `progress.step.invalid`
+
+## Contract completion follow-up
+
+- `CoastTripItem.time` and `CoastEntry.activityID` are optional and default to `nil`. Synthesized Codable decoding accepts existing stored payloads that omit both fields.
+- A supplied activity time must use a real 24-hour `HH:mm` value from `00:00` through `23:59`.
+- Learning progress now stores the submitted non-negative step as the actual last viewed position, including backward navigation. Only the completion flag remains sticky and idempotent.
