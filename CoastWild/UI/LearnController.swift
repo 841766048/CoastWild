@@ -60,6 +60,11 @@ final class LearnController: CoastController {
       config.baseForegroundColor = category == value ? .white : CoastStyle.muted
       config.background.cornerRadius = 20; config.background.strokeColor = category == value ? CoastStyle.brand : CoastStyle.border; config.background.strokeWidth = 1
       config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 17, bottom: 10, trailing: 17)
+      config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+        var attributes = incoming
+        attributes.font = CoastStyle.font(14)
+        return attributes
+      }
       button.configuration = config; button.heightAnchor.constraint(equalToConstant: 40).isActive = true
       button.addAction(UIAction { [weak self] _ in self?.category = value; self?.render() }, for: .touchUpInside)
       row.addArrangedSubview(button)
@@ -154,6 +159,11 @@ final class LessonController: CoastController {
     config.baseForegroundColor = CoastStyle.brand
     config.baseBackgroundColor = UIColor(hex: 0xEAF1F4)
     config.background.cornerRadius = 12
+    config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+      var attributes = incoming
+      attributes.font = CoastStyle.font(16, .semibold)
+      return attributes
+    }
     button.configuration = config
     button.heightAnchor.constraint(equalToConstant: 50).isActive = true
     button.addAction(UIAction { _ in action() }, for: .touchUpInside)

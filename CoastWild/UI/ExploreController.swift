@@ -88,6 +88,11 @@ final class ExploreController: CoastController {
     config.baseForegroundColor = filled ? CoastStyle.muted : .black
     config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12)
     config.titleAlignment = .leading
+    config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+      var attributes = incoming
+      attributes.font = CoastStyle.font(height == 46 ? 16 : 14)
+      return attributes
+    }
     button.configuration = config
     button.contentHorizontalAlignment = .leading
     button.backgroundColor = filled ? CoastStyle.field : .clear
@@ -136,6 +141,7 @@ final class SearchController: CoastController, UISearchBarDelegate {
     title = env.t("Search", "搜索")
     search.placeholder = env.t("Search the outdoors", "搜索户外内容")
     search.searchBarStyle = .minimal
+    search.searchTextField.font = CoastStyle.font(16)
     search.delegate = self
     let searchRow = UIStackView()
     searchRow.axis = .horizontal
@@ -177,6 +183,11 @@ final class SearchController: CoastController, UISearchBarDelegate {
       config.background.strokeColor = category == value ? CoastStyle.brand : CoastStyle.border
       config.background.strokeWidth = 1
       config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 17, bottom: 10, trailing: 17)
+      config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+        var attributes = incoming
+        attributes.font = CoastStyle.font(14)
+        return attributes
+      }
       button.configuration = config
       button.heightAnchor.constraint(equalToConstant: 40).isActive = true
       button.addAction(UIAction { [weak self] _ in self?.category = value; self?.renderCategories(); self?.renderResults() }, for: .touchUpInside)
