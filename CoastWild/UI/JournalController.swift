@@ -95,7 +95,9 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
       title: env.t("Save", "保存"), primaryAction: UIAction { [weak self] _ in self?.submit() })
     contentTop.constant = 23; stack.spacing = 14
     titleField = UITextField(); titleField.text = entry.title
-    titleField.placeholder = env.t("Give your memory a name", "给回忆起个名字")
+    let titlePlaceholder = env.t("Give your memory a name", "给回忆起个名字")
+    titleField.attributedPlaceholder = NSAttributedString(string: titlePlaceholder,
+      attributes: [.foregroundColor: UIColor(hex: 0x757575), .font: CoastStyle.font(26, .bold)])
     titleField.font = CoastStyle.font(26, .bold); titleField.textColor = CoastStyle.ink
     titleField.heightAnchor.constraint(greaterThanOrEqualToConstant: 36).isActive = true
     titleField.accessibilityIdentifier = "journal.title"; add(titleField)
@@ -127,8 +129,12 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     bodyField.accessibilityIdentifier = "journal.body"
     bodyField.delegate = self
     tripButton = journalSelectButton(tripTitle()) { [weak self] in self?.chooseTrip() }
+    tripButton.accessibilityIdentifier = "journal.link.trip"
     add(journalFormPanel([journalFieldGroup(env.t("Link a trip", "关联出游"), control: tripButton)]))
-    activityButton = UIButton(type: .system)
+    activityButton = journalSelectButton(activityTitle()) { [weak self] in self?.chooseActivity() }
+    activityButton.accessibilityIdentifier = "journal.link.activity"
+    activityButton.isHidden = entry.activityID == nil; add(activityButton)
+    stack.setCustomSpacing(8, after: tripButton)
     status.font = CoastStyle.font(12)
     add(status)
     status.text = env.t("Your draft saves as you write.", "书写时自动保存草稿。")
@@ -194,6 +200,8 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
   }
   func updateActivity() {
     activityButton.accessibilityValue = activityTitle()
+    activityButton.configuration?.title = activityTitle()
+    activityButton.isHidden = entry.activityID == nil
     scheduleDraft()
   }
   func updateTrip() {
@@ -507,6 +515,8 @@ private func journalCard(entry: CoastEntry, image: UIImage?, linkedTrip: String?
   let copy = UIStackView(arrangedSubviews: views); copy.axis = .vertical; copy.spacing = 6; copy.isLayoutMarginsRelativeArrangement = true
   copy.layoutMargins = UIEdgeInsets(top: 13, left: 15, bottom: 15, right: 15); stack.addArrangedSubview(copy); button.addSubview(stack)
   NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: button.topAnchor), stack.leadingAnchor.constraint(equalTo: button.leadingAnchor), stack.trailingAnchor.constraint(equalTo: button.trailingAnchor), stack.bottomAnchor.constraint(equalTo: button.bottomAnchor)])
+  button.accessibilityLabel = ([title, entry.date, linkedTrip].compactMap { $0 }).joined(separator: ", ")
+  button.accessibilityIdentifier = "journal.card.\(entry.id)"
   button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
 }
 private func journalTextField(value: String) -> UITextField {

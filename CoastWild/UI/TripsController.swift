@@ -36,7 +36,7 @@ final class TripsController: CoastController {
       let date = trip.start.isEmpty ? env.t("No dates yet", "日期待定") : trip.start + " – " + trip.end
       let count = "\(trip.items.count) " + env.t("experiences", "个体验")
       add(index == 0
-        ? tripHeroCard(title: trip.name, subtitle: date + " · " + count) { [weak self] in
+        ? tripHeroCard(id: trip.id, title: trip.name, subtitle: date + " · " + count) { [weak self] in
             guard let self else { return }; self.push(TripDetailController(self.env, id: trip.id))
           }
         : row(title: trip.name, subtitle: date + "\n" + count, image: "camp") { [weak self] in
@@ -187,12 +187,14 @@ final class TripDetailController: CoastController {
     } else {
       add(coastButton(env.t("Day ", "第 ") + "\(day + 1)" + env.t("", " 天"), secondary: true) { [weak self] in self?.selectDay(trip) })
     }
+    let timeline = UIStackView(); timeline.axis = .vertical; timeline.spacing = 0
     for item in trip.items.filter({ $0.day == day }) {
       let content = env.item(item.activityID)
-      add(timelineRow(time: item.time ?? "—", title: content.map { env.text($0.title) } ?? item.titleSnapshot,
+      timeline.addArrangedSubview(timelineRow(id: item.id, time: item.time ?? "—", title: content.map { env.text($0.title) } ?? item.titleSnapshot,
         category: content.map { env.category($0.category) } ?? env.t("Original content unavailable", "原内容不可用"),
-        image: content?.image) { [weak self] in self?.itemMenu(item, trip: trip) })
+        categoryKey: content?.category, optionsLabel: env.t("Options for ", "更多选项：") + item.titleSnapshot) { [weak self] in self?.itemMenu(item, trip: trip) })
     }
+    if !timeline.arrangedSubviews.isEmpty { add(timeline) }
     add(
       coastButton(env.t("Add experience", "添加体验"), secondary: true) { [weak self] in
         guard let self else { return }
@@ -345,8 +347,9 @@ final class ActivityPickerController: CoastController {
     add(editorFieldGroup(env.t("Time (optional)", "时间（选填）"), control: timeField!))
     timeField?.keyboardType = .numbersAndPunctuation
     for item in env.catalog.items {
-      add(pickerCard(title: (chosen == item.key ? "✓ " : "") + env.text(item.title),
-          subtitle: env.category(item.category) + " · \(item.minutes) " + env.t("min", "分钟"), image: item.image) { [weak self] in
+      add(pickerCard(id: item.key, title: env.text(item.title),
+          subtitle: env.category(item.category) + " · \(item.minutes) " + env.t("min", "分钟"), image: item.image,
+          selected: chosen == item.key) { [weak self] in
           self?.chosen = item.key
           self?.render()
         })
@@ -384,7 +387,7 @@ private func editorRootHeader(_ title: String, label: String, action: @escaping 
   button.accessibilityLabel = label; button.addAction(UIAction { _ in action() }, for: .touchUpInside); row.addArrangedSubview(button)
   return row
 }
-private func tripHeroCard(title: String, subtitle: String, action: @escaping () -> Void) -> UIView {
+private func tripHeroCard(id: String, title: String, subtitle: String, action: @escaping () -> Void) -> UIView {
   let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.borderWidth = 1
   button.layer.borderColor = CoastStyle.border.cgColor; button.layer.cornerRadius = 16; button.clipsToBounds = true
   let stack = UIStackView(); stack.axis = .vertical; stack.spacing = 0; stack.isUserInteractionEnabled = false; stack.translatesAutoresizingMaskIntoConstraints = false
@@ -393,10 +396,12 @@ private func tripHeroCard(title: String, subtitle: String, action: @escaping () 
   copy.axis = .vertical; copy.spacing = 5; copy.isLayoutMarginsRelativeArrangement = true; copy.layoutMargins = UIEdgeInsets(top: 10, left: 15, bottom: 12, right: 15)
   stack.addArrangedSubview(copy); button.addSubview(stack)
   NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: button.topAnchor), stack.leadingAnchor.constraint(equalTo: button.leadingAnchor), stack.trailingAnchor.constraint(equalTo: button.trailingAnchor), stack.bottomAnchor.constraint(equalTo: button.bottomAnchor)])
+  button.accessibilityLabel = title + ", " + subtitle; button.accessibilityIdentifier = "trip.card.\(id)"
   button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
 }
 private func editorTextField(placeholder: String, value: String) -> UITextField {
-  let field = UITextField(); field.text = value; field.placeholder = placeholder; field.font = CoastStyle.font(14)
+  let field = UITextField(); field.text = value; field.attributedPlaceholder = NSAttributedString(string: placeholder,
+    attributes: [.foregroundColor: UIColor(hex: 0x757575), .font: CoastStyle.font(14)]); field.font = CoastStyle.font(14)
   field.backgroundColor = CoastStyle.inputFill; field.layer.cornerRadius = 9; field.heightAnchor.constraint(equalToConstant: 48).isActive = true
   field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 1)); field.leftViewMode = .always; return field
 }
@@ -421,23 +426,26 @@ private func editorSelectButton(_ title: String, action: @escaping () -> Void) -
   button.configuration = config; button.contentHorizontalAlignment = .fill; button.heightAnchor.constraint(equalToConstant: 48).isActive = true
   button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
 }
-private func timelineRow(time: String, title: String, category: String, image: String?, action: @escaping () -> Void) -> UIView {
+private func timelineRow(id: String, time: String, title: String, category: String, categoryKey: String?, optionsLabel: String, action: @escaping () -> Void) -> UIView {
   let container = UIView(); container.heightAnchor.constraint(equalToConstant: 64).isActive = true
   let row = UIStackView(); row.axis = .horizontal; row.spacing = 10; row.alignment = .center; row.translatesAutoresizingMaskIntoConstraints = false
   let timeLabel = coastLabel(time, size: 12); timeLabel.widthAnchor.constraint(equalToConstant: 42).isActive = true; row.addArrangedSubview(timeLabel)
-  let badge = UIView(); badge.backgroundColor = UIColor(hex: 0xF3F8FA); badge.layer.cornerRadius = 21
+  let badge = UIView(); badge.backgroundColor = UIColor(hex: categoryKey == "surf" ? 0xDFF0F4 : 0xF9EDD5); badge.layer.cornerRadius = 21
   badge.widthAnchor.constraint(equalToConstant: 42).isActive = true; badge.heightAnchor.constraint(equalToConstant: 42).isActive = true
-  if let image { let iv = UIImageView(image: UIImage(named: image)); iv.contentMode = .scaleAspectFit; iv.layer.cornerRadius = 21; iv.clipsToBounds = true; iv.translatesAutoresizingMaskIntoConstraints = false; badge.addSubview(iv); NSLayoutConstraint.activate([iv.topAnchor.constraint(equalTo: badge.topAnchor), iv.leadingAnchor.constraint(equalTo: badge.leadingAnchor), iv.trailingAnchor.constraint(equalTo: badge.trailingAnchor), iv.bottomAnchor.constraint(equalTo: badge.bottomAnchor)]) }
+  let iconName = categoryKey == "surf" ? "wave" : (categoryKey ?? "info")
+  let iv = UIImageView(image: UIImage(named: "icon-" + iconName)); iv.contentMode = .scaleAspectFit; iv.tintColor = CoastStyle.brand; iv.translatesAutoresizingMaskIntoConstraints = false; badge.addSubview(iv)
+  NSLayoutConstraint.activate([iv.centerXAnchor.constraint(equalTo: badge.centerXAnchor), iv.centerYAnchor.constraint(equalTo: badge.centerYAnchor), iv.widthAnchor.constraint(equalToConstant: 24), iv.heightAnchor.constraint(equalToConstant: 24)])
   row.addArrangedSubview(badge)
   let copy = UIStackView(arrangedSubviews: [coastLabel(title, size: 14, weight: .bold), coastLabel(category, size: 12, color: CoastStyle.muted)])
   copy.axis = .vertical; copy.spacing = 3; row.addArrangedSubview(copy)
   let options = UIButton(type: .system); options.setImage(UIImage(named: "icon-more"), for: .normal); options.tintColor = CoastStyle.brand
   options.widthAnchor.constraint(equalToConstant: 32).isActive = true; options.heightAnchor.constraint(equalToConstant: 44).isActive = true
+  options.accessibilityLabel = optionsLabel; options.accessibilityIdentifier = "trip.timeline.options.\(id)"
   options.addAction(UIAction { _ in action() }, for: .touchUpInside); row.addArrangedSubview(options); container.addSubview(row)
   NSLayoutConstraint.activate([row.topAnchor.constraint(equalTo: container.topAnchor), row.bottomAnchor.constraint(equalTo: container.bottomAnchor), row.leadingAnchor.constraint(equalTo: container.leadingAnchor), row.trailingAnchor.constraint(equalTo: container.trailingAnchor)])
   return container
 }
-private func pickerCard(title: String, subtitle: String, image: String, action: @escaping () -> Void) -> UIView {
+private func pickerCard(id: String, title: String, subtitle: String, image: String, selected: Bool, action: @escaping () -> Void) -> UIView {
   let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.cornerRadius = 14; button.layer.borderWidth = 1; button.layer.borderColor = CoastStyle.border.cgColor
   button.heightAnchor.constraint(equalToConstant: 91).isActive = true
   let row = UIStackView(); row.axis = .horizontal; row.spacing = 13; row.alignment = .center; row.isUserInteractionEnabled = false; row.translatesAutoresizingMaskIntoConstraints = false
@@ -445,6 +453,8 @@ private func pickerCard(title: String, subtitle: String, image: String, action: 
   let copy = UIStackView(arrangedSubviews: [coastLabel(title, size: 17, weight: .bold), coastLabel(subtitle, size: 13, color: CoastStyle.muted)]); copy.axis = .vertical; copy.spacing = 5; row.addArrangedSubview(copy)
   let next = UIImageView(image: UIImage(named: "icon-next")); next.tintColor = CoastStyle.muted; next.widthAnchor.constraint(equalToConstant: 16).isActive = true; next.heightAnchor.constraint(equalToConstant: 16).isActive = true; row.addArrangedSubview(next)
   button.addSubview(row); NSLayoutConstraint.activate([row.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12), row.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12), row.centerYAnchor.constraint(equalTo: button.centerYAnchor)])
+  button.accessibilityLabel = title + ", " + subtitle; button.accessibilityIdentifier = "trip.activity.\(id)"
+  button.accessibilityTraits = selected ? [.button, .selected] : [.button]
   button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
 }
 private func tripJournalCard(entry: CoastEntry, image: UIImage?, tripName: String, action: @escaping () -> Void) -> UIView {
@@ -454,6 +464,8 @@ private func tripJournalCard(entry: CoastEntry, image: UIImage?, tripName: Strin
   let title = entry.title.isEmpty ? "—" : entry.title; let copy = UIStackView(arrangedSubviews: [coastLabel(entry.date, size: 13, color: CoastStyle.muted), coastLabel(title, size: 22, weight: .bold), coastLabel(entry.body, size: 14, color: CoastStyle.muted), coastLabel(tripName, size: 13, color: CoastStyle.muted)])
   copy.axis = .vertical; copy.spacing = 6; copy.isLayoutMarginsRelativeArrangement = true; copy.layoutMargins = UIEdgeInsets(top: 13, left: 15, bottom: 15, right: 15); stack.addArrangedSubview(copy); button.addSubview(stack)
   NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: button.topAnchor), stack.leadingAnchor.constraint(equalTo: button.leadingAnchor), stack.trailingAnchor.constraint(equalTo: button.trailingAnchor), stack.bottomAnchor.constraint(equalTo: button.bottomAnchor)])
+  button.accessibilityLabel = [title, entry.date, tripName].joined(separator: ", ")
+  button.accessibilityIdentifier = "trip.journal.\(entry.id)"
   button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
 }
 

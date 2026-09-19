@@ -6,9 +6,9 @@ final class ProfileController: CoastController {
     render()
   }
   func render() {
-    reset(); title = env.t("Your space", "个人空间")
-    contentTop.constant = 27; stack.spacing = 24
-    let avatar = accountPortrait(env, size: 27); add(avatar)
+    reset(); title = env.t("Your space", "个人空间"); navigationItem.backButtonTitle = title
+    contentTop.constant = 31; stack.spacing = 16
+    let avatar = accountPortrait(env, size: 27); add(avatar); stack.setCustomSpacing(12, after: avatar)
     add(coastStats([
       ("\(env.store.ledger.trips.count)", env.t("Trips", "出游")),
       ("\(env.store.ledger.entries.filter { !$0.isDraft }.count)", env.t("Entries", "手记")),
@@ -28,14 +28,18 @@ final class ProfileController: CoastController {
         guard let self else { return }; self.push(PrivacyController(self.env))
       }
     ], spacing: 0, inset: 0))
-    note(env.t("Data stays on this device, in your own account space.", "数据保存在此设备中，演示账号使用独立空间。"))
+    add(coastNotice(env.t("Data stays on this device, in your own account space.", "数据保存在此设备中，演示账号使用独立空间。")))
   }
 }
 final class AccountController: CoastController {
   override func viewDidLoad() {
-    super.viewDidLoad(); title = nil; contentTop.constant = 27; stack.spacing = 28
+    super.viewDidLoad(); title = nil; contentTop.constant = 31; stack.spacing = 28
+    navigationItem.rightBarButtonItem = UIBarButtonItem(customView: coastPreviewBadge(env))
     add(accountPortrait(env, size: 32))
-    add(coastPanel([coastSettingRow(env.t("Account type", "账号类型"), value: env.t("Local demo", "本地演示")) { }], spacing: 0, inset: 0))
+    let accountType = UIStackView(); accountType.axis = .horizontal; accountType.alignment = .center
+    accountType.addArrangedSubview(coastLabel(env.t("Account type", "账号类型"), size: 15)); accountType.addArrangedSubview(UIView())
+    accountType.addArrangedSubview(coastLabel(env.t("Local preview", "本地演示"), size: 12, color: CoastStyle.muted))
+    add(coastPanel([accountType], spacing: 0, inset: 14))
     note(env.t("Trips and journals are saved on this device for this account. Logging out keeps them for your next visit.", "出游与手记分开保存在此设备的当前演示账号下。退出不会删除它们，下次登录可以继续查看。"))
     add(coastButton(env.t("Log out", "退出登录"), secondary: true) { [weak self] in
       guard let self else { return }; _ = self.save { try self.env.logout() }
@@ -49,40 +53,50 @@ final class PreferencesController: CoastController {
     render()
   }
   func render() {
-    reset(); title = nil; contentTop.constant = 27
+    reset(); title = nil; contentTop.constant = 27; view.backgroundColor = UIColor(hex: 0xF3F8FA)
     heading(env.t("Preferences", "偏好设置"))
     add(coastLabel(env.t("Language, content region and units can be set separately.", "语言、内容地区与计量单位可以分别设置。"), size: 14, color: CoastStyle.muted))
-    let fields = UIStackView(); fields.axis = .vertical; fields.spacing = 16
-    @discardableResult func choice(_ label: String, value: String, values: [String], selected: @escaping (Int) -> Void) -> UIButton {
+    stack.setCustomSpacing(10, after: stack.arrangedSubviews[0])
+    stack.setCustomSpacing(20, after: stack.arrangedSubviews[1])
+    let fields = UIStackView(); fields.axis = .vertical; fields.spacing = 18
+    @discardableResult func choice(_ label: String, value: String, values: [String], selectedValue: String? = nil, selected: @escaping (Int) -> Void) -> UIButton {
       let group = UIStackView(); group.axis = .vertical; group.spacing = 8
       group.addArrangedSubview(coastLabel(label, size: 14))
       let control = UIButton(type: .system); var config = UIButton.Configuration.plain()
-      config.title = value; config.image = UIImage(named: "icon-down"); config.imagePlacement = .trailing; config.imagePadding = 12
+      config.title = value
       config.baseForegroundColor = CoastStyle.ink
       config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
         var attributes = incoming; attributes.font = CoastStyle.font(14); return attributes
       }
-      config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
+      config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 40)
       control.configuration = config; control.contentHorizontalAlignment = .leading
       control.backgroundColor = CoastStyle.inputFill; control.layer.cornerRadius = 9
       control.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
+      let chevron = UIImageView(image: UIImage(named: "icon-down")); chevron.tintColor = CoastStyle.muted
+      chevron.contentMode = .scaleAspectFit; chevron.isUserInteractionEnabled = false; chevron.translatesAutoresizingMaskIntoConstraints = false
+      control.addSubview(chevron); NSLayoutConstraint.activate([
+        chevron.trailingAnchor.constraint(equalTo: control.trailingAnchor, constant: -12),
+        chevron.centerYAnchor.constraint(equalTo: control.centerYAnchor),
+        chevron.widthAnchor.constraint(equalToConstant: 18), chevron.heightAnchor.constraint(equalToConstant: 18)
+      ])
       control.showsMenuAsPrimaryAction = true
       control.menu = UIMenu(children: values.enumerated().map { i, text in
-        UIAction(title: text, state: value == text ? .on : .off) { _ in selected(i) }
+        UIAction(title: text, state: (selectedValue ?? value) == text ? .on : .off) { _ in selected(i) }
       }); group.addArrangedSubview(control); fields.addArrangedSubview(group); return control
     }
     choice(env.t("Language", "语言"), value: env.chinese ? "简体中文" : "English", values: ["English", "简体中文"]) { [weak self] i in
       guard let self else { return }; self.update { $0.language = i == 0 ? "en" : "zh-Hans" }; self.env.showRoot()
     }
     choice(env.t("Region", "地区"), value: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国"), values: [env.t("United States", "美国"), env.t("Mainland China", "中国大陆")]) { [weak self] i in self?.update { $0.region = i == 0 ? "US" : "CN" } }
-    let units = choice(env.t("Units", "单位"), value: env.store.preferences.distanceUnit == "km" ? env.t("Kilometers", "公里") : env.t("Miles", "英里"), values: [env.t("Kilometers", "公里"), env.t("Miles", "英里")]) { [weak self] i in self?.update { $0.distanceUnit = i == 0 ? "km" : "mi" } }
-    add(coastPanel([fields]))
+    let selectedDistance = env.store.preferences.distanceUnit == "km" ? env.t("Kilometers", "公里") : env.t("Miles", "英里")
+    let units = choice(env.t("Units", "单位"), value: selectedDistance + " · " + (env.store.preferences.temperatureUnit == "c" ? "°C" : "°F"), values: [env.t("Kilometers", "公里"), env.t("Miles", "英里")], selectedValue: selectedDistance) { [weak self] i in self?.update { $0.distanceUnit = i == 0 ? "km" : "mi" } }
+    let form = coastFormPanel([fields]); add(form); stack.setCustomSpacing(24, after: form)
     let temperature = UIMenu(title: env.t("Temperature", "温度单位"), children: [
       UIAction(title: "°C", state: env.store.preferences.temperatureUnit == "c" ? .on : .off) { [weak self] _ in self?.update { $0.temperatureUnit = "c" } },
       UIAction(title: "°F", state: env.store.preferences.temperatureUnit == "f" ? .on : .off) { [weak self] _ in self?.update { $0.temperatureUnit = "f" } }
     ])
     units.menu = UIMenu(children: (units.menu?.children ?? []) + [temperature])
-    add(coastLabel(env.t("Your interests", "你的兴趣"), size: 18, weight: .bold))
+    let interestTitle = coastLabel(env.t("Your interests", "你的兴趣"), size: 18, weight: .bold); add(interestTitle); stack.setCustomSpacing(26, after: interestTitle)
     let chips = UIStackView(); chips.axis = .horizontal; chips.spacing = 8
     for key in ["surf", "hike", "camp"] {
       let selected = (env.store.preferences.interests ?? ["surf", "hike", "camp"]).contains(key)
@@ -97,7 +111,8 @@ final class PreferencesController: CoastController {
       } }, for: .touchUpInside); chips.addArrangedSubview(chip)
     }
     chips.addArrangedSubview(UIView()); add(chips)
-    note(env.t("Settings save automatically. Trips and journal entries stay as you wrote them.", "设置自动保存。出游与手记内容会保持你书写时的原样。"))
+    stack.setCustomSpacing(8, after: chips)
+    add(coastNotice(env.t("Settings save automatically. Trips and journal entries stay as you wrote them.", "设置自动保存。出游与手记内容会保持你书写时的原样。")))
   }
   func update(_ change: (inout CoastPreferences) -> Void) {
     var prefs = env.store.preferences; change(&prefs)
@@ -106,9 +121,10 @@ final class PreferencesController: CoastController {
 }
 final class PrivacyController: CoastController {
   override func viewDidLoad() {
-    super.viewDidLoad(); title = nil; contentTop.constant = 27; stack.spacing = 24
+    super.viewDidLoad(); title = nil; contentTop.constant = 27; stack.spacing = 16; view.backgroundColor = UIColor(hex: 0xF3F8FA)
     heading(env.t("Data & privacy", "数据与隐私"))
-    add(coastPanel([
+    stack.setCustomSpacing(20, after: stack.arrangedSubviews.last!)
+    add(coastFormPanel([
       coastLabel(env.t("Your memories belong to you.", "你的回忆，属于你。"), size: 23, weight: .bold),
       coastLabel(env.t("Trips, saved content and journals stay on this device. Demo accounts are local and are not uploaded to the cloud.", "出游、收藏与手记保存在此设备上。演示账号仅在本地使用，不会上传云端。"), size: 16, color: CoastStyle.muted)
     ]))
@@ -122,8 +138,9 @@ final class PrivacyController: CoastController {
       },
       coastSettingRow(env.t("Clear this space", "清除此空间数据"), icon: "trash", destructive: true) { [weak self] in self?.clear() }
     ], spacing: 0, inset: 0))
-    note(env.t("Export includes preferences, progress, trips, journals and imported photos. Keep a copy before clearing data.", "导出包含偏好、学习进度、出游、手记及导入的照片。清除数据前，请先保留副本。"))
-    add(coastPanel([
+    add(coastNotice(env.t("Export includes preferences, progress, trips, journals and imported photos. Keep a copy before clearing data.", "导出包含偏好、学习进度、出游、手记及导入的照片。清除数据前，请先保留副本。")))
+    stack.setCustomSpacing(0, after: stack.arrangedSubviews.last!)
+    add(coastFormPanel([
       coastLabel(env.t("About this app", "关于海岸与山野"), size: 18, weight: .bold),
       coastLabel(env.t("Coast & Wild · HF-v1. Original sample content; no live conditions, bookings or location tracking.", "海岸与山野 · HF-v1。内容与目的地图片用于体验示例，不提供实时环境、预订或位置跟踪。"), size: 13, color: CoastStyle.muted)
     ]))
@@ -177,13 +194,13 @@ final class PrivacyController: CoastController {
 }
 
 private func accountPortrait(_ env: CoastEnvironment, size: CGFloat) -> UIView {
-  let group = UIStackView(); group.axis = .vertical; group.alignment = .center; group.spacing = 12
-  let avatar = UIView(); avatar.backgroundColor = CoastStyle.field; avatar.layer.cornerRadius = 40
-  avatar.widthAnchor.constraint(equalToConstant: 80).isActive = true; avatar.heightAnchor.constraint(equalToConstant: 80).isActive = true
+  let group = UIStackView(); group.axis = .vertical; group.alignment = .center; group.spacing = 10
+  let avatar = UIView(); avatar.backgroundColor = UIColor(hex: 0xE3F0F4); avatar.layer.cornerRadius = 43
+  avatar.widthAnchor.constraint(equalToConstant: 86).isActive = true; avatar.heightAnchor.constraint(equalToConstant: 86).isActive = true
   let image = UIImageView(image: UIImage(named: "icon-user")); image.tintColor = CoastStyle.brand; image.contentMode = .scaleAspectFit
   image.translatesAutoresizingMaskIntoConstraints = false; avatar.addSubview(image)
-  NSLayoutConstraint.activate([image.widthAnchor.constraint(equalToConstant: 36), image.heightAnchor.constraint(equalToConstant: 36), image.centerXAnchor.constraint(equalTo: avatar.centerXAnchor), image.centerYAnchor.constraint(equalTo: avatar.centerYAnchor)])
-  group.addArrangedSubview(avatar)
+  NSLayoutConstraint.activate([image.widthAnchor.constraint(equalToConstant: 39), image.heightAnchor.constraint(equalToConstant: 39), image.centerXAnchor.constraint(equalTo: avatar.centerXAnchor), image.centerYAnchor.constraint(equalTo: avatar.centerYAnchor)])
+  group.addArrangedSubview(avatar); group.setCustomSpacing(18, after: avatar)
   let name = coastLabel(env.vault.current?.name ?? "Coast & Wild", size: size, weight: .bold); name.textAlignment = .center
   group.addArrangedSubview(name)
   let email = coastLabel(env.vault.current?.email ?? "", size: 16, color: CoastStyle.muted); email.textAlignment = .center; group.addArrangedSubview(email)

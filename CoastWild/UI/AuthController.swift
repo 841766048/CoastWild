@@ -22,7 +22,7 @@ final class WelcomeController: CoastController {
     let title = coastLabel("Coast & Wild", size: 38, weight: .bold)
     title.translatesAutoresizingMaskIntoConstraints = false
     hero.addSubview(title)
-    let subtitle = coastLabel(env.t("From the coast, into the wild.", "从海岸，到山野。"), size: 16)
+    let subtitle = coastLabel(env.t("From the shoreline to the trail.", "从海岸，到山野。"), size: 16)
     subtitle.translatesAutoresizingMaskIntoConstraints = false
     hero.addSubview(subtitle)
     NSLayoutConstraint.activate([
@@ -38,13 +38,13 @@ final class WelcomeController: CoastController {
     add(preferenceRow(icon: "globe", title: env.t("Language", "语言"), value: env.t("English", "简体中文")) { [weak self] in
       guard let self else { return }; self.push(PreferencesController(self.env))
     })
-    add(preferenceRow(icon: "globe", title: env.t("Explore region", "探索地区"), value: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国")) { [weak self] in
+    add(preferenceRow(icon: "trips", title: env.t("Explore region", "探索地区"), value: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国")) { [weak self] in
       guard let self else { return }; self.push(PreferencesController(self.env))
     })
-    let question = coastLabel(env.t("What interests you most?", "你最感兴趣的是什么？"), size: 16, weight: .bold)
+    let question = coastLabel(env.t("What are you most interested in?", "你最感兴趣的是什么？"), size: 16, weight: .bold)
     add(question)
     stack.setCustomSpacing(3, after: question)
-    note(env.t("You can choose more than one.", "可以选择多个方向。"))
+    note(env.t("Choose as many as you like.", "可以选择多个方向。"))
     let interests = UIStackView()
     interests.axis = .horizontal; interests.spacing = 10; interests.distribution = .fillEqually
     for key in ["surf", "hike", "camp"] {
@@ -82,7 +82,7 @@ final class WelcomeController: CoastController {
     add(interests); stack.setCustomSpacing(16, after: interests)
     let actions = UIStackView(); actions.axis = .horizontal; actions.spacing = 10; actions.distribution = .fillEqually
     for mode: AuthController.Mode in [.login, .register] {
-      let button = coastButton(mode == .login ? env.t("Log in", "登录") : env.t("Create account", "注册账号"), secondary: mode == .register) { [weak self] in
+      let button = coastButton(mode == .login ? env.t("Sign in", "登录") : env.t("Create account", "注册账号"), secondary: mode == .register) { [weak self] in
         guard let self else { return }; self.push(AuthController(self.env, mode: mode))
       }
       button.constraints.filter { $0.firstAttribute == .height }.forEach { $0.isActive = false }
@@ -95,7 +95,7 @@ final class WelcomeController: CoastController {
       actions.addArrangedSubview(button)
     }
     add(actions); stack.setCustomSpacing(16, after: actions)
-    let footnote = coastLabel(env.t("Log in to explore, plan and keep your stories.", "登录后即可探索内容、规划出游和记录手记。"), size: 11, color: CoastStyle.muted)
+    let footnote = coastLabel(env.t("Sign in to explore, plan trips and keep your journal.", "登录后即可探索内容、规划出游和记录手记。"), size: 11, color: CoastStyle.muted)
     footnote.textAlignment = .center; add(footnote)
   }
   private func preferenceRow(icon: String, title: String, value: String, action: @escaping () -> Void) -> UIButton {
@@ -109,6 +109,9 @@ final class WelcomeController: CoastController {
     image.heightAnchor.constraint(equalToConstant: 22).isActive = true
     row.addArrangedSubview(image); row.addArrangedSubview(coastLabel(title, size: 13)); row.addArrangedSubview(UIView())
     row.addArrangedSubview(coastLabel(value, size: 12, color: CoastStyle.muted))
+    let chevron = UIImageView(image: UIImage(named: "icon-down")); chevron.tintColor = CoastStyle.muted; chevron.contentMode = .scaleAspectFit
+    chevron.widthAnchor.constraint(equalToConstant: 16).isActive = true; chevron.heightAnchor.constraint(equalToConstant: 16).isActive = true
+    row.addArrangedSubview(chevron)
     button.addSubview(row)
     NSLayoutConstraint.activate([row.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12), row.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12), row.centerYAnchor.constraint(equalTo: button.centerYAnchor)])
     button.accessibilityLabel = title + ": " + value
@@ -120,12 +123,14 @@ final class AuthController: CoastController {
   enum Mode { case login, register, recover, reset }
   let mode: Mode
   var demoCode: String?
+  let recoveryEmail: String?
   var email: UITextField!, password: UITextField!, name: UITextField!, confirmation: UITextField!,
     code: UITextField!
   var errorLabel = coastLabel("", size: 14, color: CoastStyle.red)
-  init(_ env: CoastEnvironment, mode: Mode, demoCode: String? = nil) {
+  init(_ env: CoastEnvironment, mode: Mode, demoCode: String? = nil, recoveryEmail: String? = nil) {
     self.mode = mode
     self.demoCode = demoCode
+    self.recoveryEmail = recoveryEmail
     super.init(env)
   }
   required init?(coder: NSCoder) { fatalError() }
@@ -137,21 +142,23 @@ final class AuthController: CoastController {
     title = nil
     stack.spacing = 16
     contentTop.constant = 27
-    let badge = coastLabel("  " + env.t("Local demo", "本地演示") + "  ", size: 11, color: UIColor(hex: 0x705523))
-    badge.backgroundColor = UIColor(hex: 0xF8EFDE); badge.layer.cornerRadius = 6; badge.clipsToBounds = true
-    navigationItem.rightBarButtonItem = UIBarButtonItem(customView: badge)
+    navigationItem.rightBarButtonItem = UIBarButtonItem(customView: coastPreviewBadge(env))
     if mode == .login || mode == .register {
-      let photo = coastImage("surf-coast", height: 137); add(photo); stack.setCustomSpacing(18, after: photo)
+      let photo = coastImage("surf-coast", height: 137); photo.layer.cornerRadius = 14; add(photo); stack.setCustomSpacing(23, after: photo)
     }
     let headline = coastLabel(mode == .login ? env.t("Welcome back.", "欢迎回来。") : mode == .register
-      ? env.t("A place for your next adventure.", "为下一次出发，留个位置。") : mode == .recover
-      ? env.t("Forgot your password?", "忘记密码？") : env.t("Set a new password.", "设置新密码。"), size: 30, weight: .bold)
-    add(headline)
+      ? env.t("Make room for adventure.", "为下一次出发，留个位置。") : mode == .recover
+      ? env.t("Forgot your password?", "忘记密码？") : env.t("A fresh start.", "设置新密码。"), size: 30, weight: .bold)
+    add(headline); stack.setCustomSpacing(12, after: headline)
     if mode == .login || mode == .recover || mode == .reset {
-      let subtitle = coastLabel(mode == .login ? env.t("Your next story starts outside.", "下一段故事，从户外开始。") : mode == .recover
-        ? env.t("Enter the email you used to register on this device.", "输入你在此设备注册演示账号时使用的邮箱。")
-        : env.t("Reset your local account password.", "为本地账号重置密码。"), size: 15, color: CoastStyle.muted)
-      add(subtitle); stack.setCustomSpacing(28, after: subtitle)
+      let subtitle = coastLabel(mode == .login ? env.t("Your next chapter starts outside.", "下一段故事，从户外开始。") : mode == .recover
+        ? env.t("Enter the email you used for this local preview account.", "输入你在此设备注册演示账号时使用的邮箱。")
+        : env.t("Reset the password for", "为以下账号重置密码"), size: 15, color: CoastStyle.muted)
+      add(subtitle)
+      if mode == .reset, let recoveryEmail {
+        let account = coastLabel(recoveryEmail, size: 15, weight: .semibold)
+        account.accessibilityIdentifier = "auth.recovery.email"; add(account); stack.setCustomSpacing(23, after: account)
+      } else { stack.setCustomSpacing(23, after: subtitle) }
     }
     if let demoCode {
       let panel = UIStackView(); panel.axis = .vertical; panel.spacing = 8
@@ -170,11 +177,11 @@ final class AuthController: CoastController {
       email.keyboardType = .emailAddress; email.textContentType = .username
     }
     if mode == .reset {
-      code = field(env.t("Recovery code", "验证码"), placeholder: env.t("6-digit code", "6 位验证码"))
+      code = field(env.t("Verification code", "验证码"), placeholder: env.t("6-digit code", "6 位验证码"))
       code.keyboardType = .numberPad; code.textContentType = .oneTimeCode
     }
     if mode != .recover {
-      password = field(env.t("Password", "密码"), placeholder: mode == .login ? env.t("Enter password", "输入密码") : env.t("At least 10 characters", "至少 10 个字符"), secure: true, id: "auth.password")
+      password = field(mode == .reset ? env.t("New password", "新密码") : env.t("Password", "密码"), placeholder: mode == .login ? env.t("Your password", "输入密码") : env.t("At least 10 characters", "至少 10 个字符"), secure: true, id: "auth.password")
       password.textContentType = .password
       let toggle = UIButton(type: .system)
       toggle.setTitle(env.t("Show", "显示"), for: .normal); toggle.titleLabel?.font = CoastStyle.font(12)
@@ -186,7 +193,7 @@ final class AuthController: CoastController {
       password.rightView = toggle; password.rightViewMode = .always
     }
     if mode == .register || mode == .reset {
-      confirmation = field(env.t("Confirm password", "确认密码"), placeholder: env.t("Enter password again", "再次输入密码"), secure: true, id: "auth.confirmation")
+      confirmation = field(env.t("Confirm password", "确认密码"), placeholder: env.t("Enter it again", "再次输入密码"), secure: true, id: "auth.confirmation")
       confirmation.textContentType = .password
     }
     errorLabel.accessibilityIdentifier = "auth.error"; errorLabel.isHidden = true; add(errorLabel)
@@ -197,23 +204,23 @@ final class AuthController: CoastController {
       }
       forgot.contentHorizontalAlignment = .right; add(forgot); stack.setCustomSpacing(12, after: forgot)
     }
-    let label = mode == .login ? env.t("Log in", "登录") : mode == .register ? env.t("Create account", "注册账号")
-      : mode == .recover ? env.t("Get reset code", "获取重置验证码") : env.t("Reset password", "重置密码")
+    let label = mode == .login ? env.t("Sign in", "登录") : mode == .register ? env.t("Create account", "注册账号")
+      : mode == .recover ? env.t("Get a reset code", "获取重置验证码") : env.t("Reset password", "重置密码")
     let submit = coastButton(label) { [weak self] in self?.submit() }
-    submit.accessibilityIdentifier = "auth.submit"; add(submit)
+    submit.accessibilityIdentifier = "auth.submit"; add(submit); stack.setCustomSpacing(13, after: submit)
     if mode == .login || mode == .register {
       let row = UIStackView(); row.axis = .horizontal; row.alignment = .center; row.spacing = 4
       row.addArrangedSubview(UIView())
-      row.addArrangedSubview(coastLabel(mode == .login ? env.t("New here?", "还没有账号？") : env.t("Already have an account?", "已有账号？"), size: 14))
-      row.addArrangedSubview(textLink(mode == .login ? env.t("Create account", "注册账号") : env.t("Log in", "登录"), size: 14, weight: .semibold) { [weak self] in
+      row.addArrangedSubview(coastLabel(mode == .login ? env.t("New to Coast & Wild?", "还没有账号？") : env.t("Already have an account?", "已有账号？"), size: 14))
+      row.addArrangedSubview(textLink(mode == .login ? env.t("Create an account", "注册账号") : env.t("Sign in", "登录"), size: 14, weight: .semibold) { [weak self] in
         guard let self else { return }; self.push(AuthController(self.env, mode: self.mode == .login ? .register : .login))
       })
       let spacer = UIView(); row.addArrangedSubview(spacer)
       spacer.widthAnchor.constraint(equalTo: row.arrangedSubviews[0].widthAnchor).isActive = true
-      add(row)
+      add(row); stack.setCustomSpacing(20, after: row)
     }
     if mode == .reset {
-      add(textLink(env.t("Request a new code", "重新获取验证码")) { [weak self] in
+      add(textLink(env.t("Request another code", "重新获取验证码")) { [weak self] in
         guard let self else { return }; self.push(AuthController(self.env, mode: .recover))
       })
     }
@@ -244,8 +251,9 @@ final class AuthController: CoastController {
           name: name.text ?? "", email: email.text ?? "", password: password.text ?? "")
         try env.authenticated()
       case .recover:
-        let value = try env.vault.requestRecovery(email: email.text ?? "")
-        push(AuthController(env, mode: .reset, demoCode: value))
+        let recoveryEmail = (email.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let value = try env.vault.requestRecovery(email: recoveryEmail)
+        push(AuthController(env, mode: .reset, demoCode: value, recoveryEmail: recoveryEmail))
       case .reset:
         try env.vault.reset(code: code.text ?? "", password: password.text ?? "")
         navigationController?.setViewControllers(
