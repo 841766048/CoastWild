@@ -1,15 +1,15 @@
 # Coast & Wild / 海岸与山野 — UIKit
 
-原生 iPhone 开发版本，Swift + UIKit，最低 iOS 17。按已确认的 HF-v1.2 页面与交互契约开发。无 SwiftUI、Flutter、WebView 或第三方运行时依赖。
+原生 iPhone 开发版本，Swift + UIKit，最低 iOS 17。按已确认的 HF-v1.2 页面与交互契约开发。使用 CocoaPods 管理第三方库，键盘管理采用 IQKeyboardManagerSwift。无 SwiftUI、Flutter 或 WebView。
 
 ## 打开与运行
 
-打开 `CoastWild.xcodeproj`，选择 `CoastWild` Scheme 和 iPhone 模拟器，运行。
+打开 `CoastWild.xcworkspace`，选择 `CoastWild` Scheme 和 iPhone 模拟器，运行。
 
 ```sh
-xcodegen generate
-xcodebuild -project CoastWild.xcodeproj -scheme CoastWild \
-  -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=26.1' \
+./scripts/bootstrap.sh
+xcodebuild -workspace CoastWild.xcworkspace -scheme CoastWild \
+  -destination 'platform=iOS Simulator,id=5D9E1931-9B36-479E-8448-2CA6F0F1D802' \
   -derivedDataPath build CODE_SIGN_IDENTITY=- build
 swift test
 ```
@@ -51,3 +51,13 @@ Figma： https://www.figma.com/design/sekErw6W2S4swqxlC0QPIj
 当前无远程服务器、真实邮件、云同步、付费、实时海况或精确导航。美中地区的内置内容仍为同一套原创示例；用户填写的数据不会随切换语言重建。正式发布还需内容核验、真实服务接入、真机及无障碍全量验收。
 
 图片来自本项目原设计资产；原 WebP 无损转换为 PNG，图标直接复用 SVG 路径。AppIcon 暂用原海岸图片裁切，是开发版图标。
+
+
+## 第三方库（2026-09-20）
+
+- CocoaPods 1.16.2（Gemfile/Gemfile.lock 固定工具版本）。
+- IQKeyboardManagerSwift 8.0.3 及其子依赖由 Podfile.lock 固定。
+- 首次运行：`bundle install && bundle exec pod install`，随后打开 `CoastWild.xcworkspace`。
+- 如需根据 project.yml 重生成工程，运行 `./scripts/bootstrap.sh`，它会在 XcodeGen 后重新集成 Pods。
+- UIKit 表单统一由 IQKeyboardManager 管理避让、上一项/下一项/完成和点击空白收起；不再叠加 keyboardLayoutGuide 或手写 inputAccessoryView。
+- 业务 Core 的 Package.swift 仅用于独立单元测试，不承担第三方依赖管理。

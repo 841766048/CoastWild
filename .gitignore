@@ -5,3 +5,5 @@ DerivedData/
 xcuserdata/
 .DS_Store
 docs/*.diff
+
+Pods/

@@ -1,4 +1,7 @@
 import UIKit
+import IQKeyboardManagerSwift
+import IQKeyboardToolbarManager
+import IQKeyboardToolbar
 
 @main final class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
@@ -7,8 +10,13 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    IQKeyboardManager.shared.isEnabled = true
+    IQKeyboardManager.shared.resignOnTouchOutside = true
+    IQKeyboardManager.shared.keyboardDistance = 12
+    IQKeyboardToolbarManager.shared.isEnabled = true
     let window = UIWindow(frame: UIScreen.main.bounds)
     self.window = window
+    window.tintColor = CoastStyle.brand
     do {
       let environment = try CoastEnvironment()
       coast = environment
@@ -69,7 +77,9 @@ final class CoastEnvironment {
   func category(_ key: String) -> String {
     ["surf": t("Surf", "冲浪"), "hike": t("Hiking", "徒步"), "camp": t("Camping", "露营")][key] ?? key
   }
-  func showRoot() {
+  @MainActor func showRoot() {
+    IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
+      IQBarButtonItemConfiguration(title: t("Done", "完成"))
     if vault.current != nil && store.accountID != nil {
       let tabs = UITabBarController()
       let controllers: [(UIViewController, String, String)] = [
@@ -91,6 +101,13 @@ final class CoastEnvironment {
       tabs.tabBar.standardAppearance = appearance
       tabs.tabBar.scrollEdgeAppearance = appearance
       tabs.tabBar.tintColor = CoastStyle.brand
+      tabs.tabBar.unselectedItemTintColor = UIColor(hex: 0x46525B)
+      for item in [appearance.stackedLayoutAppearance, appearance.inlineLayoutAppearance, appearance.compactInlineLayoutAppearance] {
+        item.normal.titleTextAttributes = [.font: CoastStyle.font(10), .foregroundColor: UIColor(hex: 0x46525B)]
+        item.selected.titleTextAttributes = [.font: CoastStyle.font(10, .semibold), .foregroundColor: CoastStyle.brand]
+      }
+      tabs.tabBar.standardAppearance = appearance
+      tabs.tabBar.scrollEdgeAppearance = appearance
       window?.rootViewController = tabs
     } else {
       window?.rootViewController = navigation(
@@ -99,26 +116,26 @@ final class CoastEnvironment {
     }
   }
   func navigation(_ vc: UIViewController) -> UINavigationController {
-    let nav = UINavigationController(rootViewController: vc)
+    let nav = CoastNavigationController(rootViewController: vc)
     nav.navigationBar.tintColor = CoastStyle.brand
     let appearance = UINavigationBarAppearance()
     appearance.configureWithOpaqueBackground()
     appearance.backgroundColor = .white
     appearance.shadowColor = .clear
-    appearance.titleTextAttributes = [.foregroundColor: CoastStyle.ink]
+    appearance.titleTextAttributes = [.foregroundColor: CoastStyle.ink, .font: CoastStyle.font(17, .bold)]
     nav.navigationBar.standardAppearance = appearance
     nav.navigationBar.scrollEdgeAppearance = appearance
     nav.navigationBar.prefersLargeTitles = false
     return nav
   }
-  func authenticated() throws {
+  @MainActor func authenticated() throws {
     try store.activate(accountID: vault.current?.id)
     var prefs = store.preferences
     prefs.onboardingDone = true
     try store.updatePreferences(prefs)
     showRoot()
   }
-  func logout() throws {
+  @MainActor func logout() throws {
     try vault.logout()
     try store.activate(accountID: nil)
     showRoot()
@@ -181,5 +198,14 @@ final class CoastEnvironment {
     return t(
       "Could not save. Check your input and try again. Your edits are retained.",
       "未能保存，请检查输入后重试。你的编辑内容已保留。")
+  }
+}
+
+/// Keep root page titles in the content, as specified by HF-v1.2.
+final class CoastNavigationController: UINavigationController, UINavigationControllerDelegate {
+  override func viewDidLoad() { super.viewDidLoad(); delegate = self }
+  func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
+    let root = viewController is ExploreController || viewController is LearnController || viewController is TripsController || viewController is JournalController || viewController is WelcomeController
+    setNavigationBarHidden(root, animated: animated)
   }
 }
