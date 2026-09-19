@@ -128,6 +128,17 @@ final class CoastEnvironment {
       .appendingPathComponent(URL(fileURLWithPath: filename).lastPathComponent)
   }
   func photo(_ filename: String) -> UIImage? { UIImage(contentsOfFile: photoURL(filename).path) }
+  func cleanUnusedPhotos() {
+    let folder = photoURL("unused").deletingLastPathComponent()
+    let used = Set(store.ledger.entries.flatMap { $0.photos })
+    guard
+      let files = try? FileManager.default.contentsOfDirectory(
+        at: folder, includingPropertiesForKeys: nil)
+    else { return }
+    for file in files where !used.contains(file.lastPathComponent) {
+      try? FileManager.default.removeItem(at: file)
+    }
+  }
   func errorText(_ error: Error) -> String {
     let key = error.localizedDescription
     let map: [String: (String, String)] = [

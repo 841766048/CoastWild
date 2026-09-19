@@ -27,9 +27,28 @@ func coastLabel(
   label.adjustsFontForContentSizeCategory = true
   return label
 }
+final class CoastActionButton: UIButton {
+  override var isHighlighted: Bool {
+    didSet {
+      guard !UIAccessibility.isReduceMotionEnabled else {
+        transform = .identity
+        return
+      }
+      if isHighlighted {
+        layer.removeAllAnimations()
+        transform = CGAffineTransform(scaleX: 0.98, y: 0.98)
+      } else {
+        UIView.animate(
+          withDuration: 0.16, delay: 0,
+          options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseOut]
+        ) { self.transform = .identity }
+      }
+    }
+  }
+}
 func coastButton(_ title: String, secondary: Bool = false, action: @escaping () -> Void) -> UIButton
 {
-  let button = UIButton(type: .system)
+  let button = CoastActionButton(type: .system)
   var config = UIButton.Configuration.filled()
   config.title = title
   config.baseBackgroundColor = secondary ? .white : CoastStyle.brand
@@ -166,13 +185,26 @@ class CoastController: UIViewController {
     input.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 1))
     input.leftViewMode = .always
     input.accessibilityIdentifier = id
+    input.inputAccessoryView = keyboardToolbar()
     add(input)
     return input
+  }
+  func keyboardToolbar() -> UIToolbar {
+    let toolbar = UIToolbar()
+    toolbar.sizeToFit()
+    toolbar.items = [
+      UIBarButtonItem(systemItem: .flexibleSpace),
+      UIBarButtonItem(
+        title: env.t("Done", "完成"),
+        primaryAction: UIAction { [weak self] _ in self?.view.endEditing(true) }),
+    ]
+    return toolbar
   }
   func textArea(_ title: String, value: String = "", height: CGFloat = 160) -> UITextView {
     add(coastLabel(title, size: 14, weight: .medium))
     let input = UITextView()
     input.text = value
+    input.inputAccessoryView = keyboardToolbar()
     input.font = CoastStyle.font(16)
     input.adjustsFontForContentSizeCategory = true
     input.backgroundColor = CoastStyle.field

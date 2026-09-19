@@ -55,8 +55,11 @@ final class TripEditorController: CoastController {
   var name: UITextField!, start: UITextField!, end: UITextField!, notes: UITextView!,
     errorLabel = coastLabel("", size: 14, color: CoastStyle.red)
   init(_ env: CoastEnvironment, trip: CoastTrip?, pending: String? = nil) {
-    self.trip = trip ?? CoastTrip(
-      name: "", timeZone: env.store.preferences.region == "CN" ? "Asia/Shanghai" : "America/Los_Angeles")
+    self.trip =
+      trip
+      ?? CoastTrip(
+        name: "",
+        timeZone: env.store.preferences.region == "CN" ? "Asia/Shanghai" : "America/Los_Angeles")
     self.original = trip
     self.pending = pending
     super.init(env)
@@ -159,7 +162,9 @@ final class TripDetailController: CoastController {
         row(
           title: content.map { env.text($0.title) } ?? item.titleSnapshot,
           subtitle: (item.time.map { $0 + " · " } ?? "")
-            + (content.map { env.category($0.category) } ?? env.t("Original content unavailable", "原内容不可用")), image: content?.image
+            + (content.map { env.category($0.category) }
+              ?? env.t("Original content unavailable", "原内容不可用")),
+          image: content?.image
         ) { [weak self] in self?.itemMenu(item, trip: trip) })
     }
     add(
@@ -362,16 +367,17 @@ private func chooseTripDay(
     field.selectAll(nil)
   }
   alert.addAction(UIAlertAction(title: controller.env.t("Cancel", "取消"), style: .cancel))
-  alert.addAction(UIAlertAction(title: controller.env.t("Choose", "选择"), style: .default) { [weak alert] _ in
-    guard let text = alert?.textFields?.first?.text,
-      let value = Int(text), (1...count).contains(value)
-    else {
-      controller.message(
-        controller.env.t("Invalid day", "日期无效"),
-        controller.env.t("Enter a day from 1 to \(count).", "请输入 1 至 \(count) 之间的天数。"))
-      return
-    }
-    onSelect(value - 1)
-  })
+  alert.addAction(
+    UIAlertAction(title: controller.env.t("Choose", "选择"), style: .default) { [weak alert] _ in
+      guard let text = alert?.textFields?.first?.text,
+        let value = Int(text), (1...count).contains(value)
+      else {
+        controller.message(
+          controller.env.t("Invalid day", "日期无效"),
+          controller.env.t("Enter a day from 1 to \(count).", "请输入 1 至 \(count) 之间的天数。"))
+        return
+      }
+      onSelect(value - 1)
+    })
   controller.present(alert, animated: true)
 }

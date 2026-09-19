@@ -18,12 +18,13 @@ final class ExploreController: CoastController {
   func render() {
     reset()
     heading(env.t("Explore", "探索"))
-    add(fieldButton(
-      icon: "globe",
-      title: env.t("Region · ", "内容地区 · ")
-        + (env.store.preferences.region == "CN"
-          ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国"))
-    ) { [weak self] in
+    add(
+      fieldButton(
+        icon: "globe",
+        title: env.t("Region · ", "内容地区 · ")
+          + (env.store.preferences.region == "CN"
+            ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国"))
+      ) { [weak self] in
         guard let self else { return }
         self.push(PreferencesController(self.env))
       })
@@ -35,11 +36,14 @@ final class ExploreController: CoastController {
     }
     search.accessibilityIdentifier = "explore.search"
     add(search)
-    add(imageButton(image: "surf-coast", height: 248, accessibilityLabel: env.t("Explore the coast", "探索海岸")) {
-      [weak self] in
-      guard let self, let item = self.env.item("coastal-story") else { return }
-      self.push(ContentController(self.env, item: item))
-    })
+    add(
+      imageButton(
+        image: "surf-coast", height: 248, accessibilityLabel: env.t("Explore the coast", "探索海岸")
+      ) {
+        [weak self] in
+        guard let self, let item = self.env.item("coastal-story") else { return }
+        self.push(ContentController(self.env, item: item))
+      })
     add(coastLabel(env.t("Leave the weekend to the coast", "把周末留给海岸"), size: 23, weight: .semibold))
     note(env.t("Coastal walks, surf culture and time outdoors.", "海岸漫步、冲浪文化与户外夜晚。"))
     add(coastLabel(env.t("Find your next experience", "发现下一段体验"), size: 21, weight: .semibold))
@@ -143,17 +147,21 @@ final class SearchController: CoastController, UISearchBarDelegate {
     search.delegate = self
     add(search)
     [env.t("All", "全部"), env.t("Surf", "冲浪"), env.t("Hiking", "徒步"), env.t("Camping", "露营")]
-      .forEach { categoryControl.insertSegment(withTitle: $0, at: categoryControl.numberOfSegments, animated: false) }
+      .forEach {
+        categoryControl.insertSegment(
+          withTitle: $0, at: categoryControl.numberOfSegments, animated: false)
+      }
     categoryControl.selectedSegmentIndex = 0
     categoryControl.selectedSegmentTintColor = CoastStyle.brand
     categoryControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
     categoryControl.setTitleTextAttributes([.foregroundColor: CoastStyle.ink], for: .normal)
     categoryControl.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
-    categoryControl.addAction(UIAction { [weak self] _ in
-      guard let self else { return }
-      self.category = ["", "surf", "hike", "camp"][self.categoryControl.selectedSegmentIndex]
-      self.renderResults()
-    }, for: .valueChanged)
+    categoryControl.addAction(
+      UIAction { [weak self] _ in
+        guard let self else { return }
+        self.category = ["", "surf", "hike", "camp"][self.categoryControl.selectedSegmentIndex]
+        self.renderResults()
+      }, for: .valueChanged)
     add(categoryControl)
     navigationItem.rightBarButtonItem = iconItem("filter", label: env.t("Filter", "筛选")) {
       [weak self] in self?.filters()

@@ -5,28 +5,56 @@ final class WelcomeController: CoastController {
     super.viewDidLoad()
     render()
   }
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    render()
+  }
   func render() {
     reset()
-    heading("Coast & Wild")
-    note(env.t("From the coast, into the wild.", "从海岸，到山野。"))
-    add(coastImage("onboarding", height: 330))
+    let hero = coastImage("onboarding", height: 320)
+    let title = coastLabel("Coast & Wild", size: 30, weight: .bold)
+    title.translatesAutoresizingMaskIntoConstraints = false
+    hero.addSubview(title)
+    let subtitle = coastLabel(env.t("From the coast, into the wild.", "从海岸，到山野。"), size: 16)
+    subtitle.translatesAutoresizingMaskIntoConstraints = false
+    hero.addSubview(subtitle)
+    NSLayoutConstraint.activate([
+      title.topAnchor.constraint(equalTo: hero.topAnchor, constant: 16),
+      title.centerXAnchor.constraint(equalTo: hero.centerXAnchor),
+      subtitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 6),
+      subtitle.centerXAnchor.constraint(equalTo: hero.centerXAnchor),
+    ])
+    add(hero)
     add(
       coastButton(env.t("Language: English", "语言：简体中文"), secondary: true) { [weak self] in
         guard let self else { return }
-        var p = self.env.store.preferences
-        p.language = self.env.chinese ? "en" : "zh-Hans"
-        if self.save({ try self.env.store.updatePreferences(p) }) { self.render() }
+        self.push(PreferencesController(self.env))
       })
     add(
       coastButton(env.t("Region: ", "内容地区：") + env.store.preferences.region, secondary: true) {
         [weak self] in
         guard let self else { return }
-        var p = self.env.store.preferences
-        p.region = p.region == "CN" ? "US" : "CN"
-        if self.save({ try self.env.store.updatePreferences(p) }) { self.render() }
+        self.push(PreferencesController(self.env))
       })
     add(coastLabel(env.t("What calls you outside?", "你想探索什么？"), size: 20, weight: .semibold))
-    note(env.t("Surf culture · coastal walks · camping", "冲浪文化 · 海岸徒步 · 露营"))
+    let interests = UIStackView()
+    interests.axis = .horizontal
+    interests.spacing = 8
+    interests.distribution = .fillEqually
+    for key in ["surf", "hike", "camp"] {
+      let selected = (env.store.preferences.interests ?? ["surf", "hike", "camp"]).contains(key)
+      let button = coastButton((selected ? "✓ " : "") + env.category(key), secondary: !selected) {
+        [weak self] in
+        guard let self else { return }
+        var prefs = self.env.store.preferences
+        var values = prefs.interests ?? ["surf", "hike", "camp"]
+        if values.contains(key) { values.removeAll { $0 == key } } else { values.append(key) }
+        prefs.interests = values
+        if self.save({ try self.env.store.updatePreferences(prefs) }) { self.render() }
+      }
+      interests.addArrangedSubview(button)
+    }
+    add(interests)
     let login = coastButton(env.t("Log in", "登录")) { [weak self] in
       guard let self else { return }
       self.push(AuthController(self.env, mode: .login))

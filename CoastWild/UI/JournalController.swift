@@ -73,10 +73,25 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
   let photoStack = UIStackView()
   var pending: DispatchWorkItem?
   var finished = false
+  var hasChanges = false
   var importing = false
   init(_ env: CoastEnvironment, entry: CoastEntry?, tripID: String? = nil) {
-    self.entry = entry ?? CoastEntry()
     original = entry
+    if let entry, !entry.isDraft {
+      if let draft = env.store.ledger.entries.first(where: {
+        $0.isDraft && $0.sourceEntryID == entry.id
+      }) {
+        self.entry = draft
+      } else {
+        var draft = entry
+        draft.id = UUID().uuidString
+        draft.sourceEntryID = entry.id
+        draft.isDraft = true
+        self.entry = draft
+      }
+    } else {
+      self.entry = entry ?? CoastEntry()
+    }
     if entry == nil { self.entry.tripID = tripID }
     super.init(env)
   }
@@ -84,6 +99,9 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
   deinit { pending?.cancel() }
   override func viewDidLoad() {
     super.viewDidLoad()
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(flushDraft), name: UIApplication.willResignActiveNotification,
+      object: nil)
     title = env.t("New entry", "新手记")
     navigationItem.hidesBackButton = true
     navigationItem.leftBarButtonItem = UIBarButtonItem(
@@ -182,6 +200,10 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     tripButton.configuration?.title = tripTitle()
     scheduleDraft()
   }
+  @objc func flushDraft() {
+    pending?.cancel()
+    if isViewLoaded && !finished && hasChanges { persistDraft() }
+  }
   func textViewDidChange(_ textView: UITextView) { scheduleDraft() }
   func capture() {
     entry.title = titleField.text ?? ""
@@ -190,6 +212,7 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
   }
   func scheduleDraft() {
     guard !finished else { return }
+    hasChanges = true
     pending?.cancel()
     status.text = env.t("Saving draft…", "正在保存草稿…")
     let work = DispatchWorkItem { [weak self] in self?.persistDraft() }
@@ -199,12 +222,13 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
   @discardableResult func persistDraft() -> Bool {
     guard !finished else { return false }
     capture()
-    guard !entry.title.isEmpty || !entry.body.isEmpty || !entry.photos.isEmpty else { return true }
+
     var draft = entry
     draft.isDraft = true
     do {
       try env.store.saveEntry(draft)
       status.text = env.t("Draft saved", "草稿已保存")
+      status.textColor = CoastStyle.muted
       return true
     } catch {
       status.text = env.t(
@@ -227,6 +251,7 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
       return
     }
     if save({ try env.store.saveEntry(entry) }) {
+      env.cleanUnusedPhotos()
       finished = true
       navigationController?.popViewController(animated: true)
     }
@@ -248,6 +273,7 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
           { [weak self] in
             guard let self else { return }
             if self.persistDraft() {
+              self.env.cleanUnusedPhotos()
               self.finished = true
               self.navigationController?.popViewController(animated: true)
             }
@@ -258,12 +284,13 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
           { [weak self] in
             guard let self else { return }
             if self.save({
-              if let original = self.original {
+              if let original = self.original, original.isDraft {
                 try self.env.store.saveEntry(original)
               } else {
                 try self.env.store.deleteEntry(id: self.entry.id)
               }
             }) {
+              self.env.cleanUnusedPhotos()
               self.finished = true
               self.navigationController?.popViewController(animated: true)
             }

@@ -60,6 +60,20 @@ final class CoastWildUITests: XCTestCase {
       app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Sea Notes")).firstMatch
         .waitForExistence(timeout: 5))
     capture("03-Journal", app: app)
+    tap(
+      app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Sea Notes")).firstMatch,
+      in: app)
+    app.navigationBars.buttons["更多"].tap()
+    app.buttons["编辑"].tap()
+    let editBody = app.textViews["journal.body"]
+    tap(editBody, in: app)
+    editBody.typeText(" Draft-only change.")
+    app.navigationBars.buttons["取消"].tap()
+    app.buttons["保留草稿"].tap()
+    XCTAssertTrue(app.staticTexts["A quiet walk beside the sea."].waitForExistence(timeout: 5))
+    XCTAssertFalse(app.staticTexts["A quiet walk beside the sea. Draft-only change."].exists)
+    app.navigationBars.buttons.element(boundBy: 0).tap()
+
     app.tabBars.buttons["探索"].tap()
     app.navigationBars.buttons["个人空间"].tap()
     tap(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "我的账号")).firstMatch, in: app)
