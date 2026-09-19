@@ -23,15 +23,19 @@ final class CoastWildUITests: XCTestCase {
     XCTAssertTrue(name.waitForExistence(timeout: 5))
     name.tap()
     name.typeText("Coast Tester")
+    dismissKeyboard(app)
     let email = app.textFields["auth.email"]
     email.tap()
     email.typeText("native-test@example.test")
+    dismissKeyboard(app)
     let password = app.secureTextFields["auth.password"]
     password.tap()
     password.typeText("coast-test-2026")
+    dismissKeyboard(app)
     let confirmation = app.secureTextFields["auth.confirmation"]
     tap(confirmation, in: app)
     confirmation.typeText("coast-test-2026")
+    dismissKeyboard(app)
     tap(app.buttons["auth.submit"], in: app)
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
     capture("01-Explore", app: app)
@@ -41,6 +45,7 @@ final class CoastWildUITests: XCTestCase {
     XCTAssertTrue(tripName.waitForExistence(timeout: 5))
     tripName.tap()
     tripName.typeText("Coastal Weekend")
+    dismissKeyboard(app)
     tap(app.buttons["保存出游"], in: app)
     XCTAssertTrue(app.staticTexts["Coastal Weekend"].waitForExistence(timeout: 5))
     capture("02-Trip", app: app)
@@ -49,9 +54,11 @@ final class CoastWildUITests: XCTestCase {
     XCTAssertTrue(title.waitForExistence(timeout: 5))
     title.tap()
     title.typeText("Sea Notes")
+    dismissKeyboard(app)
     let body = app.textViews["journal.body"]
     tap(body, in: app)
     body.typeText("A quiet walk beside the sea.")
+    dismissKeyboard(app)
     app.navigationBars.buttons["保存"].tap()
     XCTAssertTrue(app.staticTexts["Coastal Weekend"].waitForExistence(timeout: 5))
     app.navigationBars.buttons.element(boundBy: 0).tap()
@@ -68,6 +75,7 @@ final class CoastWildUITests: XCTestCase {
     let editBody = app.textViews["journal.body"]
     tap(editBody, in: app)
     editBody.typeText(" Draft-only change.")
+    dismissKeyboard(app)
     app.navigationBars.buttons["取消"].tap()
     app.buttons["保留草稿"].tap()
     XCTAssertTrue(app.staticTexts["A quiet walk beside the sea."].waitForExistence(timeout: 5))
@@ -83,14 +91,20 @@ final class CoastWildUITests: XCTestCase {
     capture("04-Login", app: app)
     app.textFields["auth.email"].tap()
     app.textFields["auth.email"].typeText("native-test@example.test")
+    dismissKeyboard(app)
     app.secureTextFields["auth.password"].tap()
     app.secureTextFields["auth.password"].typeText("coast-test-2026")
+    dismissKeyboard(app)
     tap(app.buttons["auth.submit"], in: app)
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
     app.tabBars.buttons["出游"].tap()
     XCTAssertTrue(
       app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Coastal Weekend")).firstMatch
         .waitForExistence(timeout: 5))
+  }
+  private func dismissKeyboard(_ app: XCUIApplication) {
+    let done = app.toolbars.buttons["完成"]
+    if done.waitForExistence(timeout: 1) { done.tap() }
   }
   private func tap(_ element: XCUIElement, in app: XCUIApplication) {
     for _ in 0..<7 {

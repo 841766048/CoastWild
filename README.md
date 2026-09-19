@@ -1,0 +1,53 @@
+# Coast & Wild / 海岸与山野 — UIKit
+
+原生 iPhone 开发版本，Swift + UIKit，最低 iOS 17。按已确认的 HF-v1.2 页面与交互契约开发。无 SwiftUI、Flutter、WebView 或第三方运行时依赖。
+
+## 打开与运行
+
+打开 `CoastWild.xcodeproj`，选择 `CoastWild` Scheme 和 iPhone 模拟器，运行。
+
+```sh
+xcodegen generate
+xcodebuild -project CoastWild.xcodeproj -scheme CoastWild \
+  -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=26.1' \
+  -derivedDataPath build CODE_SIGN_IDENTITY=- build
+swift test
+```
+
+模拟器请保留本地签名（`CODE_SIGN_IDENTITY=-`）；关闭签名会使 Keychain 不可用。真机需在 Signing & Capabilities 选择自己的开发团队；工程未填入团队或签名凭据。
+
+## 使用
+
+首次启动选择语言、内容地区与兴趣，然后注册一个本地测试账号（邮箱＋至少 10 字符的密码）。登录后才能进入探索、学习、出游、手记；退出保留账号数据。不要使用正式账号的密码。
+
+找回密码显示本地演示验证码，10 分钟有效、最多 5 次尝试；不会发送真实邮件。本地身份验证只服务本机演示，不是远程账号系统。
+
+## 功能
+
+- 探索、搜索、类别／时长筛选、专题／目的地／体验详情、收藏。
+- 冲浪／徒步／露营学习，步骤进度、首次完成时间、回顾。
+- 出游创建／编辑／删除、日期校验、活动添加／移除／上下移动／改天、可选时间、完成／重新打开。
+- 手记正文、日期、关联出游／体验，系统照片选择器（最多 12 张），500ms 草稿保存、保存失败保留输入。
+- 已发布手记的编辑草稿独立持久化；正式保存才原子替换原文。
+- 系统分享、当前账号 JSON＋照片导出、本地内容清除、独立的语言／地区／距离／温度偏好。
+- 原始 11 张照片/插画和 28 个 SVG 图标，系统动态字体、滚动表单、键盘工具栏、减少动态效果。
+
+## 结构
+
+- `CoastWild/App`：应用启动、登录前置、Keychain 本地账号、内容解码。
+- `CoastWild/Core`：Codable 模型、校验、按账号隔离的原子文件存储。
+- `CoastWild/UI`：UIKit 控制器、共用组件、系统照片与分享接口。
+- `CoastWild/Resources`：双语原创示例内容、原始图片/矢量图标、应用名称本地化。
+- `Tests`：Foundation 数据层 XCTest。
+- `UITests`：原生账号、出游、手记、退出与数据保留流程。
+- `docs`：实施计划、审查记录、截图与验收说明。
+
+## 设计来源与边界
+
+Figma： https://www.figma.com/design/sekErw6W2S4swqxlC0QPIj
+
+开发时实际通过 Figma 电脑 App 查看中文登录、探索、出游详情、手记编辑页，并使用已导出的全量设计与素材核对。布局采用 Auto Layout 和原生导航，系统导航／弹窗／照片选择器会随 iOS 版本变化。尚未完成所有中英文页面的逐像素验收。
+
+当前无远程服务器、真实邮件、云同步、付费、实时海况或精确导航。美中地区的内置内容仍为同一套原创示例；用户填写的数据不会随切换语言重建。正式发布还需内容核验、真实服务接入、真机及无障碍全量验收。
+
+图片来自本项目原设计资产；原 WebP 无损转换为 PNG，图标直接复用 SVG 路径。AppIcon 暂用原海岸图片裁切，是开发版图标。
