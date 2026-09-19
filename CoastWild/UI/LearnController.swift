@@ -6,7 +6,9 @@ private func learnLabel(_ text: String, size: CGFloat, weight: UIFont.Weight = .
   let paragraph = NSMutableParagraphStyle()
   paragraph.minimumLineHeight = lineHeight
   paragraph.maximumLineHeight = lineHeight
-  label.attributedText = NSAttributedString(string: text, attributes: [.font: label.font as Any, .foregroundColor: color, .paragraphStyle: paragraph])
+  let attributed = NSMutableAttributedString(attributedString: label.attributedText ?? NSAttributedString(string: text))
+  attributed.addAttribute(.paragraphStyle, value: paragraph, range: NSRange(location: 0, length: attributed.length))
+  label.attributedText = attributed
   return label
 }
 
@@ -20,7 +22,8 @@ final class LearnController: CoastController {
     let header = UIStackView()
     header.axis = .horizontal
     header.alignment = .center
-    header.addArrangedSubview(learnLabel(env.t("Learn", "学习"), size: 32, weight: .bold, lineHeight: 36))
+    header.addArrangedSubview(learnLabel(env.t("Learn", "学习"), size: 32, weight: .bold, lineHeight: 35.84))
+    header.addArrangedSubview(UIView())
     let profile = UIButton(type: .system)
     profile.setImage(UIImage(named: "icon-user"), for: .normal)
     profile.tintColor = CoastStyle.brand
@@ -31,24 +34,37 @@ final class LearnController: CoastController {
     header.addArrangedSubview(profile)
     add(header)
     stack.setCustomSpacing(14, after: header)
-    let intro = learnLabel(env.t("Find your footing", "找到自己的节奏"), size: 23, weight: .bold, lineHeight: 28)
+    let intro = learnLabel(env.t("Find your footing", "找到自己的节奏"), size: 23, weight: .bold, lineHeight: 27.6)
     add(intro)
     stack.setCustomSpacing(2, after: intro)
     let subtitle = learnLabel(env.t("Build skills, confidence and a deeper connection with the coast.", "收获知识与信心，与海岸建立更深的联结。"), size: 14, color: CoastStyle.muted, lineHeight: 21)
     add(subtitle)
     stack.setCustomSpacing(14, after: subtitle)
-    chips([env.t("Surfing", "冲浪"), env.t("Hiking", "徒步"), env.t("Camping", "露营")], selected: ["surf", "hike", "camp"].firstIndex(of: category) ?? 0) { [weak self] index in
-      self?.category = ["surf", "hike", "camp"][index]
-      self?.render()
-    }
+    add(categoryPills())
     guard let first = env.catalog.lessons.first(where: { $0.category == category }) else { return }
-    let group = learnLabel(env.text(first.group), size: 21, weight: .bold, lineHeight: 25)
+    let group = learnLabel(env.text(first.group), size: 21, weight: .bold, lineHeight: 25.2)
     add(group)
     stack.setCustomSpacing(12, after: group)
     for (index, lesson) in env.catalog.lessons.filter({ $0.category == category }).enumerated() {
       add(lessonCard(lesson, imageHeight: index == 0 ? 180 : 110))
       if let card = stack.arrangedSubviews.last { stack.setCustomSpacing(12, after: card) }
     }
+  }
+
+  private func categoryPills() -> UIView {
+    let row = UIStackView(); row.axis = .horizontal; row.spacing = 8
+    [(env.t("Surfing", "冲浪"), "surf"), (env.t("Hiking", "徒步"), "hike"), (env.t("Camping", "露营"), "camp")].forEach { title, value in
+      let button = UIButton(type: .system)
+      var config = UIButton.Configuration.filled(); config.title = title
+      config.baseBackgroundColor = category == value ? CoastStyle.brand : .white
+      config.baseForegroundColor = category == value ? .white : CoastStyle.muted
+      config.background.cornerRadius = 20; config.background.strokeColor = category == value ? CoastStyle.brand : CoastStyle.border; config.background.strokeWidth = 1
+      config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 17, bottom: 10, trailing: 17)
+      button.configuration = config; button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+      button.addAction(UIAction { [weak self] _ in self?.category = value; self?.render() }, for: .touchUpInside)
+      row.addArrangedSubview(button)
+    }
+    row.addArrangedSubview(UIView()); return row
   }
 
   private func lessonCard(_ lesson: CoastLesson, imageHeight: CGFloat) -> UIView {
@@ -74,10 +90,10 @@ final class LearnController: CoastController {
     copy.spacing = 4
     copy.isLayoutMarginsRelativeArrangement = true
     copy.layoutMargins = UIEdgeInsets(top: 11, left: 15, bottom: 12, right: 15)
-    copy.addArrangedSubview(learnLabel(env.text(lesson.title), size: 24, weight: .bold, lineHeight: 29))
+    copy.addArrangedSubview(learnLabel(env.text(lesson.title), size: 24, weight: .bold, lineHeight: 28.8))
     let progress = env.store.ledger.progress[lesson.key]
     let state = progress?.completed == true ? env.t("Review", "复习") : (progress == nil ? env.t("Start learning", "开始学习") : env.t("Continue learning", "继续学习"))
-    copy.addArrangedSubview(learnLabel("\(lesson.steps.count) " + env.t("short steps", "个简短步骤") + " · " + state, size: 14, color: CoastStyle.muted, lineHeight: 20))
+    copy.addArrangedSubview(learnLabel("\(lesson.steps.count) " + env.t("short steps", "个简短步骤") + " · " + state, size: 14, color: CoastStyle.muted, lineHeight: 20.3))
     content.addArrangedSubview(copy)
     NSLayoutConstraint.activate([content.topAnchor.constraint(equalTo: button.topAnchor), content.leadingAnchor.constraint(equalTo: button.leadingAnchor), content.trailingAnchor.constraint(equalTo: button.trailingAnchor), content.bottomAnchor.constraint(equalTo: button.bottomAnchor)])
     button.addAction(UIAction { [weak self] _ in guard let self else { return }; self.push(LessonController(self.env, lesson: lesson)) }, for: .touchUpInside)
@@ -100,10 +116,10 @@ final class LessonController: CoastController {
     reset()
     title = env.text(lesson.title)
     let value = lesson.steps[step]
-    let stepLabel = learnLabel(env.t("Step \(step + 1) of \(lesson.steps.count)", "步骤 \(step + 1) / \(lesson.steps.count)"), size: 13, color: CoastStyle.muted, lineHeight: 19)
+    let stepLabel = learnLabel(env.t("Step \(step + 1) of \(lesson.steps.count)", "步骤 \(step + 1) / \(lesson.steps.count)"), size: 13, color: CoastStyle.muted, lineHeight: 18.85)
     add(stepLabel)
     stack.setCustomSpacing(31, after: stepLabel)
-    let heading = learnLabel(env.text(value.title), size: 32, weight: .bold, lineHeight: 36)
+    let heading = learnLabel(env.text(value.title), size: 32, weight: .bold, lineHeight: 35.84)
     add(heading)
     stack.setCustomSpacing(17, after: heading)
     let image = UIImageView(image: UIImage(named: value.image))
@@ -160,9 +176,10 @@ final class LessonController: CoastController {
     let complete = learnLabel(env.t("Lesson complete", "学习完成"), size: 30, weight: .bold, lineHeight: 34)
     complete.textAlignment = .center
     add(complete)
-    let message = learnLabel(env.t("You’ve completed", "你已完成") + "\n" + env.text(lesson.title), size: 16, color: CoastStyle.muted, lineHeight: 24)
-    message.textAlignment = .center
-    add(message)
+    let message = learnLabel(env.t("You’ve completed", "你已完成"), size: 16, color: CoastStyle.muted, lineHeight: 24)
+    message.textAlignment = .center; add(message)
+    let lessonTitle = learnLabel(env.text(lesson.title), size: 16, weight: .bold, color: CoastStyle.muted, lineHeight: 24)
+    lessonTitle.textAlignment = .center; add(lessonTitle)
     add(coastButton(env.t("Explore an experience", "探索相关体验")) { [weak self] in self?.tabBarController?.selectedIndex = 0; self?.navigationController?.popToRootViewController(animated: true) })
     add(coastButton(env.t("Keep learning", "继续学习"), secondary: true) { [weak self] in self?.navigationController?.popViewController(animated: true) })
     add(subtleButton(env.t("Review this lesson", "复习这一课")) { [weak self] in self?.step = 0; self?.render() })

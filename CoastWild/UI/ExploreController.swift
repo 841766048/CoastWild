@@ -6,7 +6,9 @@ private func exploreLabel(_ text: String, size: CGFloat, weight: UIFont.Weight =
   let paragraph = NSMutableParagraphStyle()
   paragraph.minimumLineHeight = lineHeight
   paragraph.maximumLineHeight = lineHeight
-  label.attributedText = NSAttributedString(string: text, attributes: [.font: label.font as Any, .foregroundColor: color, .paragraphStyle: paragraph])
+  let attributed = NSMutableAttributedString(attributedString: label.attributedText ?? NSAttributedString(string: text))
+  attributed.addAttribute(.paragraphStyle, value: paragraph, range: NSRange(location: 0, length: attributed.length))
+  label.attributedText = attributed
   return label
 }
 
@@ -28,7 +30,8 @@ final class ExploreController: CoastController {
     let header = UIStackView()
     header.axis = .horizontal
     header.alignment = .center
-    header.addArrangedSubview(exploreLabel(env.t("Explore", "探索"), size: 32, weight: .bold, lineHeight: 36))
+    header.addArrangedSubview(exploreLabel(env.t("Explore", "探索"), size: 32, weight: .bold, lineHeight: 35.84))
+    header.addArrangedSubview(UIView())
     let profile = UIButton(type: .system)
     profile.setImage(UIImage(named: "icon-user"), for: .normal)
     profile.tintColor = CoastStyle.brand
@@ -40,7 +43,7 @@ final class ExploreController: CoastController {
     add(header)
     stack.setCustomSpacing(10, after: header)
 
-    let region = fieldButton(icon: "globe", title: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国"), filled: false, height: 44) { [weak self] in
+    let region = fieldButton(icon: "globe", title: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国"), filled: true, height: 42) { [weak self] in
       guard let self else { return }; self.push(PreferencesController(self.env))
     }
     add(region)
@@ -59,11 +62,11 @@ final class ExploreController: CoastController {
       guard let self, let item = self.env.item("coastal-story") else { return }; self.push(ContentController(self.env, item: item))
     }
     feature.addArrangedSubview(hero)
-    feature.addArrangedSubview(exploreLabel(env.t("A weekend by the water", "把周末留给海岸"), size: 23, weight: .bold, lineHeight: 28))
-    feature.addArrangedSubview(exploreLabel(env.t("Surf culture, coastal walks and a night outdoors.", "海岸漫步、冲浪文化与户外夜晚。"), size: 14, color: CoastStyle.muted, lineHeight: 20))
+    feature.addArrangedSubview(exploreLabel(env.t("A weekend by the water", "把周末留给海岸"), size: 23, weight: .bold, lineHeight: 27.6))
+    feature.addArrangedSubview(exploreLabel(env.t("Surf culture, coastal walks and a night outdoors.", "海岸漫步、冲浪文化与户外夜晚。"), size: 14, color: CoastStyle.muted, lineHeight: 19.6))
     add(feature)
     stack.setCustomSpacing(20, after: feature)
-    let section = exploreLabel(env.t("Find your next experience", "发现下一段体验"), size: 21, weight: .bold, lineHeight: 25)
+    let section = exploreLabel(env.t("Find your next experience", "发现下一段体验"), size: 21, weight: .bold, lineHeight: 25.2)
     add(section)
     stack.setCustomSpacing(12, after: section)
     let tiles = UIStackView()
@@ -88,7 +91,7 @@ final class ExploreController: CoastController {
     button.configuration = config
     button.contentHorizontalAlignment = .leading
     button.backgroundColor = filled ? CoastStyle.field : .clear
-    button.layer.cornerRadius = filled ? 10 : 0
+    button.layer.cornerRadius = filled ? (height == 46 ? 12 : 10) : 0
     button.heightAnchor.constraint(equalToConstant: height).isActive = true
     button.addAction(UIAction { _ in action() }, for: .touchUpInside)
     return button
@@ -127,29 +130,60 @@ final class ExploreController: CoastController {
 
 final class SearchController: CoastController, UISearchBarDelegate {
   var query = "", category = "", maximum = 0
-  let results = UIStackView(), search = UISearchBar(), categoryControl = UISegmentedControl()
+  let results = UIStackView(), search = UISearchBar(), categoryRow = UIStackView()
   override func viewDidLoad() {
     super.viewDidLoad()
     title = env.t("Search", "搜索")
     search.placeholder = env.t("Search the outdoors", "搜索户外内容")
     search.searchBarStyle = .minimal
     search.delegate = self
-    add(search)
-    [env.t("All", "全部"), env.t("Surfing", "冲浪"), env.t("Hiking", "徒步"), env.t("Camping", "露营")].forEach { categoryControl.insertSegment(withTitle: $0, at: categoryControl.numberOfSegments, animated: false) }
-    categoryControl.selectedSegmentIndex = 0
-    categoryControl.selectedSegmentTintColor = CoastStyle.brand
-    categoryControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
-    categoryControl.setTitleTextAttributes([.foregroundColor: CoastStyle.muted], for: .normal)
-    categoryControl.heightAnchor.constraint(equalToConstant: 40).isActive = true
-    categoryControl.addAction(UIAction { [weak self] _ in guard let self else { return }; self.category = ["", "surf", "hike", "camp"][self.categoryControl.selectedSegmentIndex]; self.renderResults() }, for: .valueChanged)
-    add(categoryControl)
-    navigationItem.rightBarButtonItem = iconItem("filter", label: env.t("Filter", "筛选")) { [weak self] in self?.filters() }
+    let searchRow = UIStackView()
+    searchRow.axis = .horizontal
+    searchRow.alignment = .center
+    searchRow.backgroundColor = CoastStyle.field
+    searchRow.layer.cornerRadius = 12
+    searchRow.addArrangedSubview(search)
+    let filter = UIButton(type: .system)
+    filter.setImage(UIImage(named: "icon-filter"), for: .normal)
+    filter.tintColor = CoastStyle.brand
+    filter.accessibilityLabel = env.t("Filter", "筛选")
+    filter.widthAnchor.constraint(equalToConstant: 44).isActive = true
+    filter.heightAnchor.constraint(equalToConstant: 44).isActive = true
+    filter.addAction(UIAction { [weak self] _ in self?.filters() }, for: .touchUpInside)
+    searchRow.addArrangedSubview(filter)
+    searchRow.heightAnchor.constraint(equalToConstant: 48).isActive = true
+    add(searchRow)
+    categoryRow.axis = .horizontal
+    categoryRow.spacing = 8
+    categoryRow.alignment = .fill
+    add(categoryRow)
+    renderCategories()
     results.axis = .vertical
     results.spacing = 12
     add(results)
     renderResults()
   }
   func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) { query = searchText.trimmingCharacters(in: .whitespacesAndNewlines); renderResults() }
+  private func renderCategories() {
+    categoryRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+    let values = [(env.t("All", "全部"), ""), (env.t("Surfing", "冲浪"), "surf"), (env.t("Hiking", "徒步"), "hike"), (env.t("Camping", "露营"), "camp")]
+    values.forEach { title, value in
+      let button = UIButton(type: .system)
+      var config = UIButton.Configuration.filled()
+      config.title = title
+      config.baseBackgroundColor = category == value ? CoastStyle.brand : .white
+      config.baseForegroundColor = category == value ? .white : CoastStyle.muted
+      config.background.cornerRadius = 20
+      config.background.strokeColor = category == value ? CoastStyle.brand : CoastStyle.border
+      config.background.strokeWidth = 1
+      config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 17, bottom: 10, trailing: 17)
+      button.configuration = config
+      button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+      button.addAction(UIAction { [weak self] _ in self?.category = value; self?.renderCategories(); self?.renderResults() }, for: .touchUpInside)
+      categoryRow.addArrangedSubview(button)
+    }
+    categoryRow.addArrangedSubview(UIView())
+  }
   func filters() {
     menu(env.t("Duration", "时长"), choices: [
       (env.t("Any duration", "不限时长"), { [weak self] in self?.maximum = 0; self?.renderResults() }),
@@ -165,7 +199,7 @@ final class SearchController: CoastController, UISearchBarDelegate {
     results.addArrangedSubview(exploreLabel("\(items.count) " + env.t("results", "项结果"), size: 12, color: CoastStyle.muted, lineHeight: 18))
     if items.isEmpty {
       results.addArrangedSubview(exploreLabel(env.t("No results yet. Try another word or clear your filters.", "没有找到相关内容，试试其他关键词或清除筛选。"), size: 16))
-      results.addArrangedSubview(coastButton(env.t("Clear filters", "清除筛选")) { [weak self] in self?.category = ""; self?.maximum = 0; self?.query = ""; self?.search.text = ""; self?.categoryControl.selectedSegmentIndex = 0; self?.renderResults() })
+      results.addArrangedSubview(coastButton(env.t("Clear filters", "清除筛选")) { [weak self] in self?.category = ""; self?.maximum = 0; self?.query = ""; self?.search.text = ""; self?.renderCategories(); self?.renderResults() })
     }
     items.forEach { results.addArrangedSubview(searchCard($0)) }
   }
@@ -181,10 +215,15 @@ final class SearchController: CoastController, UISearchBarDelegate {
     button.addSubview(image)
     let text = UIStackView()
     text.axis = .vertical; text.spacing = 7; text.translatesAutoresizingMaskIntoConstraints = false; text.isUserInteractionEnabled = false
-    text.addArrangedSubview(exploreLabel(env.text(item.title), size: 17, weight: .bold, lineHeight: 22))
-    text.addArrangedSubview(exploreLabel(env.category(item.category) + " · \(item.minutes) " + env.t("min", "分钟"), size: 13, color: CoastStyle.muted, lineHeight: 19))
+    text.addArrangedSubview(exploreLabel(env.text(item.title), size: 17, weight: .bold, lineHeight: 22.1))
+    text.addArrangedSubview(exploreLabel(env.category(item.category) + " · \(item.minutes) " + env.t("min", "分钟"), size: 13, color: CoastStyle.muted, lineHeight: 18.85))
     button.addSubview(text)
-    NSLayoutConstraint.activate([image.leadingAnchor.constraint(equalTo: button.leadingAnchor), image.centerYAnchor.constraint(equalTo: button.centerYAnchor), image.widthAnchor.constraint(equalToConstant: 124), image.heightAnchor.constraint(equalToConstant: 128), text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 13), text.trailingAnchor.constraint(lessThanOrEqualTo: button.trailingAnchor, constant: -12), text.centerYAnchor.constraint(equalTo: button.centerYAnchor)])
+    let chevron = UIImageView(image: UIImage(named: "icon-next"))
+    chevron.tintColor = CoastStyle.muted
+    chevron.contentMode = .scaleAspectFit
+    chevron.translatesAutoresizingMaskIntoConstraints = false
+    button.addSubview(chevron)
+    NSLayoutConstraint.activate([image.leadingAnchor.constraint(equalTo: button.leadingAnchor), image.centerYAnchor.constraint(equalTo: button.centerYAnchor), image.widthAnchor.constraint(equalToConstant: 124), text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 13), text.trailingAnchor.constraint(lessThanOrEqualTo: chevron.leadingAnchor, constant: -8), text.centerYAnchor.constraint(equalTo: button.centerYAnchor), chevron.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12), chevron.centerYAnchor.constraint(equalTo: button.centerYAnchor), chevron.widthAnchor.constraint(equalToConstant: 16), chevron.heightAnchor.constraint(equalToConstant: 24)])
     button.addAction(UIAction { [weak self] _ in guard let self else { return }; self.push(ContentController(self.env, item: item)) }, for: .touchUpInside)
     return button
   }
@@ -196,33 +235,48 @@ final class ContentController: CoastController {
   required init?(coder: NSCoder) { fatalError() }
   override func viewDidLoad() { super.viewDidLoad(); render() }
   func render() {
-    reset(); title = env.t("Explore", "探索")
+    reset(); title = nil
     navigationItem.rightBarButtonItem = iconItem("bookmark", label: env.t("Save content", "收藏内容")) { [weak self] in guard let self else { return }; if self.save({ try self.env.store.toggleBookmark(self.item.key) }) { self.render() } }
     navigationItem.rightBarButtonItem?.tintColor = env.store.ledger.bookmarks.contains(item.key) ? CoastStyle.sand : CoastStyle.brand
     if item.kind == "experience" { renderExperience(); return }
     add(explorePhoto(item.image, height: 238))
     if item.kind == "story" { add(exploreLabel(env.category(item.category).uppercased() + env.t(" · FIELD NOTES", " · 自然笔记"), size: 11, weight: .semibold, color: CoastStyle.brand)) }
-    add(exploreLabel(env.text(item.title), size: 32, weight: .bold, lineHeight: 36))
+    add(exploreLabel(env.text(item.title), size: 32, weight: .bold, lineHeight: 35.84))
     add(exploreLabel(env.text(item.subtitle), size: 16, color: CoastStyle.muted, lineHeight: 24))
-    add(exploreLabel(item.body.map { env.text($0) } ?? env.t("Sea air, winding trails and a little room to breathe.", "海风、蜿蜒步道，以及自在呼吸的空间。"), size: 16, lineHeight: 26.4))
+    if item.kind == "story" {
+      add(exploreLabel(item.body.map { env.text($0) } ?? "", size: 16, lineHeight: 26.4))
+    } else {
+      add(destinationFacts())
+    }
     if item.kind == "story" {
       add(coastButton(env.t("Add to a trip", "加入出游")) { [weak self] in self?.chooseTrip() })
-      add(exploreLabel(env.t("Try a little exploration", "开始一次小探索"), size: 23, weight: .bold, lineHeight: 28))
+      add(exploreLabel(env.t("Try a little exploration", "开始一次小探索"), size: 23, weight: .bold, lineHeight: 27.6))
       env.catalog.items.filter { $0.key != item.key && $0.kind == "experience" }.prefix(1).forEach { add(detailRow($0)) }
     } else {
-      add(exploreLabel(env.t("Make a day of it", "把一天交给自然"), size: 23, weight: .bold, lineHeight: 28))
+      add(exploreLabel(env.t("Make a day of it", "把一天交给自然"), size: 23, weight: .bold, lineHeight: 27.6))
       env.catalog.items.filter { $0.kind == "experience" }.prefix(3).forEach { add(detailRow($0)) }
       add(exploreLabel(env.t("An illustrative destination. Check local access and conditions before planning a real visit.", "此处为示例目的地。计划实际出行前，请核实当地开放情况与环境。"), size: 13, color: CoastStyle.muted, lineHeight: 20))
     }
   }
   private func renderExperience() {
-    add(exploreLabel(env.text(item.title), size: 32, weight: .bold, lineHeight: 36))
+    add(exploreLabel(env.text(item.title), size: 32, weight: .bold, lineHeight: 35.84))
     add(exploreLabel(env.text(item.subtitle), size: 16, color: CoastStyle.muted, lineHeight: 24))
     add(explorePhoto(item.image, height: 238)); add(metrics())
-    add(exploreLabel(env.t("A little more about it", "关于这次体验"), size: 23, weight: .bold, lineHeight: 28))
+    add(exploreLabel(env.t("A little more about it", "关于这次体验"), size: 23, weight: .bold, lineHeight: 27.6))
     add(exploreLabel(env.t("Make space for an unhurried moment outside. Notice the view, enjoy the fresh air and keep a small memory of the day.", "为户外留一段不赶时间的片刻。观察风景，感受新鲜空气，留下一点属于今天的回忆。"), size: 16, lineHeight: 24))
     add(coastButton(env.t("Add to a trip", "加入出游")) { [weak self] in self?.chooseTrip() })
     add(exploreLabel(env.t("An example experience, not a navigation route. Check current access before leaving.", "此处为示例体验，不提供实时导航。出发前请核实开放情况。"), size: 13, color: CoastStyle.muted, lineHeight: 20))
+  }
+  private func destinationFacts() -> UIView {
+    let row = UIStackView(); row.axis = .horizontal; row.distribution = .fillEqually
+    [("wave", env.t("Coast", "海岸")), ("hike", env.t("Walks", "步道")), ("camp", env.t("Camp", "露营"))].forEach { icon, title in
+      let group = UIStackView(); group.axis = .vertical; group.alignment = .center; group.spacing = 8
+      let image = UIImageView(image: UIImage(named: "icon-" + icon)); image.tintColor = CoastStyle.brand; image.contentMode = .scaleAspectFit
+      image.widthAnchor.constraint(equalToConstant: 24).isActive = true; image.heightAnchor.constraint(equalToConstant: 24).isActive = true
+      group.addArrangedSubview(image); group.addArrangedSubview(exploreLabel(title, size: 13, color: CoastStyle.muted)); row.addArrangedSubview(group)
+    }
+    row.heightAnchor.constraint(equalToConstant: 72).isActive = true
+    return row
   }
   private func metrics() -> UIView {
     let row = UIStackView(); row.axis = .horizontal; row.distribution = .fillEqually
@@ -239,8 +293,9 @@ final class ContentController: CoastController {
     let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.cornerRadius = 14; button.layer.borderColor = CoastStyle.border.cgColor; button.layer.borderWidth = 1; button.heightAnchor.constraint(equalToConstant: 114).isActive = true
     let image = explorePhoto(related.image, height: 90, radius: 10); image.translatesAutoresizingMaskIntoConstraints = false; button.addSubview(image)
     let text = UIStackView(); text.axis = .vertical; text.spacing = 7; text.translatesAutoresizingMaskIntoConstraints = false; text.isUserInteractionEnabled = false
-    text.addArrangedSubview(exploreLabel(env.text(related.title), size: 17, weight: .bold, lineHeight: 22)); text.addArrangedSubview(exploreLabel(env.category(related.category) + " · \(related.minutes) " + env.t("min", "分钟"), size: 13, color: CoastStyle.muted, lineHeight: 19)); button.addSubview(text)
-    NSLayoutConstraint.activate([image.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12), image.centerYAnchor.constraint(equalTo: button.centerYAnchor), image.widthAnchor.constraint(equalToConstant: 88), image.heightAnchor.constraint(equalToConstant: 90), text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 13), text.trailingAnchor.constraint(lessThanOrEqualTo: button.trailingAnchor, constant: -12), text.centerYAnchor.constraint(equalTo: button.centerYAnchor)])
+    text.addArrangedSubview(exploreLabel(env.text(related.title), size: 17, weight: .bold, lineHeight: 22.1)); text.addArrangedSubview(exploreLabel(env.category(related.category) + " · \(related.minutes) " + env.t("min", "分钟"), size: 13, color: CoastStyle.muted, lineHeight: 18.85)); button.addSubview(text)
+    let chevron = UIImageView(image: UIImage(named: "icon-next")); chevron.tintColor = CoastStyle.muted; chevron.contentMode = .scaleAspectFit; chevron.translatesAutoresizingMaskIntoConstraints = false; button.addSubview(chevron)
+    NSLayoutConstraint.activate([image.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12), image.centerYAnchor.constraint(equalTo: button.centerYAnchor), image.widthAnchor.constraint(equalToConstant: 88), text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 13), text.trailingAnchor.constraint(lessThanOrEqualTo: chevron.leadingAnchor, constant: -8), text.centerYAnchor.constraint(equalTo: button.centerYAnchor), chevron.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12), chevron.centerYAnchor.constraint(equalTo: button.centerYAnchor), chevron.widthAnchor.constraint(equalToConstant: 16), chevron.heightAnchor.constraint(equalToConstant: 24)])
     button.addAction(UIAction { [weak self] _ in guard let self else { return }; self.push(ContentController(self.env, item: related)) }, for: .touchUpInside)
     return button
   }
@@ -254,9 +309,14 @@ final class ContentController: CoastController {
 final class BookmarksController: CoastController {
   override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); render() }
   func render() {
-    reset(); title = env.t("Saved", "收藏")
+    reset(); title = nil
+    add(exploreLabel(env.t("Saved", "收藏"), size: 32, weight: .bold, lineHeight: 35.84))
     let items = env.catalog.items.filter { env.store.ledger.bookmarks.contains($0.key) }
-    if items.isEmpty { empty(env.t("Keep what inspires you", "收藏喜欢的户外灵感"), env.t("Saved stories and places will appear here.", "喜欢的专题、地点与体验会出现在这里。"), icon: "bookmark") }
+    if items.isEmpty {
+      empty(env.t("Keep what inspires you", "收藏喜欢的户外灵感"), env.t("Saved stories and places will appear here.", "喜欢的专题、地点与体验会出现在这里。"), icon: "bookmark", actionTitle: env.t("Start exploring", "开始探索")) { [weak self] in
+        self?.tabBarController?.selectedIndex = 0
+      }
+    }
     items.forEach { item in add(row(title: env.text(item.title), subtitle: env.text(item.subtitle), image: item.image) { [weak self] in guard let self else { return }; self.push(ContentController(self.env, item: item)) }) }
   }
 }
