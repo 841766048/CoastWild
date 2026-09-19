@@ -20,6 +20,7 @@ final class CoastWildCoreTests: XCTestCase {
         XCTAssertEqual(preferences.distanceUnit, "km")
         XCTAssertEqual(preferences.temperatureUnit, "c")
         XCTAssertFalse(preferences.onboardingDone)
+        XCTAssertNil(preferences.interests)
 
         let trip = CoastTrip(name: "Coast")
         XCTAssertFalse(trip.id.isEmpty)
@@ -28,10 +29,15 @@ final class CoastWildCoreTests: XCTestCase {
         let entry = CoastEntry()
         XCTAssertNotNil(CoastValidation.parseDate(entry.date))
         XCTAssertNil(entry.activityID)
+        XCTAssertNil(entry.sourceEntryID)
         XCTAssertNil(CoastTripItem(activityID: "walk", titleSnapshot: "Walk").time)
+        XCTAssertNil(CoastProgress().completedAt)
     }
 
     func testOptionalContractFieldsDecodeFromLegacyJSONWhenAbsent() throws {
+        let preferencesData = Data(#"{"language":"zh-Hans","region":"CN","distanceUnit":"km","temperatureUnit":"c","onboardingDone":false}"#.utf8)
+        XCTAssertNil(try JSONDecoder().decode(CoastPreferences.self, from: preferencesData).interests)
+
         let itemData = Data(#"{"id":"item","activityID":"walk","day":0,"titleSnapshot":"Walk"}"#.utf8)
         let item = try JSONDecoder().decode(CoastTripItem.self, from: itemData)
         XCTAssertNil(item.time)
@@ -39,6 +45,10 @@ final class CoastWildCoreTests: XCTestCase {
         let entryData = Data(#"{"id":"entry","title":"Title","body":"Body","date":"2026-01-01","photos":[],"isDraft":false}"#.utf8)
         let entry = try JSONDecoder().decode(CoastEntry.self, from: entryData)
         XCTAssertNil(entry.activityID)
+        XCTAssertNil(entry.sourceEntryID)
+
+        let progressData = Data(#"{"step":2,"completed":true}"#.utf8)
+        XCTAssertNil(try JSONDecoder().decode(CoastProgress.self, from: progressData).completedAt)
     }
 
     func testValidationUsesExactFieldLimitsAndDateRules() {
@@ -215,6 +225,57 @@ final class CoastWildCoreTests: XCTestCase {
         }
     }
 
+    func testLinkedDraftPreservesPublishedEntryUntilFinalAtomicallyReplacesIt() throws {
+        let store = try activeStore()
+        let published = CoastEntry(id: "published", body: "Original", date: "2026-01-01", isDraft: false)
+        try store.saveEntry(published)
+        var draft = CoastEntry(id: "draft", body: "Edited", date: "2026-01-02", isDraft: true, sourceEntryID: published.id)
+        try store.saveEntry(draft)
+
+        XCTAssertEqual(store.ledger.entries.count, 2)
+        XCTAssertEqual(store.ledger.entries.first(where: { $0.id == published.id })?.body, "Original")
+        XCTAssertEqual(store.ledger.entries.first(where: { $0.id == draft.id })?.body, "Edited")
+
+        draft.isDraft = false
+        try store.saveEntry(draft)
+        XCTAssertEqual(store.ledger.entries.count, 1)
+        XCTAssertEqual(store.ledger.entries[0].id, published.id)
+        XCTAssertEqual(store.ledger.entries[0].body, "Edited")
+        XCTAssertNil(store.ledger.entries[0].sourceEntryID)
+    }
+
+    func testLinkedDraftResumesAfterReloadAndFinalRequiresPublishedSource() throws {
+        let store = try activeStore()
+        try store.saveEntry(CoastEntry(id: "published", body: "Original", date: "2026-01-01", isDraft: false))
+        try store.saveEntry(CoastEntry(id: "draft", body: "Edited", date: "2026-01-02", isDraft: true, sourceEntryID: "published"))
+
+        let reloaded = try CoastStore(directory: directory)
+        try reloaded.activate(accountID: "account")
+        var resumed = try XCTUnwrap(reloaded.ledger.entries.first(where: { $0.id == "draft" }))
+        resumed.isDraft = false
+        try reloaded.saveEntry(resumed)
+
+        let verified = try CoastStore(directory: directory)
+        try verified.activate(accountID: "account")
+        XCTAssertEqual(verified.ledger.entries.map(\.id), ["published"])
+        XCTAssertEqual(verified.ledger.entries[0].body, "Edited")
+
+        let orphan = CoastEntry(id: "orphan-draft", body: "Lost", date: "2026-01-03", isDraft: false, sourceEntryID: "missing")
+        XCTAssertThrowsError(try verified.saveEntry(orphan)) {
+            XCTAssertEqual(($0 as? LocalizedError)?.errorDescription, "entry.source.notFound")
+        }
+    }
+
+    func testDeletingPublishedEntryCascadesLinkedDraftsButKeepsPlainDrafts() throws {
+        let store = try activeStore()
+        try store.saveEntry(CoastEntry(id: "published", body: "Original", date: "2026-01-01", isDraft: false))
+        try store.saveEntry(CoastEntry(id: "linked", body: "Edited", date: "2026-01-02", isDraft: true, sourceEntryID: "published"))
+        try store.saveEntry(CoastEntry(id: "plain", date: "", isDraft: true))
+
+        try store.deleteEntry(id: "published")
+        XCTAssertEqual(store.ledger.entries.map(\.id), ["plain"])
+    }
+
     func testDeletingTripKeepsEntriesAndClearsReferences() throws {
         let store = try activeStore()
         let trip = CoastTrip(name: "Trip")
@@ -230,12 +291,20 @@ final class CoastWildCoreTests: XCTestCase {
     func testProgressPersistsBackwardNavigationAcrossReloadAndCompletionIsSticky() throws {
         let store = try activeStore()
         try store.setProgress(lessonID: "lesson", step: 3, completed: true)
+        let firstCompletedAt = try XCTUnwrap(store.ledger.progress["lesson"]?.completedAt)
         try store.setProgress(lessonID: "lesson", step: 2, completed: false)
-        XCTAssertEqual(store.ledger.progress["lesson"], CoastProgress(step: 2, completed: true))
+        XCTAssertEqual(store.ledger.progress["lesson"]?.step, 2)
+        XCTAssertEqual(store.ledger.progress["lesson"]?.completed, true)
+        XCTAssertEqual(store.ledger.progress["lesson"]?.completedAt, firstCompletedAt)
+
+        try store.setProgress(lessonID: "lesson", step: 2, completed: true)
+        XCTAssertEqual(store.ledger.progress["lesson"]?.completedAt, firstCompletedAt)
 
         let reloaded = try CoastStore(directory: directory)
         try reloaded.activate(accountID: "account")
-        XCTAssertEqual(reloaded.ledger.progress["lesson"], CoastProgress(step: 2, completed: true))
+        XCTAssertEqual(reloaded.ledger.progress["lesson"]?.step, 2)
+        XCTAssertEqual(reloaded.ledger.progress["lesson"]?.completed, true)
+        XCTAssertEqual(reloaded.ledger.progress["lesson"]?.completedAt, firstCompletedAt)
         XCTAssertThrowsError(try reloaded.setProgress(lessonID: "lesson", step: -1, completed: false)) {
             XCTAssertEqual(($0 as? LocalizedError)?.errorDescription, "progress.step.invalid")
         }

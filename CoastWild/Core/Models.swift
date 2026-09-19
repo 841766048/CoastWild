@@ -6,19 +6,22 @@ public struct CoastPreferences: Codable, Equatable {
     public var distanceUnit: String
     public var temperatureUnit: String
     public var onboardingDone: Bool
+    public var interests: [String]?
 
     public init(
         language: String = "zh-Hans",
         region: String = "CN",
         distanceUnit: String = "km",
         temperatureUnit: String = "c",
-        onboardingDone: Bool = false
+        onboardingDone: Bool = false,
+        interests: [String]? = nil
     ) {
         self.language = language
         self.region = region
         self.distanceUnit = distanceUnit
         self.temperatureUnit = temperatureUnit
         self.onboardingDone = onboardingDone
+        self.interests = interests
     }
 }
 
@@ -84,6 +87,7 @@ public struct CoastEntry: Codable, Identifiable, Equatable {
     public var activityID: String?
     public var photos: [String]
     public var isDraft: Bool
+    public var sourceEntryID: String?
 
     public init() {
         let formatter = DateFormatter()
@@ -102,7 +106,8 @@ public struct CoastEntry: Codable, Identifiable, Equatable {
         tripID: String? = nil,
         activityID: String? = nil,
         photos: [String] = [],
-        isDraft: Bool = true
+        isDraft: Bool = true,
+        sourceEntryID: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -112,16 +117,19 @@ public struct CoastEntry: Codable, Identifiable, Equatable {
         self.activityID = activityID
         self.photos = photos
         self.isDraft = isDraft
+        self.sourceEntryID = sourceEntryID
     }
 }
 
 public struct CoastProgress: Codable, Equatable {
     public var step: Int
     public var completed: Bool
+    public var completedAt: Date?
 
-    public init(step: Int = 0, completed: Bool = false) {
+    public init(step: Int = 0, completed: Bool = false, completedAt: Date? = nil) {
         self.step = step
         self.completed = completed
+        self.completedAt = completedAt
     }
 }
 

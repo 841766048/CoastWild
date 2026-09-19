@@ -16,11 +16,11 @@
 - Account identifiers are never used as path components. A stable hash produces `ledger-<hash>.json` filenames.
 - Deleting a trip preserves journal entries and clears their trip references.
 - Draft journal entries may be incomplete, while title/body/photo limits remain enforced. Final entries receive a localized untitled name when blank.
-- Progress step and completion values are monotonic, making repeated completion calls idempotent.
+- Progress stores the latest viewed step, including backward navigation. Completion and its first completion timestamp remain sticky, making repeated completion calls idempotent.
 
 ## Verification
 
-`swift test` passes 20 tests with 0 failures. Coverage includes model defaults, legacy JSON compatibility, exact limits, strict dates and times, auth field validation, account denial/isolation/reload, path traversal resistance, failed-write rollback, corrupt-data rollback, duplicate activities through both write paths, activity date bounds, draft/final journal behavior, trip deletion references, preferences, bookmarks, backward lesson navigation and reload, sticky completion, clearing, and export decoding.
+`swift test` passes 23 tests with 0 failures. Coverage includes model defaults, legacy JSON compatibility, exact limits, strict dates and times, auth field validation, account denial/isolation/reload, path traversal resistance, failed-write rollback, corrupt-data rollback, duplicate activities through both write paths, activity date bounds, separate edit drafts, draft reload/final replacement, entry deletion cascades, trip deletion references, preferences, bookmarks, backward lesson navigation and reload, sticky completion timestamps, clearing, and export decoding.
 
 ## API notes
 
@@ -37,11 +37,19 @@ Stable keys currently emitted by the core are:
 - Account: `account.required`
 - Storage: `storage.directory`, `storage.read`, `storage.decode`, `storage.encode`, `storage.write`
 - Trip: `trip.name.required`, `trip.name.tooLong`, `trip.notes.tooLong`, `trip.date.incomplete`, `trip.date.invalid`, `trip.date.range`, `trip.date.excludesItems`, `trip.notFound`, `trip.activity.dayOutOfRange`, `trip.activity.duplicate`, `trip.activity.time.invalid`
-- Entry: `entry.title.tooLong`, `entry.body.tooLong`, `entry.photos.tooMany`, `entry.content.required`, `entry.date.invalid`, `entry.trip.notFound`
+- Entry: `entry.title.tooLong`, `entry.body.tooLong`, `entry.photos.tooMany`, `entry.content.required`, `entry.date.invalid`, `entry.trip.notFound`, `entry.source.notFound`
 - Progress: `progress.step.invalid`
 
 ## Contract completion follow-up
 
+- `CoastPreferences.interests` is an optional string array that defaults to `nil`; `nil` represents all interests and older preference files remain decodable.
 - `CoastTripItem.time` and `CoastEntry.activityID` are optional and default to `nil`. Synthesized Codable decoding accepts existing stored payloads that omit both fields.
 - A supplied activity time must use a real 24-hour `HH:mm` value from `00:00` through `23:59`.
-- Learning progress now stores the submitted non-negative step as the actual last viewed position, including backward navigation. Only the completion flag remains sticky and idempotent.
+- Learning progress now stores the submitted non-negative step as the actual last viewed position, including backward navigation. The completion flag and first `completedAt` timestamp remain sticky and idempotent.
+
+## Persistent edit-draft follow-up
+
+- `CoastEntry.sourceEntryID` is optional and defaults to `nil`, so older stored entries remain decodable.
+- A draft linked to a published entry persists as a separate entry and leaves the published value untouched.
+- Saving that linked draft as final requires the published source to exist, then atomically replaces the source while retaining its ID, removes the draft ID, and clears `sourceEntryID`.
+- Deleting a published entry also deletes drafts linked to it, preventing a later stale draft from restoring deleted content. Unlinked drafts remain independent.

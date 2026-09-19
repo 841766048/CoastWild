@@ -141,6 +141,25 @@ public final class CoastStore {
             saved.title = preferences.language.hasPrefix("zh") ? "未命名手记" : "Untitled entry"
         }
         var next = ledger
+        if !saved.isDraft, let sourceEntryID = saved.sourceEntryID {
+            guard next.entries.contains(where: { $0.id == sourceEntryID && !$0.isDraft }) else {
+                throw CoastStoreError("entry.source.notFound")
+            }
+            let draftID = saved.id
+            saved.id = sourceEntryID
+            saved.sourceEntryID = nil
+            var replaced: [CoastEntry] = []
+            for current in next.entries {
+                if current.id == sourceEntryID {
+                    replaced.append(saved)
+                } else if current.id != draftID {
+                    replaced.append(current)
+                }
+            }
+            next.entries = replaced
+            try commit(next)
+            return
+        }
         if let index = next.entries.firstIndex(where: { $0.id == saved.id }) {
             next.entries[index] = saved
         } else {
@@ -152,7 +171,7 @@ public final class CoastStore {
     public func deleteEntry(id: String) throws {
         try requireAccount()
         var next = ledger
-        next.entries.removeAll { $0.id == id }
+        next.entries.removeAll { $0.id == id || $0.sourceEntryID == id }
         try commit(next)
     }
 
@@ -174,7 +193,8 @@ public final class CoastStore {
         let current = next.progress[lessonID] ?? CoastProgress()
         next.progress[lessonID] = CoastProgress(
             step: step,
-            completed: current.completed || completed
+            completed: current.completed || completed,
+            completedAt: current.completedAt ?? (completed ? Date() : nil)
         )
         try commit(next)
     }
