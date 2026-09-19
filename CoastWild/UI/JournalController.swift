@@ -261,6 +261,10 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     pending?.cancel()
     capture()
     if original == nil && entry.title.isEmpty && entry.body.isEmpty && entry.photos.isEmpty {
+      if env.store.ledger.entries.contains(where: { $0.id == entry.id }) {
+        guard save({ try env.store.deleteEntry(id: entry.id) }) else { return }
+      }
+      env.cleanUnusedPhotos()
       finished = true
       navigationController?.popViewController(animated: true)
       return
@@ -454,9 +458,7 @@ final class JournalDetailController: CoastController {
                 "只删除应用中的附件副本，不影响系统照片库原图。")
             ) {
               if self.save({ try self.env.store.deleteEntry(id: entry.id) }) {
-                for filename in entry.photos {
-                  try? FileManager.default.removeItem(at: self.env.photoURL(filename))
-                }
+                self.env.cleanUnusedPhotos()
                 self.navigationController?.popViewController(animated: true)
               }
             }
