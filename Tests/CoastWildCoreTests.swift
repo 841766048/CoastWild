@@ -94,8 +94,27 @@ final class CoastWildCoreTests: XCTestCase {
         try FileManager.default.removeItem(at: directory)
         var next = before
         next.trips.append(CoastTrip(name: "Never published"))
-        XCTAssertThrowsError(try store.commit(next))
+        XCTAssertThrowsError(try store.commit(next)) {
+            XCTAssertEqual(($0 as? LocalizedError)?.errorDescription, "storage.write")
+            XCTAssertNotNil(($0 as? CoastStoreError)?.underlyingError)
+        }
         XCTAssertEqual(store.ledger, before)
+    }
+
+    func testCorruptAccountFileExposesStableDecodeErrorAndDoesNotActivate() throws {
+        let store = try CoastStore(directory: directory)
+        try store.activate(accountID: "good")
+        try store.saveTrip(CoastTrip(name: "Good"))
+
+        let corruptURL = directory.appendingPathComponent("ledger-\(stableHash("corrupt")).json")
+        try Data("not-json".utf8).write(to: corruptURL)
+
+        XCTAssertThrowsError(try store.activate(accountID: "corrupt")) {
+            XCTAssertEqual(($0 as? LocalizedError)?.errorDescription, "storage.decode")
+            XCTAssertNotNil(($0 as? CoastStoreError)?.underlyingError)
+        }
+        XCTAssertEqual(store.accountID, "good")
+        XCTAssertEqual(store.ledger.trips.map(\.name), ["Good"])
     }
 
     func testDuplicateActivitySameDayRejectedButOtherDayAllowed() throws {
@@ -125,6 +144,29 @@ final class CoastWildCoreTests: XCTestCase {
         let trip = CoastTrip(name: "Trip", start: "2026-01-01", end: "2026-01-02", items: [item])
         XCTAssertThrowsError(try store.saveTrip(trip)) {
             XCTAssertEqual(($0 as? LocalizedError)?.errorDescription, "trip.date.excludesItems")
+        }
+    }
+
+    func testSaveTripRejectsNegativeItemHiddenByValidItem() throws {
+        let store = try activeStore()
+        let items = [
+            CoastTripItem(activityID: "bad", day: -1, titleSnapshot: "Bad"),
+            CoastTripItem(activityID: "good", day: 0, titleSnapshot: "Good")
+        ]
+        let trip = CoastTrip(name: "Trip", items: items)
+        XCTAssertThrowsError(try store.saveTrip(trip)) {
+            XCTAssertEqual(($0 as? LocalizedError)?.errorDescription, "trip.activity.dayOutOfRange")
+        }
+    }
+
+    func testSaveTripRejectsDuplicateActivityAndDayPairs() throws {
+        let store = try activeStore()
+        let items = [
+            CoastTripItem(activityID: "same", day: 0, titleSnapshot: "First"),
+            CoastTripItem(activityID: "same", day: 0, titleSnapshot: "Second")
+        ]
+        XCTAssertThrowsError(try store.saveTrip(CoastTrip(name: "Trip", items: items))) {
+            XCTAssertEqual(($0 as? LocalizedError)?.errorDescription, "trip.activity.duplicate")
         }
     }
 
@@ -196,5 +238,14 @@ final class CoastWildCoreTests: XCTestCase {
         let store = try CoastStore(directory: directory)
         try store.activate(accountID: "account")
         return store
+    }
+
+    private func stableHash(_ value: String) -> String {
+        var hash: UInt64 = 14_695_981_039_346_656_037
+        for byte in value.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 1_099_511_628_211
+        }
+        return String(hash, radix: 16)
     }
 }

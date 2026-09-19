@@ -2,18 +2,24 @@ import Foundation
 
 public struct CoastStoreError: LocalizedError, Equatable {
     public let key: String
+    public let underlyingError: Error?
 
-    public init(_ key: String) {
+    public init(_ key: String, underlyingError: Error? = nil) {
         self.key = key
+        self.underlyingError = underlyingError
     }
 
     public var errorDescription: String? { key }
+
+    public static func == (lhs: CoastStoreError, rhs: CoastStoreError) -> Bool {
+        lhs.key == rhs.key
+    }
 }
 
 public final class CoastStore {
     public private(set) var ledger: CoastLedger
     public private(set) var preferences: CoastPreferences
-    public var accountID: String?
+    public private(set) var accountID: String?
 
     private let directory: URL
     private let fileManager: FileManager
@@ -27,9 +33,13 @@ public final class CoastStore {
         self.decoder = JSONDecoder()
         self.ledger = CoastLedger()
         self.preferences = CoastPreferences()
-        try fileManager.createDirectory(at: self.directory, withIntermediateDirectories: true)
+        do {
+            try fileManager.createDirectory(at: self.directory, withIntermediateDirectories: true)
+        } catch {
+            throw CoastStoreError("storage.directory", underlyingError: error)
+        }
         if fileManager.fileExists(atPath: preferencesURL.path) {
-            preferences = try decoder.decode(CoastPreferences.self, from: Data(contentsOf: preferencesURL))
+            preferences = try read(CoastPreferences.self, from: preferencesURL)
         }
     }
 
@@ -42,7 +52,7 @@ public final class CoastStore {
         let url = ledgerURL(for: accountID)
         let loaded: CoastLedger
         if fileManager.fileExists(atPath: url.path) {
-            loaded = try decoder.decode(CoastLedger.self, from: Data(contentsOf: url))
+            loaded = try read(CoastLedger.self, from: url)
         } else {
             loaded = CoastLedger()
         }
@@ -51,21 +61,30 @@ public final class CoastStore {
     }
 
     public func updatePreferences(_ next: CoastPreferences) throws {
-        let data = try encoder.encode(next)
-        try data.write(to: preferencesURL, options: .atomic)
+        let data = try encode(next)
+        try write(data, to: preferencesURL)
         preferences = next
     }
 
     public func commit(_ next: CoastLedger) throws {
         guard let accountID else { throw CoastStoreError("account.required") }
-        let data = try encoder.encode(next)
-        try data.write(to: ledgerURL(for: accountID), options: .atomic)
+        let data = try encode(next)
+        try write(data, to: ledgerURL(for: accountID))
         ledger = next
     }
 
     public func saveTrip(_ trip: CoastTrip) throws {
         try requireAccount()
         if let error = CoastValidation.trip(trip) { throw CoastStoreError(error) }
+        if trip.items.contains(where: { $0.day < 0 }) {
+            throw CoastStoreError("trip.activity.dayOutOfRange")
+        }
+        var activityDays = Set<ActivityDay>()
+        for item in trip.items {
+            guard activityDays.insert(ActivityDay(activityID: item.activityID, day: item.day)).inserted else {
+                throw CoastStoreError("trip.activity.duplicate")
+            }
+        }
         let priorMaximumDay = ledger.trips.first(where: { $0.id == trip.id })?.items.map(\.day).max()
         let submittedMaximumDay = trip.items.map(\.day).max()
         let maximumDay = [priorMaximumDay, submittedMaximumDay].compactMap { $0 }.max()
@@ -165,7 +184,7 @@ public final class CoastStore {
 
     public func exportData() throws -> Data {
         try requireAccount()
-        return try encoder.encode(ledger)
+        return try encode(ledger)
     }
 
     private var preferencesURL: URL {
@@ -189,6 +208,36 @@ public final class CoastStore {
         if accountID == nil { throw CoastStoreError("account.required") }
     }
 
+    private func encode<T: Encodable>(_ value: T) throws -> Data {
+        do {
+            return try encoder.encode(value)
+        } catch {
+            throw CoastStoreError("storage.encode", underlyingError: error)
+        }
+    }
+
+    private func read<T: Decodable>(_ type: T.Type, from url: URL) throws -> T {
+        let data: Data
+        do {
+            data = try Data(contentsOf: url)
+        } catch {
+            throw CoastStoreError("storage.read", underlyingError: error)
+        }
+        do {
+            return try decoder.decode(type, from: data)
+        } catch {
+            throw CoastStoreError("storage.decode", underlyingError: error)
+        }
+    }
+
+    private func write(_ data: Data, to url: URL) throws {
+        do {
+            try data.write(to: url, options: .atomic)
+        } catch {
+            throw CoastStoreError("storage.write", underlyingError: error)
+        }
+    }
+
     private func maximumAllowedDay(for trip: CoastTrip) -> Int {
         guard let start = CoastValidation.parseDate(trip.start),
               let end = CoastValidation.parseDate(trip.end) else {
@@ -196,4 +245,9 @@ public final class CoastStore {
         }
         return Calendar(identifier: .gregorian).dateComponents([.day], from: start, to: end).day ?? 0
     }
+}
+
+private struct ActivityDay: Hashable {
+    let activityID: String
+    let day: Int
 }
