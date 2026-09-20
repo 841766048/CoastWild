@@ -149,7 +149,7 @@ final class CoastEnvironment {
   func photo(_ filename: String) -> UIImage? { UIImage(contentsOfFile: photoURL(filename).path) }
   func cleanUnusedPhotos() {
     let folder = photoURL("unused").deletingLastPathComponent()
-    let used = Set(store.ledger.entries.flatMap { $0.photos })
+    let used = store.ledger.referencedPhotoFilenames
     guard
       let files = try? FileManager.default.contentsOfDirectory(
         at: folder, includingPropertiesForKeys: nil)

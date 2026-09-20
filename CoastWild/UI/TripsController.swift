@@ -1,4 +1,5 @@
 import UIKit
+import PhotosUI
 
 final class TripsController: CoastController {
   var completed = false
@@ -35,23 +36,28 @@ final class TripsController: CoastController {
     for (index, trip) in trips.enumerated() {
       let date = trip.start.isEmpty ? env.t("No dates yet", "日期待定") : trip.start + " – " + trip.end
       let count = "\(trip.items.count) " + env.t("experiences", "个体验")
+      let customCover = trip.coverPhoto.flatMap { env.photo($0) } != nil
+      let cover = tripCoverImage(trip, env: env)
       add(index == 0
-        ? tripHeroCard(id: trip.id, title: trip.name, subtitle: date + " · " + count) { [weak self] in
+        ? tripHeroCard(id: trip.id, title: trip.name, subtitle: date + " · " + count, image: cover,
+            coverValue: env.t(customCover ? "Custom cover" : "Default cover", customCover ? "自选封面" : "默认封面")) { [weak self] in
             guard let self else { return }; self.push(TripDetailController(self.env, id: trip.id))
           }
-        : row(title: trip.name, subtitle: date + "\n" + count, image: "camp") { [weak self] in
+        : tripCompactCard(id: trip.id, title: trip.name, subtitle: date + " · " + count, image: cover,
+            coverValue: env.t(customCover ? "Custom cover" : "Default cover", customCover ? "自选封面" : "默认封面")) { [weak self] in
             guard let self else { return }; self.push(TripDetailController(self.env, id: trip.id))
           })
     }
   }
 }
-final class TripEditorController: CoastController {
+final class TripEditorController: CoastController, PHPickerViewControllerDelegate {
   var trip: CoastTrip
   let original: CoastTrip?
   let pending: String?
   var selectedRegion: String
   var regionChanged = false
   var regionButton: UIButton!
+  var coverStack: UIStackView!
   var start: CoastDateField!, end: CoastDateField!
   var name: UITextField!, notes: UITextView!,
     errorLabel = coastLabel("", size: 14, color: CoastStyle.red)
@@ -78,6 +84,11 @@ final class TripEditorController: CoastController {
     navigationItem.rightBarButtonItem = saveItem
     view.backgroundColor = UIColor(hex: 0xF3F8FA); scroll.backgroundColor = view.backgroundColor
     contentTop.constant = 20; stack.spacing = 14
+    coverStack = UIStackView()
+    coverStack.axis = .vertical
+    coverStack.spacing = 8
+    add(editorFormPanel([coverStack], height: 304))
+    renderCover()
     name = editorTextField(placeholder: env.t("Give your trip a name", "给出游起个名字"), value: trip.name)
     name.accessibilityIdentifier = "trip.name"
     add(editorFormPanel([editorFieldGroup(env.t("Trip name", "出游名称"), control: name)], height: 113))
@@ -111,16 +122,137 @@ final class TripEditorController: CoastController {
     selectedRegion = region; regionChanged = true; regionButton.accessibilityValue = regionTitle()
     regionButton.configuration?.title = regionTitle()
   }
+  func renderCover() {
+    coverStack.arrangedSubviews.forEach { view in
+      coverStack.removeArrangedSubview(view)
+      view.removeFromSuperview()
+    }
+    coverStack.addArrangedSubview(coastLabel(env.t("Cover (optional)", "封面（选填）"), size: 14))
+
+    let preview = UIView()
+    preview.clipsToBounds = true
+    preview.layer.cornerRadius = 10
+    preview.heightAnchor.constraint(equalToConstant: 164).isActive = true
+    let selectedImage = trip.coverPhoto.flatMap { env.photo($0) }
+    let imageView = UIImageView(image: selectedImage ?? UIImage(named: "camp"))
+    imageView.contentMode = .scaleAspectFill
+    imageView.clipsToBounds = true
+    imageView.translatesAutoresizingMaskIntoConstraints = false
+    imageView.isAccessibilityElement = true
+    imageView.accessibilityIdentifier = "trip.cover.preview"
+    imageView.accessibilityLabel = selectedImage == nil
+      ? env.t("Default trip cover", "默认出游封面") : env.t("Selected trip cover", "已选择的出游封面")
+    preview.addSubview(imageView)
+    NSLayoutConstraint.activate([
+      imageView.topAnchor.constraint(equalTo: preview.topAnchor),
+      imageView.leadingAnchor.constraint(equalTo: preview.leadingAnchor),
+      imageView.trailingAnchor.constraint(equalTo: preview.trailingAnchor),
+      imageView.bottomAnchor.constraint(equalTo: preview.bottomAnchor),
+    ])
+    if selectedImage == nil {
+      let badge = UILabel()
+      badge.text = env.t("Default cover", "默认封面")
+      badge.textColor = CoastStyle.ink
+      badge.font = CoastStyle.font(11, .semibold)
+      badge.backgroundColor = .white
+      badge.layer.cornerRadius = 10
+      badge.clipsToBounds = true
+      badge.textAlignment = .center
+      badge.translatesAutoresizingMaskIntoConstraints = false
+      preview.addSubview(badge)
+      NSLayoutConstraint.activate([
+        badge.leadingAnchor.constraint(equalTo: preview.leadingAnchor, constant: 10),
+        badge.bottomAnchor.constraint(equalTo: preview.bottomAnchor, constant: -10),
+        badge.heightAnchor.constraint(equalToConstant: 22),
+        badge.widthAnchor.constraint(greaterThanOrEqualToConstant: 70),
+      ])
+    }
+    coverStack.addArrangedSubview(preview)
+
+    let add = coastButton(
+      selectedImage == nil ? env.t("Add cover", "添加封面") : env.t("Change cover", "更换封面"),
+      secondary: true
+    ) { [weak self] in self?.pickCover() }
+    add.accessibilityIdentifier = "trip.cover.add"
+    add.configuration?.image = UIImage(systemName: "photo")
+    add.configuration?.imagePadding = 8
+    if selectedImage == nil {
+      coverStack.addArrangedSubview(add)
+    } else {
+      let remove = coastButton(env.t("Remove", "移除"), secondary: true) { [weak self] in
+        self?.trip.coverPhoto = nil
+        self?.renderCover()
+      }
+      remove.accessibilityIdentifier = "trip.cover.remove"
+      remove.configuration?.image = UIImage(systemName: "trash")
+      remove.configuration?.imagePadding = 8
+      let actions = UIStackView(arrangedSubviews: [add, remove])
+      actions.axis = .horizontal
+      actions.spacing = 8
+      actions.distribution = .fillEqually
+      coverStack.addArrangedSubview(actions)
+    }
+    let helper = coastLabel(
+      selectedImage == nil
+        ? env.t("The default cover is used when none is added.", "未添加时使用默认封面")
+        : env.t("This cover will appear in your trip list.", "封面将显示在出游列表"),
+      size: 12,
+      color: CoastStyle.muted)
+    helper.textAlignment = .center
+    coverStack.addArrangedSubview(helper)
+  }
+  func pickCover() {
+    var configuration = PHPickerConfiguration(photoLibrary: .shared())
+    configuration.filter = .images
+    configuration.selectionLimit = 1
+    let picker = PHPickerViewController(configuration: configuration)
+    picker.delegate = self
+    present(picker, animated: true)
+  }
+  func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+    picker.dismiss(animated: true)
+    guard let result = results.first else { return }
+    navigationItem.rightBarButtonItem?.isEnabled = false
+    result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
+      guard let self else { return }
+      guard let image = object as? UIImage, let bytes = image.jpegData(compressionQuality: 0.85) else {
+        DispatchQueue.main.async { self.finishCoverImport(nil) }
+        return
+      }
+      let filename = "trip-cover-" + UUID().uuidString + ".jpg"
+      do {
+        let url = self.env.photoURL(filename)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try bytes.write(to: url, options: [.atomic, .completeFileProtection])
+        DispatchQueue.main.async { self.finishCoverImport(filename) }
+      } catch {
+        DispatchQueue.main.async { self.finishCoverImport(nil) }
+      }
+    }
+  }
+  func finishCoverImport(_ filename: String?) {
+    navigationItem.rightBarButtonItem?.isEnabled = true
+    guard let filename else {
+      message(env.t("Could not add cover", "无法添加封面"), env.t("Choose another image and try again.", "请换一张图片后重试。"))
+      return
+    }
+    trip.coverPhoto = filename
+    renderCover()
+  }
   func cancel() {
     let changed =
       name.text != trip.name || start.text != trip.start || end.text != trip.end
-      || notes.text != trip.notes || regionChanged
+      || notes.text != trip.notes || regionChanged || trip.coverPhoto != original?.coverPhoto
+    let finish = { [weak self] in
+      self?.env.cleanUnusedPhotos()
+      self?.navigationController?.popViewController(animated: true)
+    }
     if changed {
       confirm(
         env.t("Discard changes?", "放弃本次修改？"), env.t("Unsaved edits will be lost.", "未保存的修改将丢失。")
-      ) { [weak self] in self?.navigationController?.popViewController(animated: true) }
+      ) { finish() }
     } else {
-      navigationController?.popViewController(animated: true)
+      finish()
     }
   }
   func submit() {
@@ -138,6 +270,7 @@ final class TripEditorController: CoastController {
       return
     }
     if save({ try env.store.saveTrip(trip) }) {
+      env.cleanUnusedPhotos()
       var controllers = navigationController?.viewControllers ?? []
       controllers.removeLast()
       let detail = TripDetailController(env, id: trip.id)
@@ -178,7 +311,11 @@ final class TripDetailController: CoastController {
     }
     contentTop.constant = 27; stack.spacing = 14
     add(coastLabel(trip.name, size: 27, weight: .bold))
-    add(coastImage("camp", height: 163))
+    let cover = UIImageView(image: tripCoverImage(trip, env: env))
+    cover.contentMode = .scaleAspectFill; cover.clipsToBounds = true; cover.layer.cornerRadius = 14
+    cover.heightAnchor.constraint(equalToConstant: 163).isActive = true
+    cover.isAccessibilityElement = true; cover.accessibilityIdentifier = "trip.cover.detail"
+    add(cover)
     note(trip.start.isEmpty ? env.t("No dates yet", "日期待定") : trip.start + " – " + trip.end)
     if trip.completed { note(env.t("Completed", "已完成出游")) }
     let days = tripDayCount(trip)
@@ -295,6 +432,7 @@ final class TripDetailController: CoastController {
               self.env.t("Journal entries will be kept and unlinked.", "关联手记会保留，并解除与出游的关联。")
             ) {
               if self.save({ try self.env.store.deleteTrip(id: trip.id) }) {
+                self.env.cleanUnusedPhotos()
                 self.navigationController?.popViewController(animated: true)
               }
             }
@@ -387,17 +525,46 @@ private func editorRootHeader(_ title: String, label: String, action: @escaping 
   button.accessibilityLabel = label; button.addAction(UIAction { _ in action() }, for: .touchUpInside); row.addArrangedSubview(button)
   return row
 }
-private func tripHeroCard(id: String, title: String, subtitle: String, action: @escaping () -> Void) -> UIView {
+private func tripHeroCard(id: String, title: String, subtitle: String, image: UIImage?, coverValue: String, action: @escaping () -> Void) -> UIView {
   let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.borderWidth = 1
   button.layer.borderColor = CoastStyle.border.cgColor; button.layer.cornerRadius = 16; button.clipsToBounds = true
   let stack = UIStackView(); stack.axis = .vertical; stack.spacing = 0; stack.isUserInteractionEnabled = false; stack.translatesAutoresizingMaskIntoConstraints = false
-  let image = coastImage("camp", height: 264); image.layer.cornerRadius = 0; stack.addArrangedSubview(image)
-  let copy = UIStackView(arrangedSubviews: [coastLabel(title, size: 24, weight: .bold), coastLabel(subtitle, size: 13, color: CoastStyle.muted)])
+  let cover = UIImageView(image: image); cover.contentMode = .scaleAspectFill; cover.clipsToBounds = true
+  cover.heightAnchor.constraint(equalToConstant: 184).isActive = true
+  cover.isAccessibilityElement = true; cover.accessibilityIdentifier = "trip.cover.list"
+  stack.addArrangedSubview(cover)
+  let copy = UIStackView(arrangedSubviews: [coastLabel(title, size: 17, weight: .bold), coastLabel(subtitle, size: 13, color: CoastStyle.muted)])
   copy.axis = .vertical; copy.spacing = 5; copy.isLayoutMarginsRelativeArrangement = true; copy.layoutMargins = UIEdgeInsets(top: 10, left: 15, bottom: 12, right: 15)
   stack.addArrangedSubview(copy); button.addSubview(stack)
   NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: button.topAnchor), stack.leadingAnchor.constraint(equalTo: button.leadingAnchor), stack.trailingAnchor.constraint(equalTo: button.trailingAnchor), stack.bottomAnchor.constraint(equalTo: button.bottomAnchor)])
   button.accessibilityLabel = title + ", " + subtitle; button.accessibilityIdentifier = "trip.card.\(id)"
+  button.accessibilityValue = coverValue
   button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
+}
+private func tripCompactCard(id: String, title: String, subtitle: String, image: UIImage?, coverValue: String, action: @escaping () -> Void) -> UIView {
+  let button = UIButton(type: .system); button.backgroundColor = .white; button.layer.cornerRadius = 14
+  button.layer.borderWidth = 1; button.layer.borderColor = CoastStyle.border.cgColor
+  let row = UIStackView(); row.axis = .horizontal; row.spacing = 12; row.alignment = .center
+  row.isUserInteractionEnabled = false; row.translatesAutoresizingMaskIntoConstraints = false; button.addSubview(row)
+  let cover = UIImageView(image: image); cover.contentMode = .scaleAspectFill; cover.clipsToBounds = true; cover.layer.cornerRadius = 9
+  cover.widthAnchor.constraint(equalToConstant: 88).isActive = true; cover.heightAnchor.constraint(equalToConstant: 78).isActive = true
+  cover.isAccessibilityElement = true; cover.accessibilityIdentifier = "trip.cover.list"
+  row.addArrangedSubview(cover)
+  let copy = UIStackView(arrangedSubviews: [coastLabel(title, size: 17, weight: .bold), coastLabel(subtitle, size: 13, color: CoastStyle.muted)])
+  copy.axis = .vertical; copy.spacing = 5; row.addArrangedSubview(copy)
+  let arrow = UIImageView(image: UIImage(named: "icon-next")); arrow.tintColor = CoastStyle.ink
+  arrow.contentMode = .scaleAspectFit; arrow.widthAnchor.constraint(equalToConstant: 16).isActive = true; arrow.heightAnchor.constraint(equalToConstant: 16).isActive = true
+  row.addArrangedSubview(arrow)
+  NSLayoutConstraint.activate([
+    row.topAnchor.constraint(equalTo: button.topAnchor, constant: 12), row.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -12),
+    row.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12), row.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12),
+  ])
+  button.accessibilityLabel = title + ", " + subtitle; button.accessibilityIdentifier = "trip.card.\(id)"
+  button.accessibilityValue = coverValue
+  button.addAction(UIAction { _ in action() }, for: .touchUpInside); return button
+}
+private func tripCoverImage(_ trip: CoastTrip, env: CoastEnvironment) -> UIImage? {
+  trip.coverPhoto.flatMap { env.photo($0) } ?? UIImage(named: "camp")
 }
 private func editorTextField(placeholder: String, value: String) -> UITextField {
   let field = UITextField(); field.text = value; field.attributedPlaceholder = NSAttributedString(string: placeholder,

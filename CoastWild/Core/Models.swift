@@ -34,6 +34,7 @@ public struct CoastTrip: Codable, Identifiable, Equatable {
     public var timeZone: String
     public var completed: Bool
     public var items: [CoastTripItem]
+    public var coverPhoto: String?
 
     public init(
         id: String = UUID().uuidString,
@@ -43,7 +44,8 @@ public struct CoastTrip: Codable, Identifiable, Equatable {
         notes: String = "",
         timeZone: String = "Asia/Shanghai",
         completed: Bool = false,
-        items: [CoastTripItem] = []
+        items: [CoastTripItem] = [],
+        coverPhoto: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -53,6 +55,7 @@ public struct CoastTrip: Codable, Identifiable, Equatable {
         self.timeZone = timeZone
         self.completed = completed
         self.items = items
+        self.coverPhoto = coverPhoto
     }
 }
 
@@ -159,6 +162,10 @@ public struct CoastLedger: Codable, Equatable {
         self.entries = entries
         self.bookmarks = bookmarks
         self.progress = progress
+    }
+
+    public var referencedPhotoFilenames: Set<String> {
+        Set(entries.flatMap(\.photos) + trips.compactMap(\.coverPhoto))
     }
 }
 

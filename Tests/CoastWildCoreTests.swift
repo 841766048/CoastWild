@@ -35,6 +35,7 @@ final class CoastWildCoreTests: XCTestCase {
         XCTAssertFalse(trip.id.isEmpty)
         XCTAssertEqual(trip.timeZone, "Asia/Shanghai")
         XCTAssertEqual(trip.items, [])
+        XCTAssertNil(trip.coverPhoto)
         let entry = CoastEntry()
         XCTAssertNotNil(CoastValidation.parseDate(entry.date))
         XCTAssertNil(entry.activityID)
@@ -58,6 +59,27 @@ final class CoastWildCoreTests: XCTestCase {
 
         let progressData = Data(#"{"step":2,"completed":true}"#.utf8)
         XCTAssertNil(try JSONDecoder().decode(CoastProgress.self, from: progressData).completedAt)
+
+        let tripData = Data(#"{"id":"trip","name":"Legacy","start":"","end":"","notes":"","timeZone":"Asia/Shanghai","completed":false,"items":[]}"#.utf8)
+        XCTAssertNil(try JSONDecoder().decode(CoastTrip.self, from: tripData).coverPhoto)
+    }
+
+    func testTripCoverFilenameRoundTripsThroughStore() throws {
+        let store = try activeStore()
+        let trip = CoastTrip(name: "Mountain weekend", coverPhoto: "cover-123.jpg")
+        try store.saveTrip(trip)
+
+        let reloaded = try CoastStore(directory: directory)
+        try reloaded.activate(accountID: "account")
+        XCTAssertEqual(reloaded.ledger.trips.first?.coverPhoto, "cover-123.jpg")
+    }
+
+    func testReferencedPhotosIncludeJournalImagesAndTripCovers() {
+        let ledger = CoastLedger(
+            trips: [CoastTrip(name: "Covered", coverPhoto: "trip-cover.jpg"), CoastTrip(name: "Default")],
+            entries: [CoastEntry(body: "Entry", date: "2026-09-20", photos: ["journal-1.jpg", "journal-2.jpg"])])
+
+        XCTAssertEqual(ledger.referencedPhotoFilenames, ["trip-cover.jpg", "journal-1.jpg", "journal-2.jpg"])
     }
 
     func testValidationUsesExactFieldLimitsAndDateRules() {
