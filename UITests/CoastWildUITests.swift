@@ -4,10 +4,37 @@ final class CoastWildUITests: XCTestCase {
   override func setUpWithError() throws {
     continueAfterFailure = false
   }
+  func testFreshInstallationRequiresPrivacyConsentBeforeLogin() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login"]
+    app.launch()
+
+    XCTAssertTrue(app.buttons["privacy.continue"].waitForExistence(timeout: 10))
+    XCTAssertTrue(app.buttons["privacy.checkbox"].exists)
+    XCTAssertTrue(app.textViews["privacy.agreement"].exists)
+    XCTAssertTrue(app.buttons["privacy.decline"].exists)
+    XCTAssertFalse(app.buttons["auth.remote.submit"].exists)
+    XCTAssertFalse(app.tabBars.firstMatch.exists)
+    XCTAssertEqual(app.links.count, 2)
+    app.links.element(boundBy: 0).tap()
+    XCTAssertTrue(app.webViews["legal.webview"].waitForExistence(timeout: 5))
+    app.navigationBars.buttons.firstMatch.tap()
+    XCTAssertTrue(app.buttons["privacy.continue"].waitForExistence(timeout: 5))
+    app.buttons["privacy.continue"].tap()
+    XCTAssertTrue(app.staticTexts["privacy.validation"].exists)
+    app.buttons["privacy.decline"].tap()
+    XCTAssertTrue(app.buttons["privacy.sheet.policy"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["privacy.sheet.accept"].exists)
+    app.buttons["privacy.sheet.exit"].tap()
+    XCTAssertTrue(app.buttons["privacy.continue"].waitForExistence(timeout: 5))
+    XCTAssertFalse(app.buttons["auth.remote.submit"].exists)
+  }
+
   func testOnboardingAndLoginGate() {
     let app = XCUIApplication()
     app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login"]
     app.launch()
+    acceptPrivacyConsent(in: app)
     XCTAssertTrue(app.buttons["auth.remote.submit"].waitForExistence(timeout: 10))
     XCTAssertFalse(app.tabBars.firstMatch.exists)
     capture("00-Onboarding", app: app)
@@ -21,6 +48,7 @@ final class CoastWildUITests: XCTestCase {
     let app = XCUIApplication()
     app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login"]
     app.launch()
+    acceptPrivacyConsent(in: app)
     tap(app.buttons["auth.remote.submit"], in: app)
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
     capture("01-Explore", app: app)
@@ -147,6 +175,7 @@ final class CoastWildUITests: XCTestCase {
     let app = XCUIApplication()
     app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login"]
     app.launch()
+    acceptPrivacyConsent(in: app)
     tap(app.buttons["auth.remote.submit"], in: app)
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
     app.terminate()
@@ -154,6 +183,15 @@ final class CoastWildUITests: XCTestCase {
     app.launch()
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
     XCTAssertFalse(app.buttons["auth.remote.submit"].exists)
+    XCTAssertFalse(app.buttons["privacy.continue"].exists)
+  }
+
+  private func acceptPrivacyConsent(in app: XCUIApplication) {
+    let checkbox = app.buttons["privacy.checkbox"]
+    XCTAssertTrue(checkbox.waitForExistence(timeout: 10))
+    checkbox.tap()
+    app.buttons["privacy.continue"].tap()
+    XCTAssertTrue(app.buttons["auth.remote.submit"].waitForExistence(timeout: 10))
   }
 
   private func dismissKeyboard(_ app: XCUIApplication) {

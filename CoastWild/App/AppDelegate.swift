@@ -44,6 +44,7 @@ final class CoastEnvironment {
   let remoteSessions: RemoteSessionStore
   let integrationAPI: any RemoteAuthenticationAPI
   let remoteSessionCoordinator: RemoteSessionCoordinator
+  let privacyConsent: PrivacyConsentStore
   let store: CoastStore
   let vault: AccountVault
   let catalog: Catalog
@@ -101,6 +102,14 @@ final class CoastEnvironment {
       deviceIdentity: deviceIdentity,
       sessions: remoteSessions
     )
+    privacyConsent = PrivacyConsentStore(
+      defaults: defaults,
+      key: "com.coastwild.integration.privacy-consent",
+      currentVersion: 1
+    )
+    if testing && ProcessInfo.processInfo.arguments.contains("--accept-privacy") {
+      privacyConsent.accept()
+    }
     directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(testing ? "CoastWildTests" : "CoastWild")
     vault = try AccountVault(testing: testing)
@@ -135,7 +144,15 @@ final class CoastEnvironment {
   @MainActor func showRoot() {
     IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
       IQBarButtonItemConfiguration(title: t("Done", "完成"))
-    window?.rootViewController = navigation(RemoteLoginController(self))
+    if privacyConsent.isAccepted {
+      window?.rootViewController = navigation(RemoteLoginController(self))
+    } else {
+      window?.rootViewController = PrivacyConsentController(self)
+    }
+  }
+  @MainActor func acceptPrivacy() {
+    privacyConsent.accept()
+    showRoot()
   }
   @MainActor func showMainInterface() {
     let tabs = UITabBarController()
