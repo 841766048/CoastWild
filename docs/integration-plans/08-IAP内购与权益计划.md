@@ -37,3 +37,8 @@
 
 - [x] 先写 App 启动交易更新、多笔并发验单和恢复购买测试。
 - [x] 实现恢复入口、进度、可重试错误和权益刷新；沙盒/正式交易仍需 App Store Connect 商品与服务端联调。
+
+### Task 4: JS Bridge 接入
+
+- [x] 使用独立 `IAPBridgeHandler` 接入商品价格查询、购买、IAP 日志和并发购买保护。
+- [x] 通过现有安全编码器回调 `getProductPriceResult` 与 `iapLog`，不向 JS 暴露收据或原始错误。

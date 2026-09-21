@@ -7,6 +7,7 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   private let policy: BusinessWebNavigationPolicy
   private let allowedHosts: Set<String>
   private let appIconDataURL: String
+  private let iapBridgeHandler: (any IAPBridgeHandling)?
   private let onBridgeMessage: (BridgeMessage) -> Void
   private var webView: WKWebView?
   private var progressObservation: NSKeyValueObservation?
@@ -23,12 +24,14 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   )
 
   init(url: URL, bootstrap: BusinessWebBootstrap, allowedHosts: Set<String>, appIconDataURL: String,
+       iapBridgeHandler: (any IAPBridgeHandling)? = nil,
        onBridgeMessage: @escaping (BridgeMessage) -> Void) {
     initialURL = url
     self.bootstrap = bootstrap
     self.allowedHosts = allowedHosts
     policy = BusinessWebNavigationPolicy(allowedHosts: allowedHosts)
     self.appIconDataURL = appIconDataURL
+    self.iapBridgeHandler = iapBridgeHandler
     self.onBridgeMessage = onBridgeMessage
     super.init(nibName: nil, bundle: nil)
   }
@@ -153,6 +156,15 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
         allowedHosts: allowedHosts, onVisibilityChange: { [weak self] in self?.evaluate($0) })
       navigationController?.pushViewController(controller, animated: true)
     case .newTppClose: evaluate(JavaScriptCallbackEncoder.closeInternalWeb())
+    case .openAppPurchase, .logPurchase, .onCreateOrder, .getProductPrice:
+      guard let iapBridgeHandler else { onBridgeMessage(message); return }
+      Task { [weak self] in
+        guard let self, let commands = try? await iapBridgeHandler.handle(message) else { return }
+        for command in commands {
+          guard let script = try? command.javaScript() else { continue }
+          evaluate(script)
+        }
+      }
     default: onBridgeMessage(message)
     }
   }

@@ -51,6 +51,7 @@ final class CoastEnvironment {
   let integrationAPI: any RemoteAuthenticationAPI
   let remoteSessionCoordinator: RemoteSessionCoordinator
   let purchaseCoordinator: PurchaseCoordinator?
+  let iapBridgeHandler: IAPBridgeHandler?
   let privacyConsent: PrivacyConsentStore
   let store: CoastStore
   let vault: AccountVault
@@ -100,6 +101,7 @@ final class CoastEnvironment {
     if testing {
       integrationAPI = UITestRemoteAuthenticationAPI()
       purchaseCoordinator = nil
+      iapBridgeHandler = nil
     } else {
       let client = IntegrationAPIClient(
         primaryHost: integration.primaryHost,
@@ -108,10 +110,16 @@ final class CoastEnvironment {
         runtimeConfiguration: integrationRuntime
       )
       integrationAPI = client
-      purchaseCoordinator = PurchaseCoordinator(
-        store: StoreKit2PurchaseStore(defaults: defaults),
+      let purchaseStore = StoreKit2PurchaseStore(defaults: defaults)
+      let coordinator = PurchaseCoordinator(
+        store: purchaseStore,
         server: IntegrationPurchaseServer(client: client, sessions: remoteSessions),
         entitlements: EntitlementStore()
+      )
+      purchaseCoordinator = coordinator
+      iapBridgeHandler = IAPBridgeHandler(
+        catalog: ProductCatalog(store: purchaseStore),
+        coordinator: coordinator
       )
     }
     remoteSessionCoordinator = RemoteSessionCoordinator(
