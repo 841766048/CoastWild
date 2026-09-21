@@ -95,21 +95,21 @@ Commit: `feat: persist validated remote sessions`
 - Consumes: `RemoteAuthenticationAPI`, `DeviceIdentityStore`, and `RemoteSessionStore`.
 - Produces: `RemoteSessionCoordinator.automaticLogin()`, `manualLogin(riskInfo:)`, `backgroundLogin(riskInfo:)`, `logout()`, and `state()`.
 
-- [ ] **Step 1: Write failing flow tests**
+- [x] **Step 1: Write failing flow tests**
 
 Use an actor fake API to assert automatic login calls only `getConfig → getStrategy`; manual and background login call `getConfig → oauth → getStrategy`; OAuth receives the device UUID and correct relogin flag; concurrent calls do not duplicate requests; invalid OAuth is not stored; OAuth failure preserves the prior session; strategy failure after OAuth preserves the new session; and logout clears session but not UUID.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `swift test --filter RemoteSessionCoordinatorTests`
 
 Expected: compilation fails because the coordinator and API protocol do not exist.
 
-- [ ] **Step 3: Implement orchestration**
+- [x] **Step 3: Implement orchestration**
 
 Define `RemoteAuthenticationAPI: Sendable` with the three existing async API methods and conform `IntegrationAPIClient`. Implement `RemoteLoginState` and typed `RemoteLoginError`. Guard every entry when state is `.loading`, persist immediately after valid OAuth, and publish authenticated state only after strategy succeeds.
 
-- [ ] **Step 4: Verify GREEN and commit**
+- [x] **Step 4: Verify GREEN and commit**
 
 Run: `swift test --filter RemoteSessionCoordinatorTests && swift test`
 

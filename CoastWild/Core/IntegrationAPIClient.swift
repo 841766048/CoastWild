@@ -251,3 +251,5 @@ public final class IntegrationAPIClient: @unchecked Sendable {
         return components.url
     }
 }
+
+extension IntegrationAPIClient: RemoteAuthenticationAPI {}
