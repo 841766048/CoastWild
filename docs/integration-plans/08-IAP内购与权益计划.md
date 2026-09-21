@@ -20,21 +20,20 @@
 
 **Files:** Create `Integration/Purchase/ProductCatalog.swift`; Test `Tests/PurchaseTests.swift`.
 
-- [ ] 先写多 SKU、缺失 SKU、本地化价格和币种测试。
-- [ ] 实现 Product 查询与 Bridge 价格 DTO。
+- [x] 先写多 SKU、缺失 SKU、本地化价格和币种测试。
+- [x] 实现 Product 查询与 Bridge 价格 DTO；正式 SKU 尚未配置，真实商品查询待上线门禁验证。
 
 ### Task 2: 购买和验单
 
 **Files:** Create `PurchaseCoordinator.swift`, `PurchaseLog.swift`; Test `PurchaseTests.swift`.
 
-- [ ] 先写建单失败、取消、pending、unverified、验单失败和成功测试。
-- [ ] 实现建单→购买→本地验证→服务端验单→finish 顺序。
-- [ ] 生成结构化、不含收据全文的 IAP 日志。
+- [x] 先写建单失败、取消、pending、unverified、验单失败和成功测试。
+- [x] 实现建单→购买→本地验证→服务端验单→finish 顺序。
+- [x] 生成结构化、不含收据全文的 IAP 日志。
 
 ### Task 3: 恢复与权益
 
 **Files:** Create `EntitlementStore.swift`; Modify `UI/ProfileController.swift`; Test `PurchaseTests.swift`, `UITests/CoastWildUITests.swift`.
 
-- [ ] 先写 App 启动交易更新、多笔并发验单和恢复购买测试。
-- [ ] 实现恢复入口、进度、可重试错误和权益刷新。
-
+- [x] 先写 App 启动交易更新、多笔并发验单和恢复购买测试。
+- [x] 实现恢复入口、进度、可重试错误和权益刷新；沙盒/正式交易仍需 App Store Connect 商品与服务端联调。

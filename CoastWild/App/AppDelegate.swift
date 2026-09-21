@@ -25,6 +25,7 @@ private enum SimulatedAccountDeletionError: LocalizedError {
     do {
       let environment = try CoastEnvironment()
       coast = environment
+      environment.startPurchaseUpdates()
       environment.window = window
       environment.showRoot()
     } catch {
@@ -49,12 +50,14 @@ final class CoastEnvironment {
   let remoteSessions: RemoteSessionStore
   let integrationAPI: any RemoteAuthenticationAPI
   let remoteSessionCoordinator: RemoteSessionCoordinator
+  let purchaseCoordinator: PurchaseCoordinator?
   let privacyConsent: PrivacyConsentStore
   let store: CoastStore
   let vault: AccountVault
   let catalog: Catalog
   let directory: URL
   weak var window: UIWindow?
+  private var purchaseUpdatesTask: Task<Void, Never>?
   var chinese: Bool { store.preferences.language != "en" }
   init() throws {
     guard let integrationURL = Bundle.main.url(
@@ -94,14 +97,23 @@ final class CoastEnvironment {
       attributionSDK: "AJ",
       adjustSDKVersion: "0.0.0"
     ))
-    integrationAPI = testing
-      ? UITestRemoteAuthenticationAPI()
-      : IntegrationAPIClient(
-          primaryHost: integration.primaryHost,
-          contextProvider: contextProvider,
-          keyStore: IntegrationKeyStore(),
-          runtimeConfiguration: integrationRuntime
-        )
+    if testing {
+      integrationAPI = UITestRemoteAuthenticationAPI()
+      purchaseCoordinator = nil
+    } else {
+      let client = IntegrationAPIClient(
+        primaryHost: integration.primaryHost,
+        contextProvider: contextProvider,
+        keyStore: IntegrationKeyStore(),
+        runtimeConfiguration: integrationRuntime
+      )
+      integrationAPI = client
+      purchaseCoordinator = PurchaseCoordinator(
+        store: StoreKit2PurchaseStore(defaults: defaults),
+        server: IntegrationPurchaseServer(client: client, sessions: remoteSessions),
+        entitlements: EntitlementStore()
+      )
+    }
     remoteSessionCoordinator = RemoteSessionCoordinator(
       api: integrationAPI,
       deviceIdentity: deviceIdentity,
@@ -246,6 +258,14 @@ final class CoastEnvironment {
     )
     try await service.deleteAccount()
     showRoot()
+  }
+  func restorePurchases() async throws -> [EntitlementSnapshot] {
+    guard let purchaseCoordinator else { return [] }
+    return try await purchaseCoordinator.restorePurchases()
+  }
+  func startPurchaseUpdates() {
+    guard purchaseUpdatesTask == nil, let purchaseCoordinator else { return }
+    purchaseUpdatesTask = Task { await purchaseCoordinator.observeTransactionUpdates() }
   }
   func photoURL(_ filename: String) -> URL {
     directory.appendingPathComponent("Photos").appendingPathComponent(store.accountID ?? "none")
