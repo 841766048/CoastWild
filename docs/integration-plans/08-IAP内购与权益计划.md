@@ -1,0 +1,40 @@
+# IAP 内购与权益 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 实现 StoreKit 2 购买、服务端验单、权益同步和未完成交易恢复。
+
+**Architecture:** `PurchaseCoordinator` 协调 Product API、服务端订单和交易更新；权益只由服务端验单结果激活。
+
+**Tech Stack:** StoreKit 2、Swift Concurrency、XCTest、StoreKit Configuration。
+
+## Global Constraints
+
+- SKU 必须来自正式商品清单。
+- 验单成功前不发放权益。
+- 支付页展示价格、周期、自动续订、权益、恢复购买、协议和隐私。
+
+---
+
+### Task 1: 商品与价格
+
+**Files:** Create `Integration/Purchase/ProductCatalog.swift`; Test `Tests/PurchaseTests.swift`.
+
+- [ ] 先写多 SKU、缺失 SKU、本地化价格和币种测试。
+- [ ] 实现 Product 查询与 Bridge 价格 DTO。
+
+### Task 2: 购买和验单
+
+**Files:** Create `PurchaseCoordinator.swift`, `PurchaseLog.swift`; Test `PurchaseTests.swift`.
+
+- [ ] 先写建单失败、取消、pending、unverified、验单失败和成功测试。
+- [ ] 实现建单→购买→本地验证→服务端验单→finish 顺序。
+- [ ] 生成结构化、不含收据全文的 IAP 日志。
+
+### Task 3: 恢复与权益
+
+**Files:** Create `EntitlementStore.swift`; Modify `UI/ProfileController.swift`; Test `PurchaseTests.swift`, `UITests/CoastWildUITests.swift`.
+
+- [ ] 先写 App 启动交易更新、多笔并发验单和恢复购买测试。
+- [ ] 实现恢复入口、进度、可重试错误和权益刷新。
+
