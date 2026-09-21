@@ -29,21 +29,21 @@
 - Consumes: bundle identifier, `UserDefaults`, Keychain read/write abstraction, UUID generator.
 - Produces: `DeviceIdentityStore.resolve() async throws -> String`, `KeychainValueStoring`, and `SecurityKeychainValueStore`.
 
-- [ ] **Step 1: Write failing storage-order tests**
+- [x] **Step 1: Write failing storage-order tests**
 
 Add tests proving a nonempty `uuidKey` default wins without Keychain access, a Keychain value is restored into defaults, and a generated lowercase UUID is written to both stores. The fake Keychain records the requested account and accessibility value.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `swift test --filter DeviceIdentityStoreTests`
 
 Expected: compilation fails because `DeviceIdentityStore` and `KeychainValueStoring` do not exist.
 
-- [ ] **Step 3: Implement minimal identity storage**
+- [x] **Step 3: Implement minimal identity storage**
 
 Create an actor whose initializer accepts `bundleIdentifier`, `UserDefaults`, `any KeychainValueStoring`, and `uuidGenerator: @Sendable () -> UUID`. Implement the exact three-level lookup and store the Keychain item under `"\(bundleIdentifier)_UUID"` with after-first-unlock-this-device-only accessibility.
 
-- [ ] **Step 4: Verify GREEN and commit**
+- [x] **Step 4: Verify GREEN and commit**
 
 Run: `swift test --filter DeviceIdentityStoreTests && git diff --check`
 
