@@ -9,18 +9,22 @@
 /* Begin PBXBuildFile section */
 		0905CCC1CF46B6A08BB52E4E /* IntegrationAPIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4AB2D6457B1E1CD563DB5C8 /* IntegrationAPIError.swift */; };
 		0A362DD9763E0827A68745C6 /* IntegrationEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBC119B15928D45D56E2615 /* IntegrationEnvironment.swift */; };
-		148A25EB33A7FA550B249025 /* Pods_CoastWild.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C2F826C4AE871510EE481D3 /* Pods_CoastWild.framework */; };
+		1256B9C5A214736EC413F60C /* RemoteSessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1899BAA201756E5AFDBA91B2 /* RemoteSessionCoordinator.swift */; };
 		183CD025318A0E61BB09B349 /* RequestContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10E4FF688C12DE2E48B106F /* RequestContext.swift */; };
+		1D830954210EE13B409BA85A /* DeviceIdentityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D22E00F40C78E76F7FA7F50 /* DeviceIdentityStore.swift */; };
 		2D33BBACDF2314391BC6B30A /* ProfileController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6EB62C965D21935136A741F /* ProfileController.swift */; };
+		302964B3468D6C9E043D5006 /* Pods_CoastWild.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE524C4DFC8AFDEEF6CB7F04 /* Pods_CoastWild.framework */; };
 		356284BC5F9F062F2DADB3AF /* IntegrationAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FE561C6CF5CCE7FCA16EECA /* IntegrationAPIClient.swift */; };
 		480C2A18590A43EDF5071B75 /* CoastStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BE46D2AEEBA347131A3685 /* CoastStore.swift */; };
 		49A12E2F85CC4E4F1CD2EE30 /* ExploreController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08986A7911CC6DD0EEE621B8 /* ExploreController.swift */; };
+		4FFFE9F00EA99CAEE7718864 /* RemoteSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05AE2F4DB4D5DC48B6472574 /* RemoteSession.swift */; };
 		50F74866C98388FFFC5ECF6A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 795A71A1A46E7CCC8D44E8D2 /* Models.swift */; };
 		57CD7DFBFAE7C7BE63ADE33E /* Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3791E637CBBBDC8A7444AF /* Catalog.swift */; };
-		5DF8C8587E62A24009733092 /* Pods_CoastWildUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3935B726537A282725E18250 /* Pods_CoastWildUITests.framework */; };
+		5B5BB994A7A5C65C2BEDDD4D /* RemoteSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF74A8E0516969AD62977EED /* RemoteSessionStore.swift */; };
 		6A0B1CB9BAB010C72CD28013 /* IntegrationCipher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420FAC0F495802BE7D2DB555 /* IntegrationCipher.swift */; };
 		6C8D337C48F154EA6913D047 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F869631CBAECE9314BEC9 /* AppDelegate.swift */; };
 		72DD80024C5ACA14C33FF977 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F78DC17F81D11034765F363 /* Components.swift */; };
+		72EBA14BDFEF09F6F28E3D68 /* Pods_CoastWildUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51126523CDC5F90F567006FB /* Pods_CoastWildUITests.framework */; };
 		79BDAABD6BE5D2FBF8DEC9AE /* CoastWildUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 292ABC00FF4DD149879459A7 /* CoastWildUITests.swift */; };
 		81B4CA3BBBD35618880E523A /* JournalController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1179FA5CFC38177E012252F6 /* JournalController.swift */; };
 		876DC50021B957368701584F /* catalog.json in Resources */ = {isa = PBXBuildFile; fileRef = 0F2F3E9A846BABCF9764B610 /* catalog.json */; };
@@ -51,25 +55,28 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		05AE2F4DB4D5DC48B6472574 /* RemoteSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteSession.swift; sourceTree = "<group>"; };
 		08986A7911CC6DD0EEE621B8 /* ExploreController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreController.swift; sourceTree = "<group>"; };
 		0CB7556909418298BF833F9C /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		0DBC119B15928D45D56E2615 /* IntegrationEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationEnvironment.swift; sourceTree = "<group>"; };
+		0E37C28A21A4DF6A53D4739F /* Pods-CoastWild.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CoastWild.release.xcconfig"; path = "Target Support Files/Pods-CoastWild/Pods-CoastWild.release.xcconfig"; sourceTree = "<group>"; };
 		0F2F3E9A846BABCF9764B610 /* catalog.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = catalog.json; sourceTree = "<group>"; };
 		0F3261745E313674211D3095 /* TripsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripsController.swift; sourceTree = "<group>"; };
 		1179FA5CFC38177E012252F6 /* JournalController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalController.swift; sourceTree = "<group>"; };
+		1899BAA201756E5AFDBA91B2 /* RemoteSessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteSessionCoordinator.swift; sourceTree = "<group>"; };
+		1D22E00F40C78E76F7FA7F50 /* DeviceIdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentityStore.swift; sourceTree = "<group>"; };
 		1DCFFFA2D16B94CDFB3DA1EB /* HTTPTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPTransport.swift; sourceTree = "<group>"; };
 		1F78DC17F81D11034765F363 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		292ABC00FF4DD149879459A7 /* CoastWildUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoastWildUITests.swift; sourceTree = "<group>"; };
 		2F19E4CEB7C89B94B2F467E9 /* IntegrationRuntimeConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationRuntimeConfiguration.swift; sourceTree = "<group>"; };
 		383D24E3AFDDFF193BCAB646 /* AccountVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountVault.swift; sourceTree = "<group>"; };
-		3935B726537A282725E18250 /* Pods_CoastWildUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CoastWildUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		420FAC0F495802BE7D2DB555 /* IntegrationCipher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationCipher.swift; sourceTree = "<group>"; };
 		485F869631CBAECE9314BEC9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		4C2F826C4AE871510EE481D3 /* Pods_CoastWild.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CoastWild.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EB8B4CC2C62F576BDB2006E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		51126523CDC5F90F567006FB /* Pods_CoastWildUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CoastWildUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		59A7D6614AF616C1E93F4B3F /* LearnController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnController.swift; sourceTree = "<group>"; };
 		5B3791E637CBBBDC8A7444AF /* Catalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalog.swift; sourceTree = "<group>"; };
-		690189AE343D440E961FB673 /* Pods-CoastWild.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CoastWild.release.xcconfig"; path = "Target Support Files/Pods-CoastWild/Pods-CoastWild.release.xcconfig"; sourceTree = "<group>"; };
+		6A1A2FBD1C1257DFBB31BC1B /* Pods-CoastWildUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CoastWildUITests.debug.xcconfig"; path = "Target Support Files/Pods-CoastWildUITests/Pods-CoastWildUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		70ED430FB6F3523AE48F66BF /* IntegrationEnvironmentLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationEnvironmentLoader.swift; sourceTree = "<group>"; };
 		75F9B0733ABA9E48DEB86C45 /* IntegrationKeyDeriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationKeyDeriver.swift; sourceTree = "<group>"; };
 		775930C3DD272B9ED62F1962 /* AuthController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthController.swift; sourceTree = "<group>"; };
@@ -78,33 +85,34 @@
 		7AD638F0576AF73849AF2E11 /* DatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatePicker.swift; sourceTree = "<group>"; };
 		83B422AA91B5EF3449B9440B /* IntegrationEndpointPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationEndpointPaths.swift; sourceTree = "<group>"; };
 		8FE561C6CF5CCE7FCA16EECA /* IntegrationAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationAPIClient.swift; sourceTree = "<group>"; };
-		90A7E15717C77D8D915680B6 /* Pods-CoastWild.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CoastWild.debug.xcconfig"; path = "Target Support Files/Pods-CoastWild/Pods-CoastWild.debug.xcconfig"; sourceTree = "<group>"; };
 		A10E4FF688C12DE2E48B106F /* RequestContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestContext.swift; sourceTree = "<group>"; };
 		B4AB2D6457B1E1CD563DB5C8 /* IntegrationAPIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationAPIError.swift; sourceTree = "<group>"; };
 		BEFB3ED087C575AA0971CC5E /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		CE524C4DFC8AFDEEF6CB7F04 /* Pods_CoastWild.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CoastWild.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D2E0CA55E530497B34618190 /* IntegrationConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = IntegrationConfig.plist; sourceTree = "<group>"; };
 		D91ADB5B2BB1ED9E09F672D2 /* IntegrationDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationDTOs.swift; sourceTree = "<group>"; };
-		E1C9421FC7449C4F0D304FFE /* Pods-CoastWildUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CoastWildUITests.debug.xcconfig"; path = "Target Support Files/Pods-CoastWildUITests/Pods-CoastWildUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		DF368D729470C5BF450BA4D4 /* Pods-CoastWildUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CoastWildUITests.release.xcconfig"; path = "Target Support Files/Pods-CoastWildUITests/Pods-CoastWildUITests.release.xcconfig"; sourceTree = "<group>"; };
+		DF74A8E0516969AD62977EED /* RemoteSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteSessionStore.swift; sourceTree = "<group>"; };
 		E6EB62C965D21935136A741F /* ProfileController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileController.swift; sourceTree = "<group>"; };
 		E79BE478B0FA5201A06B3032 /* CoastWild.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CoastWild.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3BE46D2AEEBA347131A3685 /* CoastStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoastStore.swift; sourceTree = "<group>"; };
-		FB994F594B4BE7B482E0BC36 /* Pods-CoastWildUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CoastWildUITests.release.xcconfig"; path = "Target Support Files/Pods-CoastWildUITests/Pods-CoastWildUITests.release.xcconfig"; sourceTree = "<group>"; };
+		F3C2225FD412814537F7222E /* Pods-CoastWild.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CoastWild.debug.xcconfig"; path = "Target Support Files/Pods-CoastWild/Pods-CoastWild.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		334326B34A8CF6267F6C8D05 /* Frameworks */ = {
+		0C6D20F69E44C11242262A45 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				148A25EB33A7FA550B249025 /* Pods_CoastWild.framework in Frameworks */,
+				302964B3468D6C9E043D5006 /* Pods_CoastWild.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		65447E6930346A7FA724053D /* Frameworks */ = {
+		95820C38636322281B255651 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5DF8C8587E62A24009733092 /* Pods_CoastWildUITests.framework in Frameworks */,
+				72EBA14BDFEF09F6F28E3D68 /* Pods_CoastWildUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,8 +133,8 @@
 				D275A6E70F5EDC3422698450 /* CoastWild */,
 				0482C4AA73FC716D4740AE4C /* UITests */,
 				DEBF844330A7E4350B3420E2 /* Products */,
-				F0A064663FC4CC43AAFD6C31 /* Pods */,
-				366A548D896F24E2E10C1118 /* Frameworks */,
+				95B199DC90957B2BCD3DBF16 /* Pods */,
+				FD2E390B098F24C36CB2E785 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -141,13 +149,16 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		366A548D896F24E2E10C1118 /* Frameworks */ = {
+		95B199DC90957B2BCD3DBF16 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				4C2F826C4AE871510EE481D3 /* Pods_CoastWild.framework */,
-				3935B726537A282725E18250 /* Pods_CoastWildUITests.framework */,
+				F3C2225FD412814537F7222E /* Pods-CoastWild.debug.xcconfig */,
+				0E37C28A21A4DF6A53D4739F /* Pods-CoastWild.release.xcconfig */,
+				6A1A2FBD1C1257DFBB31BC1B /* Pods-CoastWildUITests.debug.xcconfig */,
+				DF368D729470C5BF450BA4D4 /* Pods-CoastWildUITests.release.xcconfig */,
 			);
-			name = Frameworks;
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		D275A6E70F5EDC3422698450 /* CoastWild */ = {
@@ -174,6 +185,7 @@
 			isa = PBXGroup;
 			children = (
 				F3BE46D2AEEBA347131A3685 /* CoastStore.swift */,
+				1D22E00F40C78E76F7FA7F50 /* DeviceIdentityStore.swift */,
 				1DCFFFA2D16B94CDFB3DA1EB /* HTTPTransport.swift */,
 				8FE561C6CF5CCE7FCA16EECA /* IntegrationAPIClient.swift */,
 				B4AB2D6457B1E1CD563DB5C8 /* IntegrationAPIError.swift */,
@@ -185,21 +197,12 @@
 				75F9B0733ABA9E48DEB86C45 /* IntegrationKeyDeriver.swift */,
 				2F19E4CEB7C89B94B2F467E9 /* IntegrationRuntimeConfiguration.swift */,
 				795A71A1A46E7CCC8D44E8D2 /* Models.swift */,
+				05AE2F4DB4D5DC48B6472574 /* RemoteSession.swift */,
+				1899BAA201756E5AFDBA91B2 /* RemoteSessionCoordinator.swift */,
+				DF74A8E0516969AD62977EED /* RemoteSessionStore.swift */,
 				A10E4FF688C12DE2E48B106F /* RequestContext.swift */,
 			);
 			path = Core;
-			sourceTree = "<group>";
-		};
-		F0A064663FC4CC43AAFD6C31 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				90A7E15717C77D8D915680B6 /* Pods-CoastWild.debug.xcconfig */,
-				690189AE343D440E961FB673 /* Pods-CoastWild.release.xcconfig */,
-				E1C9421FC7449C4F0D304FFE /* Pods-CoastWildUITests.debug.xcconfig */,
-				FB994F594B4BE7B482E0BC36 /* Pods-CoastWildUITests.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		F0E9CB4E3579BC5988638482 /* App */ = {
@@ -227,6 +230,15 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		FD2E390B098F24C36CB2E785 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CE524C4DFC8AFDEEF6CB7F04 /* Pods_CoastWild.framework */,
+				51126523CDC5F90F567006FB /* Pods_CoastWildUITests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -234,9 +246,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 04FCE0277086FA7B90551BDB /* Build configuration list for PBXNativeTarget "CoastWildUITests" */;
 			buildPhases = (
-				A084D872AE2C36F7ADF1B990 /* [CP] Check Pods Manifest.lock */,
+				1AA6EF7B04274526A8E51B51 /* [CP] Check Pods Manifest.lock */,
 				4DBCAC8D71A5BA89B61CA61D /* Sources */,
-				65447E6930346A7FA724053D /* Frameworks */,
+				95820C38636322281B255651 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -252,11 +264,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 55CA575BFF59601957964689 /* Build configuration list for PBXNativeTarget "CoastWild" */;
 			buildPhases = (
-				7A229E49F93CAFC452532BCB /* [CP] Check Pods Manifest.lock */,
+				A0B282EF8E96A9DA3CF8FD44 /* [CP] Check Pods Manifest.lock */,
 				9717F01F31C77AA2DDA1588A /* Sources */,
 				906A5A87CC4CB62F3DDE7152 /* Resources */,
-				334326B34A8CF6267F6C8D05 /* Frameworks */,
-				73916DF08F0D5F546BDF4949 /* [CP] Copy Pods Resources */,
+				0C6D20F69E44C11242262A45 /* Frameworks */,
+				4CA75C3BBFDA6E05A7108C00 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -323,7 +335,29 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		73916DF08F0D5F546BDF4949 /* [CP] Copy Pods Resources */ = {
+		1AA6EF7B04274526A8E51B51 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-CoastWildUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		4CA75C3BBFDA6E05A7108C00 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -340,7 +374,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CoastWild/Pods-CoastWild-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		7A229E49F93CAFC452532BCB /* [CP] Check Pods Manifest.lock */ = {
+		A0B282EF8E96A9DA3CF8FD44 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -356,28 +390,6 @@
 			);
 			outputPaths = (
 				"$(DERIVED_FILE_DIR)/Pods-CoastWild-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		A084D872AE2C36F7ADF1B990 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-CoastWildUITests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -406,6 +418,7 @@
 				480C2A18590A43EDF5071B75 /* CoastStore.swift in Sources */,
 				72DD80024C5ACA14C33FF977 /* Components.swift in Sources */,
 				A4A39E37AAFAB82258F080A3 /* DatePicker.swift in Sources */,
+				1D830954210EE13B409BA85A /* DeviceIdentityStore.swift in Sources */,
 				49A12E2F85CC4E4F1CD2EE30 /* ExploreController.swift in Sources */,
 				E29E9F0508D32D7EEB6CABA9 /* HTTPTransport.swift in Sources */,
 				356284BC5F9F062F2DADB3AF /* IntegrationAPIClient.swift in Sources */,
@@ -421,6 +434,9 @@
 				B05EE039147F62EC29140908 /* LearnController.swift in Sources */,
 				50F74866C98388FFFC5ECF6A /* Models.swift in Sources */,
 				2D33BBACDF2314391BC6B30A /* ProfileController.swift in Sources */,
+				4FFFE9F00EA99CAEE7718864 /* RemoteSession.swift in Sources */,
+				1256B9C5A214736EC413F60C /* RemoteSessionCoordinator.swift in Sources */,
+				5B5BB994A7A5C65C2BEDDD4D /* RemoteSessionStore.swift in Sources */,
 				183CD025318A0E61BB09B349 /* RequestContext.swift in Sources */,
 				F05F474ABA0DB1B14EC6214B /* TripsController.swift in Sources */,
 			);
@@ -451,7 +467,7 @@
 /* Begin XCBuildConfiguration section */
 		20F47DEC2FA3AE30B15D3AC8 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 90A7E15717C77D8D915680B6 /* Pods-CoastWild.debug.xcconfig */;
+			baseConfigurationReference = F3C2225FD412814537F7222E /* Pods-CoastWild.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -536,7 +552,7 @@
 		};
 		567254AA8F379642F9583537 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 690189AE343D440E961FB673 /* Pods-CoastWild.release.xcconfig */;
+			baseConfigurationReference = 0E37C28A21A4DF6A53D4739F /* Pods-CoastWild.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -628,7 +644,7 @@
 		};
 		951E3ABF4641775E37338406 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E1C9421FC7449C4F0D304FFE /* Pods-CoastWildUITests.debug.xcconfig */;
+			baseConfigurationReference = 6A1A2FBD1C1257DFBB31BC1B /* Pods-CoastWildUITests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
@@ -646,7 +662,7 @@
 		};
 		B4175BCF839B352713C42F65 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FB994F594B4BE7B482E0BC36 /* Pods-CoastWildUITests.release.xcconfig */;
+			baseConfigurationReference = DF368D729470C5BF450BA4D4 /* Pods-CoastWildUITests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;

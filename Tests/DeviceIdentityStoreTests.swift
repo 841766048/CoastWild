@@ -14,7 +14,7 @@ final class DeviceIdentityStoreTests: XCTestCase {
             uuidGenerator: { UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")! }
         )
 
-        let value = try await store.resolve()
+        let value = try store.resolve()
 
         XCTAssertEqual(value, "cached-device")
         XCTAssertEqual(keychain.readAccounts, [])
@@ -30,7 +30,7 @@ final class DeviceIdentityStoreTests: XCTestCase {
             keychain: keychain
         )
 
-        let value = try await store.resolve()
+        let value = try store.resolve()
 
         XCTAssertEqual(value, "keychain-device")
         XCTAssertEqual(defaults.string(forKey: "uuidKey"), "keychain-device")
@@ -47,7 +47,7 @@ final class DeviceIdentityStoreTests: XCTestCase {
             uuidGenerator: { UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")! }
         )
 
-        let value = try await store.resolve()
+        let value = try store.resolve()
 
         XCTAssertEqual(value, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
         XCTAssertEqual(defaults.string(forKey: "uuidKey"), value)

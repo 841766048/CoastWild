@@ -79,13 +79,14 @@ public struct SecurityKeychainValueStore: KeychainValueStoring {
     }
 }
 
-public actor DeviceIdentityStore {
+public final class DeviceIdentityStore: @unchecked Sendable {
     public static let defaultsKey = "uuidKey"
 
     private let account: String
     private let defaults: UserDefaults
     private let keychain: any KeychainValueStoring
     private let uuidGenerator: @Sendable () -> UUID
+    private let lock = NSLock()
 
     public init(
         bundleIdentifier: String,
@@ -100,6 +101,8 @@ public actor DeviceIdentityStore {
     }
 
     public func resolve() throws -> String {
+        lock.lock()
+        defer { lock.unlock() }
         if let cached = nonempty(defaults.string(forKey: Self.defaultsKey)) {
             return cached
         }

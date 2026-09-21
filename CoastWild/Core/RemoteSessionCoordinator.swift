@@ -79,7 +79,7 @@ public actor RemoteSessionCoordinator {
 
         do {
             _ = try await api.getConfig(session: .anonymous)
-            let deviceID = try await deviceIdentity.resolve()
+            let deviceID = try deviceIdentity.resolve()
             let relogin = await sessions.hasLoggedInBefore()
             let response = try await api.oauth(
                 OAuthRequest(token: deviceID, relogin: relogin, riskInfo: riskInfo),

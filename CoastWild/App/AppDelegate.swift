@@ -40,6 +40,10 @@ import IQKeyboardToolbar
 final class CoastEnvironment {
   let integration: IntegrationEnvironment
   let integrationRuntime: IntegrationRuntimeConfiguration
+  let deviceIdentity: DeviceIdentityStore
+  let remoteSessions: RemoteSessionStore
+  let integrationAPI: IntegrationAPIClient
+  let remoteSessionCoordinator: RemoteSessionCoordinator
   let store: CoastStore
   let vault: AccountVault
   let catalog: Catalog
@@ -59,6 +63,42 @@ final class CoastEnvironment {
     )
     integrationRuntime = IntegrationRuntimeConfiguration(environment: integration)
     let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing")
+    let defaults = testing
+      ? UserDefaults(suiteName: "com.coastwild.integration.ui-tests")!
+      : UserDefaults.standard
+    if testing && ProcessInfo.processInfo.arguments.contains("--reset-test-data") {
+      defaults.removePersistentDomain(forName: "com.coastwild.integration.ui-tests")
+    }
+    deviceIdentity = DeviceIdentityStore(
+      bundleIdentifier: integration.bundleIdentifier,
+      defaults: defaults
+    )
+    let deviceID = try deviceIdentity.resolve()
+    remoteSessions = RemoteSessionStore(defaults: defaults)
+    let contextProvider = RequestContextProvider(values: RequestContextValues(
+      deviceID: deviceID,
+      model: UIDevice.current.model,
+      language: Locale.preferredLanguages.first ?? "en",
+      appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
+      bundleIdentifier: integration.bundleIdentifier,
+      timeZone: TimeZone.current.identifier,
+      country: Locale.current.region?.identifier ?? "",
+      platformVersion: UIDevice.current.systemVersion,
+      localeIdentifier: Locale.current.identifier,
+      attributionSDK: "AJ",
+      adjustSDKVersion: "0.0.0"
+    ))
+    integrationAPI = IntegrationAPIClient(
+      primaryHost: integration.primaryHost,
+      contextProvider: contextProvider,
+      keyStore: IntegrationKeyStore(),
+      runtimeConfiguration: integrationRuntime
+    )
+    remoteSessionCoordinator = RemoteSessionCoordinator(
+      api: integrationAPI,
+      deviceIdentity: deviceIdentity,
+      sessions: remoteSessions
+    )
     directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(testing ? "CoastWildTests" : "CoastWild")
     vault = try AccountVault(testing: testing)

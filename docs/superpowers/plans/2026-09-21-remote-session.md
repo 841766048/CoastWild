@@ -129,20 +129,20 @@ Commit: `feat: orchestrate remote login flows`
 - Consumes: completed identity store, session store, API client, and coordinator.
 - Produces: shared remote-authentication dependencies owned by `CoastEnvironment`.
 
-- [ ] **Step 1: Compose dependencies without replacing UI yet**
+- [x] **Step 1: Compose dependencies without replacing UI yet**
 
 Initialize the production Keychain store, identity store, session store, API client, and coordinator in `CoastEnvironment`. Keep the existing local auth UI until its separate UI task is implemented; do not migrate its accounts or data.
 
-- [ ] **Step 2: Update plan status and regenerate Xcode project**
+- [x] **Step 2: Update plan status and regenerate Xcode project**
 
 Mark completed storage and state-machine steps in integration plan `04`, then run `./scripts/bootstrap.sh` so all new Swift sources enter the app target.
 
-- [ ] **Step 3: Run final verification**
+- [x] **Step 3: Run final verification**
 
 Run: `swift test && xcodebuild -workspace CoastWild.xcworkspace -scheme CoastWild -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGN_IDENTITY=- build && git diff --check`
 
 Expected: all tests pass, output contains `BUILD SUCCEEDED`, and diff check is empty.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Commit: `feat: integrate remote session foundation`

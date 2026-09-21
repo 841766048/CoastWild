@@ -74,7 +74,7 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
 
         await coordinator.logout()
         let clearedSession = await dependencies.sessions.sessionValueForTest()
-        let retainedIdentity = try await dependencies.identity.resolve()
+        let retainedIdentity = try dependencies.identity.resolve()
 
         XCTAssertNil(clearedSession)
         XCTAssertEqual(retainedIdentity, "device-uuid")
