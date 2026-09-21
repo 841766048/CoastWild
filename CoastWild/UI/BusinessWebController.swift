@@ -1,26 +1,42 @@
 import UIKit
 import WebKit
 
-final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUIDelegate {
+final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, BridgeMessageHandling {
   private let initialURL: URL
   private let bootstrap: BusinessWebBootstrap
   private let policy: BusinessWebNavigationPolicy
+  private let allowedHosts: Set<String>
   private let appIconDataURL: String
+  private let onBridgeMessage: (BridgeMessage) -> Void
   private var webView: WKWebView?
   private var progressObservation: NSKeyValueObservation?
   private let progress = UIProgressView(progressViewStyle: .bar)
   private let percent = UILabel()
   private let retry = UIButton(type: .system)
   private var configured = false
+  private var keyboardTokens: [NSObjectProtocol] = []
+  private lazy var router = BridgeRouter(allowedHosts: allowedHosts, handler: self)
+  private lazy var eventEmitter = BridgeEventEmitter(
+    resumedName: UIApplication.didBecomeActiveNotification,
+    pausedName: UIApplication.didEnterBackgroundNotification,
+    evaluate: { [weak self] in self?.evaluate($0) }
+  )
 
-  init(url: URL, bootstrap: BusinessWebBootstrap, allowedHosts: Set<String>, appIconDataURL: String) {
+  init(url: URL, bootstrap: BusinessWebBootstrap, allowedHosts: Set<String>, appIconDataURL: String,
+       onBridgeMessage: @escaping (BridgeMessage) -> Void) {
     initialURL = url
     self.bootstrap = bootstrap
+    self.allowedHosts = allowedHosts
     policy = BusinessWebNavigationPolicy(allowedHosts: allowedHosts)
     self.appIconDataURL = appIconDataURL
+    self.onBridgeMessage = onBridgeMessage
     super.init(nibName: nil, bundle: nil)
   }
   required init?(coder: NSCoder) { fatalError("init(coder:) unsupported") }
+  deinit {
+    keyboardTokens.forEach(NotificationCenter.default.removeObserver)
+    webView?.configuration.userContentController.removeAllScriptMessageHandlers()
+  }
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -44,6 +60,8 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
       retry.centerXAnchor.constraint(equalTo: view.centerXAnchor), retry.centerYAnchor.constraint(equalTo: view.centerYAnchor),
       retry.widthAnchor.constraint(equalToConstant: 160), retry.heightAnchor.constraint(equalToConstant: 48),
     ])
+    _ = eventEmitter
+    observeKeyboard()
   }
 
   override func viewDidLayoutSubviews() {
@@ -74,6 +92,9 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     }
     configuration.userContentController.addUserScript(WKUserScript(
       source: script, injectionTime: .atDocumentStart, forMainFrameOnly: false))
+    for topic in BridgeTopic.allCases {
+      configuration.userContentController.add(BusinessWeakScriptMessageHandler(target: self), name: topic.rawValue)
+    }
     let next = WKWebView(frame: .zero, configuration: configuration)
     next.navigationDelegate = self; next.uiDelegate = self
     next.allowsLinkPreview = false; next.allowsBackForwardNavigationGestures = false
@@ -102,6 +123,45 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   }
   private func reloadFromStart() { rebuildAndLoad() }
   private func showFailure() { progress.isHidden = true; percent.isHidden = true; retry.isHidden = false }
+  private func evaluate(_ script: String) { webView?.evaluateJavaScript(script) }
+
+  private func observeKeyboard() {
+    let center = NotificationCenter.default
+    keyboardTokens = [
+      center.addObserver(forName: UIResponder.keyboardWillChangeFrameNotification, object: nil, queue: .main) { [weak self] note in
+        guard let self, let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        let local = view.convert(frame, from: nil); let height = max(0, view.bounds.maxY - local.minY)
+        let duration = (note.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue ?? 0
+        eventEmitter.emitKeyboard(height: height, duration: duration)
+      },
+      center.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { [weak self] _ in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { self?.eventEmitter.emitKeyboard(height: 0, duration: 0) }
+      },
+    ]
+  }
+
+  func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    try? router.route(name: message.name, body: message.body, sourceURL: message.frameInfo.request.url, isMainFrame: message.frameInfo.isMainFrame)
+  }
+
+  func handle(_ message: BridgeMessage) {
+    switch message {
+    case let .openInternalWeb(payload):
+      guard policy.decision(for: payload.url) == .allow else { return }
+      let controller = InternalWebController(
+        url: payload.url, title: payload.title, showsNavigationBar: payload.showsNavigationBar,
+        allowedHosts: allowedHosts, onVisibilityChange: { [weak self] in self?.evaluate($0) })
+      navigationController?.pushViewController(controller, animated: true)
+    case .newTppClose: evaluate(JavaScriptCallbackEncoder.closeInternalWeb())
+    default: onBridgeMessage(message)
+    }
+  }
+
+  func sendBackgroundLoginSuccess(_ value: JSONValue) throws { evaluate(try JavaScriptCallbackEncoder.backgroundLoginSuccess(value)) }
+  func sendIAPLog(_ value: JSONValue) throws { evaluate(try JavaScriptCallbackEncoder.iapLog(value)) }
+  func sendProductPrices(_ value: JSONValue) throws { evaluate(try JavaScriptCallbackEncoder.productPriceResult(value)) }
+  func sendOpenVIPService() { evaluate(JavaScriptCallbackEncoder.openVIPService()) }
+  func sendRecharge() { evaluate(JavaScriptCallbackEncoder.recharge()) }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     progress.setProgress(1, animated: true); percent.text = "100%"
@@ -124,4 +184,12 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin,
                initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType,
                decisionHandler: @escaping (WKPermissionDecision) -> Void) { decisionHandler(.prompt) }
+}
+
+private final class BusinessWeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
+  weak var target: WKScriptMessageHandler?
+  init(target: WKScriptMessageHandler) { self.target = target }
+  func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    target?.userContentController(userContentController, didReceive: message)
+  }
 }

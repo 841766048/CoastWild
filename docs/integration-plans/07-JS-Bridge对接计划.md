@@ -20,21 +20,20 @@
 
 **Files:** Create `Integration/Bridge/BridgeMessage.swift`, `BridgePayloads.swift`; Test `Tests/BridgeTests.swift`.
 
-- [ ] 先写所有 topic 的正常和错误 payload 解码测试。
-- [ ] 实现 enum、Codable payload 和精确错误。
+- [x] 先写所有 topic 的正常和错误 payload 解码测试。
+- [x] 实现 enum、类型化 payload 和精确错误。
 
 ### Task 2: 路由和生命周期
 
 **Files:** Create `BridgeRouter.swift`, `BridgeEventEmitter.swift`; Test `BridgeTests.swift`.
 
-- [ ] 先写每个 topic 只调用指定 handler 的测试。
-- [ ] 实现路由、`AppLifecycleState` 和 `KeyboardInset` 事件。
-- [ ] 验证 observer 在 controller 释放后被移除。
+- [x] 先写每个 topic 只产生一个指定类型消息的测试。
+- [x] 实现路由、`AppLifecycleState` 和 `KeyboardInset` 事件。
+- [x] 验证 observer 在 controller 释放后被移除。
 
 ### Task 3: Native 回调
 
 **Files:** Create `JavaScriptCallbackEncoder.swift`; Modify `BusinessWebController.swift`; Test `BridgeTests.swift`.
 
-- [ ] 先写反斜杠、引号、换行和 Unicode 的回调转义测试。
-- [ ] 实现背景登录、IAP 日志、价格、内部页状态回调。
-
+- [x] 先写反斜杠、引号、换行和 Unicode 的回调转义测试。
+- [x] 实现背景登录、IAP 日志、价格、内部页状态回调。
