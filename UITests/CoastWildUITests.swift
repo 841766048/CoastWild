@@ -9,6 +9,7 @@ final class CoastWildUITests: XCTestCase {
     app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login"]
     app.launch()
 
+    XCTAssertTrue(app.staticTexts["Welcome to Coast & Wild"].waitForExistence(timeout: 10))
     XCTAssertTrue(app.buttons["privacy.continue"].waitForExistence(timeout: 10))
     XCTAssertTrue(app.buttons["privacy.checkbox"].exists)
     XCTAssertTrue(app.textViews["privacy.agreement"].exists)
@@ -46,7 +47,7 @@ final class CoastWildUITests: XCTestCase {
 
   func testRegisteredUserCanCreateTripAndJournalThenLogOut() {
     let app = XCUIApplication()
-    app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login"]
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login", "--language-zh"]
     app.launch()
     acceptPrivacyConsent(in: app)
     tap(app.buttons["auth.remote.submit"], in: app)

@@ -24,7 +24,7 @@ final class CoastWildCoreTests: XCTestCase {
 
     func testModelsExposeContractDefaults() {
         let preferences = CoastPreferences()
-        XCTAssertEqual(preferences.language, "zh-Hans")
+        XCTAssertEqual(preferences.language, "en")
         XCTAssertEqual(preferences.region, "CN")
         XCTAssertEqual(preferences.distanceUnit, "km")
         XCTAssertEqual(preferences.temperatureUnit, "c")
@@ -243,9 +243,14 @@ final class CoastWildCoreTests: XCTestCase {
 
     func testFinalEntryGetsLocalizedUntitledName() throws {
         let store = try activeStore()
-        let entry = CoastEntry(title: "  ", body: "Memory", date: "2026-01-01", isDraft: false)
-        try store.saveEntry(entry)
-        XCTAssertEqual(store.ledger.entries[0].title, "未命名手记")
+        try store.saveEntry(CoastEntry(title: "  ", body: "Memory", date: "2026-01-01", isDraft: false))
+        XCTAssertEqual(store.ledger.entries[0].title, "Untitled entry")
+
+        var preferences = store.preferences
+        preferences.language = "zh-Hans"
+        try store.updatePreferences(preferences)
+        try store.saveEntry(CoastEntry(title: "  ", body: "记忆", date: "2026-01-02", isDraft: false))
+        XCTAssertEqual(store.ledger.entries[1].title, "未命名手记")
     }
 
     func testEntryCannotReferenceMissingTrip() throws {

@@ -121,12 +121,15 @@ final class CoastEnvironment {
     }
     let existed = FileManager.default.fileExists(atPath: directory.path)
     store = try CoastStore(directory: directory)
-    if !existed && !testing {
+    if !existed {
       var prefs = store.preferences
-      prefs.language = Locale.preferredLanguages.first?.hasPrefix("zh") == true ? "zh-Hans" : "en"
-      prefs.region = Locale.current.region?.identifier == "CN" ? "CN" : "US"
-      prefs.distanceUnit = prefs.region == "CN" ? "km" : "mi"
-      prefs.temperatureUnit = prefs.region == "CN" ? "c" : "f"
+      prefs.language = testing && ProcessInfo.processInfo.arguments.contains("--language-zh")
+        ? "zh-Hans" : "en"
+      if !testing {
+        prefs.region = Locale.current.region?.identifier == "CN" ? "CN" : "US"
+        prefs.distanceUnit = prefs.region == "CN" ? "km" : "mi"
+        prefs.temperatureUnit = prefs.region == "CN" ? "c" : "f"
+      }
       try store.updatePreferences(prefs)
     }
     let url = Bundle.main.url(forResource: "catalog", withExtension: "json")!

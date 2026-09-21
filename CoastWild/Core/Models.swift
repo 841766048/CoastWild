@@ -9,7 +9,7 @@ public struct CoastPreferences: Codable, Equatable {
     public var interests: [String]?
 
     public init(
-        language: String = "zh-Hans",
+        language: String = "en",
         region: String = "CN",
         distanceUnit: String = "km",
         temperatureUnit: String = "c",
