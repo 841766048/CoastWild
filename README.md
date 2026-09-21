@@ -16,6 +16,22 @@ swift test
 
 模拟器请保留本地签名（`CODE_SIGN_IDENTITY=-`）；关闭签名会使 Keychain 不可用。真机需在 Signing & Capabilities 选择自己的开发团队；工程未填入团队或签名凭据。
 
+## 正式发布配置校验
+
+归档前必须对将要打入正式包的 `IntegrationConfig.plist` 执行扫描，并传入该归档使用的 Bundle ID：
+
+```sh
+./scripts/validate_release_config.sh /path/to/ReleaseIntegrationConfig.plist com.example.coastwild
+```
+
+正式配置必须将 `CoastIntegrationMode` 设为 `production`，并用 `CoastExpectedBundleIdentifier` 声明预期 Bundle ID。扫描器会拒绝缺失或空值、非 HTTPS URL、`test-`／本地主机以及配置与构建 Bundle ID 不一致；任一错误都会返回非零退出码，必须阻止归档或发布。仓库内置的 `CoastWild/Resources/IntegrationConfig.plist` 是共享开发环境配置，按设计无法通过正式发布扫描。
+
+扫描器自身的契约测试命令：
+
+```sh
+bash scripts/tests/validate_release_config_test.sh
+```
+
 ## 使用
 
 首次启动选择语言、内容地区与兴趣，然后注册一个本地测试账号（邮箱＋至少 10 字符的密码）。登录后才能进入探索、学习、出游、手记；退出保留账号数据。不要使用正式账号的密码。
@@ -48,7 +64,7 @@ Figma： https://www.figma.com/design/sekErw6W2S4swqxlC0QPIj
 
 开发时通过 Figma 电脑 App 查看设计，并用同版导入 JSON 核对字号、字重、行高、字距、颜色、间距、图片和原始图标。布局采用 Auto Layout；状态栏、安全区和系统照片选择器随设备及 iOS 变化。主要页面的原生截图与测试记录见 `docs/verification-2026-09-20.md`；全量中英文画面尚未完成逐像素差分验收。
 
-当前无远程服务器、真实邮件、云同步、付费、实时海况或精确导航。美中地区的内置内容仍为同一套原创示例；用户填写的数据不会随切换语言重建。正式发布还需内容核验、真实服务接入、真机及无障碍全量验收。
+当前远程登录与配置接口仍使用共享测试环境；尚无云同步、付费、实时海况或精确导航。美中地区的内置内容仍为同一套原创示例；用户填写的数据不会随切换语言重建。正式发布还需替换正式配置、内容核验、真机及无障碍全量验收。
 
 图片来自本项目原设计资产；原 WebP 无损转换为 PNG，图标直接复用 SVG 路径。AppIcon 暂用原海岸图片裁切，是开发版图标。
 

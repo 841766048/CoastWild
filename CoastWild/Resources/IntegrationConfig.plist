@@ -4,6 +4,8 @@
 <dict>
     <key>CoastIntegrationMode</key>
     <string>development</string>
+    <key>CoastExpectedBundleIdentifier</key>
+    <string>test.duckegg.ios</string>
     <key>CoastPrimaryHost</key>
     <string>https://test-app.bigegg.work</string>
     <key>CoastWebHost</key>

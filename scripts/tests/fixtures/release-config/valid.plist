@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CoastIntegrationMode</key><string>production</string>
+  <key>CoastExpectedBundleIdentifier</key><string>com.example.coastwild</string>
+  <key>CoastPrimaryHost</key><string>https://api.example.com</string>
+  <key>CoastWebHost</key><string>https://web.example.com/app/</string>
+  <key>CoastIMHost</key><string>https://im.example.com</string>
+  <key>CoastLogHost</key><string>https://log.example.com</string>
+  <key>CoastPrivacyURL</key><string>https://www.example.com/privacy</string>
+  <key>CoastTermsURL</key><string>https://www.example.com/terms</string>
+  <key>CoastAppStoreID</key><string>1234567890</string>
+  <key>CoastAdjustToken</key><string>release-token</string>
+  <key>CoastAdjustPurchaseToken</key><string>purchase-token</string>
+</dict></plist>
+
