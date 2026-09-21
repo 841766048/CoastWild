@@ -57,27 +57,26 @@ Commit: `feat: add persistent device identity`
 - Create: `CoastWild/Core/RemoteSession.swift`
 - Create: `CoastWild/Core/RemoteSessionStore.swift`
 - Create: `Tests/RemoteSessionStoreTests.swift`
-- Modify: `CoastWild/Core/IntegrationDTOs.swift`
 
 **Interfaces:**
 - Consumes: OAuth `JSONValue` response and injected `UserDefaults`.
 - Produces: `RemoteSession.init(oauthResponse:)`, `requestSession`, `RemoteSessionStore.session()`, `save(_:)`, `clear()`, `hasLoggedInBefore()`, and `markLoginSucceeded()`.
 
-- [ ] **Step 1: Write failing decoding and persistence tests**
+- [x] **Step 1: Write failing decoding and persistence tests**
 
 Cover complete OAuth decoding, numeric values `0`, `1`, and `2`, missing/blank token or `userInfo.userId`, round-trip persistence under `LanlinLoginData`, malformed data rejection, `logindKey`, and clear behavior.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `swift test --filter RemoteSessionStoreTests`
 
 Expected: compilation fails because the remote-session types do not exist.
 
-- [ ] **Step 3: Implement the session model and actor**
+- [x] **Step 3: Implement the session model and actor**
 
 Persist a Codable `RemoteSession` containing `token`, `userID`, numeric `isFirstRegister`, and encoded original response data. Reject incomplete responses with `RemoteSessionError.invalidOAuthResponse`. Expose `RequestSession(token:userID:)` from the validated model. Treat malformed persisted data as absent and remove it.
 
-- [ ] **Step 4: Verify GREEN and commit**
+- [x] **Step 4: Verify GREEN and commit**
 
 Run: `swift test --filter RemoteSessionStoreTests && swift test`
 
