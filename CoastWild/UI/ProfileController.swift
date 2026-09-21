@@ -38,13 +38,14 @@ final class AccountController: CoastController {
     add(accountPortrait(env, size: 32))
     let accountType = UIStackView(); accountType.axis = .horizontal; accountType.alignment = .center
     accountType.addArrangedSubview(coastLabel(env.t("Account type", "账号类型"), size: 15)); accountType.addArrangedSubview(UIView())
-    accountType.addArrangedSubview(coastLabel(env.t("Local preview", "本地演示"), size: 12, color: CoastStyle.muted))
+    accountType.addArrangedSubview(coastLabel(env.t("Device account", "设备账号"), size: 12, color: CoastStyle.muted))
     add(coastPanel([accountType], spacing: 0, inset: 14))
-    note(env.t("Trips and journals are saved on this device for this account. Logging out keeps them for your next visit.", "出游与手记分开保存在此设备的当前演示账号下。退出不会删除它们，下次登录可以继续查看。"))
+    note(env.t("Trips and journals remain on this device for this remote account after logout.", "退出后，当前远程账号的出游与手记仍保存在此设备。"))
     add(coastButton(env.t("Log out", "退出登录"), secondary: true) { [weak self] in
-      guard let self else { return }; _ = self.save { try self.env.logout() }
+      guard let self else { return }
+      Task { try? await self.env.logout() }
     })
-    add(coastLabel(env.t("This is a local demo account. No email is sent.", "此账号仅用于本机演示，不会发送真实邮件。"), size: 11, color: CoastStyle.muted))
+    add(coastLabel(env.t("This account signs in securely with this device.", "此账号通过当前设备安全登录。"), size: 11, color: CoastStyle.muted))
   }
 }
 final class PreferencesController: CoastController {
@@ -184,10 +185,9 @@ final class PrivacyController: CoastController {
         var preferences = self.env.store.preferences
         preferences.onboardingDone = false
         try self.env.store.updatePreferences(preferences)
-        try self.env.logout()
       }) {
         try? FileManager.default.removeItem(at: photoFolder)
-        self.env.showRoot()
+        Task { try? await self.env.logout() }
       }
     }
   }

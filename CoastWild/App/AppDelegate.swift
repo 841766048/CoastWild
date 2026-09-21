@@ -42,7 +42,7 @@ final class CoastEnvironment {
   let integrationRuntime: IntegrationRuntimeConfiguration
   let deviceIdentity: DeviceIdentityStore
   let remoteSessions: RemoteSessionStore
-  let integrationAPI: IntegrationAPIClient
+  let integrationAPI: any RemoteAuthenticationAPI
   let remoteSessionCoordinator: RemoteSessionCoordinator
   let store: CoastStore
   let vault: AccountVault
@@ -88,12 +88,14 @@ final class CoastEnvironment {
       attributionSDK: "AJ",
       adjustSDKVersion: "0.0.0"
     ))
-    integrationAPI = IntegrationAPIClient(
-      primaryHost: integration.primaryHost,
-      contextProvider: contextProvider,
-      keyStore: IntegrationKeyStore(),
-      runtimeConfiguration: integrationRuntime
-    )
+    integrationAPI = testing
+      ? UITestRemoteAuthenticationAPI()
+      : IntegrationAPIClient(
+          primaryHost: integration.primaryHost,
+          contextProvider: contextProvider,
+          keyStore: IntegrationKeyStore(),
+          runtimeConfiguration: integrationRuntime
+        )
     remoteSessionCoordinator = RemoteSessionCoordinator(
       api: integrationAPI,
       deviceIdentity: deviceIdentity,
@@ -120,7 +122,7 @@ final class CoastEnvironment {
     }
     let url = Bundle.main.url(forResource: "catalog", withExtension: "json")!
     catalog = try JSONDecoder().decode(Catalog.self, from: Data(contentsOf: url))
-    try store.activate(accountID: vault.current?.id)
+    try store.activate(accountID: nil)
   }
   func t(_ en: String, _ zh: String) -> String { chinese ? zh : en }
   func text(_ value: [String: String]) -> String {
@@ -133,8 +135,10 @@ final class CoastEnvironment {
   @MainActor func showRoot() {
     IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
       IQBarButtonItemConfiguration(title: t("Done", "完成"))
-    if vault.current != nil && store.accountID != nil {
-      let tabs = UITabBarController()
+    window?.rootViewController = navigation(RemoteLoginController(self))
+  }
+  @MainActor func showMainInterface() {
+    let tabs = UITabBarController()
       let controllers: [(UIViewController, String, String)] = [
         (ExploreController(self), t("Explore", "探索"), "search"),
         (LearnController(self), t("Learn", "学习"), "learn"),
@@ -163,12 +167,7 @@ final class CoastEnvironment {
       }
       tabs.tabBar.standardAppearance = appearance
       tabs.tabBar.scrollEdgeAppearance = appearance
-      window?.rootViewController = tabs
-    } else {
-      window?.rootViewController = navigation(
-        store.preferences.onboardingDone
-          ? AuthController(self, mode: .login) : WelcomeController(self))
-    }
+    window?.rootViewController = tabs
   }
   func navigation(_ vc: UIViewController) -> UINavigationController {
     let nav = CoastNavigationController(rootViewController: vc)
@@ -183,15 +182,20 @@ final class CoastEnvironment {
     nav.navigationBar.prefersLargeTitles = false
     return nav
   }
-  @MainActor func authenticated() throws {
-    try store.activate(accountID: vault.current?.id)
+  @MainActor func remoteAuthenticated(userID: String) throws {
+    try store.activate(accountID: userID)
     var prefs = store.preferences
     prefs.onboardingDone = true
     try store.updatePreferences(prefs)
-    showRoot()
+    showMainInterface()
   }
-  @MainActor func logout() throws {
-    try vault.logout()
+  @MainActor func authenticated() throws {
+    guard let accountID = vault.current?.id else { return }
+    try store.activate(accountID: accountID)
+    showMainInterface()
+  }
+  @MainActor func logout() async throws {
+    await remoteSessionCoordinator.logout()
     try store.activate(accountID: nil)
     showRoot()
   }
