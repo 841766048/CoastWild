@@ -39,6 +39,7 @@ import IQKeyboardToolbar
 }
 final class CoastEnvironment {
   let integration: IntegrationEnvironment
+  let integrationRuntime: IntegrationRuntimeConfiguration
   let store: CoastStore
   let vault: AccountVault
   let catalog: Catalog
@@ -56,6 +57,7 @@ final class CoastEnvironment {
       propertyListData: Data(contentsOf: integrationURL),
       bundleIdentifier: Bundle.main.bundleIdentifier ?? ""
     )
+    integrationRuntime = IntegrationRuntimeConfiguration(environment: integration)
     let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing")
     directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(testing ? "CoastWildTests" : "CoastWild")

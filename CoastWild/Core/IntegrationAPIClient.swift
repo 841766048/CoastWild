@@ -45,6 +45,7 @@ public final class IntegrationAPIClient: @unchecked Sendable {
     private let cipher: any IntegrationCiphering
     private let contextProvider: any RequestContextProviding
     private let keyStore: IntegrationKeyStore
+    private let runtimeConfiguration: IntegrationRuntimeConfiguration?
     private let sleeper: Sleeper
 
     public init(
@@ -54,6 +55,7 @@ public final class IntegrationAPIClient: @unchecked Sendable {
         cipher: any IntegrationCiphering = DefaultIntegrationCipher(),
         contextProvider: any RequestContextProviding,
         keyStore: IntegrationKeyStore,
+        runtimeConfiguration: IntegrationRuntimeConfiguration? = nil,
         sleeper: @escaping Sleeper = {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
@@ -64,6 +66,7 @@ public final class IntegrationAPIClient: @unchecked Sendable {
         self.cipher = cipher
         self.contextProvider = contextProvider
         self.keyStore = keyStore
+        self.runtimeConfiguration = runtimeConfiguration
         self.sleeper = sleeper
     }
 
@@ -115,6 +118,7 @@ public final class IntegrationAPIClient: @unchecked Sendable {
             throw IntegrationAPIError.decryption
         }
         let configuration = try JSONValue(any: configurationObject)
+        await runtimeConfiguration?.apply(configuration: configuration)
         await keyStore.store(derivedKey)
         return IntegrationConfigBundle(
             k2: k2,

@@ -46,6 +46,87 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertEqual(cachedKey, derivedKey)
     }
 
+    func testGetConfigAppliesRemoteRuntimeOverridesAfterK4Decrypts() async throws {
+        let host = URL(string: "https://test-app.bigegg.work")!
+        let derivedKey = "1234567890abcdeffedcba9876543210"
+        let encryptedConfiguration = try IntegrationCipher.encryptJSONObject(
+            [
+                "items": [[
+                    "name": "app_ext_data",
+                    "data": [
+                        "test.duckegg.ios:privacy": "https://remote.example/privacy",
+                        "test.duckegg.ios:terms": "https://remote.example/terms",
+                        "test.duckegg.ios:app_id": "99887766",
+                        "test.duckegg.ios:aj_token": "remote-adjust",
+                        "test.duckegg.ios:aj_purchase_token": "remote-purchase",
+                    ],
+                ]],
+            ],
+            key: derivedKey
+        )
+        let response = try encryptedResponse(
+            [
+                "code": 0,
+                "msg": "",
+                "data": [
+                    "k2": Data("1234567890abcdef".utf8).base64EncodedString(),
+                    "k3": Data("fedcba9876543210".utf8).base64EncodedString(),
+                    "k4": Data(encryptedConfiguration.utf8).base64EncodedString(),
+                ],
+            ],
+            key: "test-app.bigegg.work",
+            url: host
+        )
+        let runtime = IntegrationRuntimeConfiguration(environment: try makeIntegrationEnvironment())
+        let client = makeClient(
+            host: host,
+            transport: ScriptedTransport(results: [.success(response)]),
+            keyStore: IntegrationKeyStore(),
+            runtimeConfiguration: runtime
+        )
+
+        _ = try await client.getConfig(session: .anonymous)
+        let snapshot = await runtime.snapshot()
+
+        XCTAssertEqual(snapshot.privacyURL.absoluteString, "https://remote.example/privacy")
+        XCTAssertEqual(snapshot.termsURL.absoluteString, "https://remote.example/terms")
+        XCTAssertEqual(snapshot.appID, "99887766")
+        XCTAssertEqual(snapshot.adjustToken, "remote-adjust")
+        XCTAssertEqual(snapshot.adjustPurchaseToken, "remote-purchase")
+    }
+
+    func testGetConfigDoesNotApplyOverridesWhenK4CannotDecrypt() async throws {
+        let host = URL(string: "https://test-app.bigegg.work")!
+        let response = try encryptedResponse(
+            [
+                "code": 0,
+                "msg": "",
+                "data": [
+                    "k2": Data("1234567890abcdef".utf8).base64EncodedString(),
+                    "k3": Data("fedcba9876543210".utf8).base64EncodedString(),
+                    "k4": Data("invalid-ciphertext".utf8).base64EncodedString(),
+                ],
+            ],
+            key: "test-app.bigegg.work",
+            url: host
+        )
+        let environment = try makeIntegrationEnvironment()
+        let runtime = IntegrationRuntimeConfiguration(environment: environment)
+        let client = makeClient(
+            host: host,
+            transport: ScriptedTransport(results: [.success(response)]),
+            keyStore: IntegrationKeyStore(),
+            runtimeConfiguration: runtime
+        )
+
+        await assertThrows(.decryption) {
+            _ = try await client.getConfig(session: .anonymous)
+        }
+        let snapshot = await runtime.snapshot()
+
+        XCTAssertEqual(snapshot, IntegrationRuntimeSnapshot(environment: environment))
+    }
+
     func testFiveSecretEndpointsUseDerivedKeyAndExpectedParameters() async throws {
         let host = URL(string: "https://test-app.bigegg.work")!
         let key = "1234567890abcdeffedcba9876543210"
@@ -379,6 +460,7 @@ final class IntegrationNetworkTests: XCTestCase {
         host: URL = URL(string: "https://test-app.bigegg.work")!,
         transport: some HTTPTransport,
         keyStore: IntegrationKeyStore,
+        runtimeConfiguration: IntegrationRuntimeConfiguration? = nil,
         sleeper: @escaping IntegrationAPIClient.Sleeper = { }
     ) -> IntegrationAPIClient {
         IntegrationAPIClient(
@@ -386,7 +468,24 @@ final class IntegrationNetworkTests: XCTestCase {
             transport: transport,
             contextProvider: makeContextProvider(),
             keyStore: keyStore,
+            runtimeConfiguration: runtimeConfiguration,
             sleeper: sleeper
+        )
+    }
+
+    private func makeIntegrationEnvironment() throws -> IntegrationEnvironment {
+        try IntegrationEnvironment(
+            mode: .development,
+            primaryHost: "https://test-app.bigegg.work",
+            webHost: "https://test-h5.bigegg.work",
+            imHost: "https://test-im.bigegg.work",
+            logHost: "https://test-log.bigegg.work",
+            privacyURL: "https://bundled.example/privacy",
+            termsURL: "https://bundled.example/terms",
+            appStoreID: "123456",
+            bundleIdentifier: "test.duckegg.ios",
+            adjustToken: "bundled-adjust",
+            adjustPurchaseToken: "bundled-purchase"
         )
     }
 
