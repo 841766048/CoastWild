@@ -37,6 +37,8 @@ final class CoastWildUITests: XCTestCase {
     app.launch()
     acceptPrivacyConsent(in: app)
     XCTAssertTrue(app.buttons["auth.remote.submit"].waitForExistence(timeout: 10))
+    XCTAssertTrue(app.buttons["auth.terms"].exists)
+    XCTAssertTrue(app.buttons["auth.privacy"].exists)
     XCTAssertFalse(app.tabBars.firstMatch.exists)
     capture("00-Onboarding", app: app)
     XCTAssertFalse(app.textFields["auth.email"].exists)
@@ -185,6 +187,50 @@ final class CoastWildUITests: XCTestCase {
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
     XCTAssertFalse(app.buttons["auth.remote.submit"].exists)
     XCTAssertFalse(app.buttons["privacy.continue"].exists)
+  }
+
+  func testAccountActionsAreDistinctAndDeletionFailureCanRetry() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login", "--accept-privacy", "--account-deletion-fails"]
+    app.launch()
+    tap(app.buttons["auth.remote.submit"], in: app)
+    XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
+    app.tabBars.buttons["Explore"].tap()
+    tap(app.buttons["Your space"], in: app)
+
+    XCTAssertTrue(app.buttons["profile.account"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["profile.privacy"].exists)
+    app.buttons["profile.privacy"].tap()
+    XCTAssertTrue(app.buttons["privacy.clear-space"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["privacy.policy"].exists)
+    XCTAssertTrue(app.buttons["privacy.terms"].exists)
+    app.navigationBars.buttons.firstMatch.tap()
+    app.buttons["profile.account"].tap()
+    XCTAssertTrue(app.buttons["account.logout"].exists)
+    XCTAssertTrue(app.buttons["account.delete"].exists)
+    app.buttons["account.delete"].tap()
+    XCTAssertTrue(app.staticTexts["Delete account permanently?"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Apple subscription")).firstMatch.exists)
+    app.buttons["Confirm"].tap()
+    XCTAssertTrue(app.staticTexts["Account deletion failed"].waitForExistence(timeout: 5))
+    app.buttons["OK"].tap()
+    XCTAssertTrue(app.buttons["account.delete"].isEnabled)
+    XCTAssertTrue(app.buttons["account.logout"].exists)
+  }
+
+  func testSuccessfulAccountDeletionReturnsToLogin() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login", "--accept-privacy"]
+    app.launch()
+    tap(app.buttons["auth.remote.submit"], in: app)
+    XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
+    app.tabBars.buttons["Explore"].tap()
+    tap(app.buttons["Your space"], in: app)
+    app.buttons["profile.account"].tap()
+    app.buttons["account.delete"].tap()
+    app.buttons["Confirm"].tap()
+    XCTAssertTrue(app.buttons["auth.remote.submit"].waitForExistence(timeout: 8))
+    XCTAssertFalse(app.tabBars.firstMatch.exists)
   }
 
   private func acceptPrivacyConsent(in app: XCUIApplication) {

@@ -137,6 +137,23 @@ final class CoastWildCoreTests: XCTestCase {
         XCTAssertEqual(reloaded.ledger.trips.map(\.name), ["Second"])
     }
 
+    func testDeleteCurrentAccountDataRemovesOnlyActiveLedger() throws {
+        let store = try CoastStore(directory: directory)
+        try store.activate(accountID: "first")
+        try store.saveTrip(CoastTrip(name: "First"))
+        try store.activate(accountID: "second")
+        try store.saveTrip(CoastTrip(name: "Second"))
+
+        try store.deleteCurrentAccountData()
+
+        XCTAssertNil(store.accountID)
+        XCTAssertTrue(store.ledger.trips.isEmpty)
+        try store.activate(accountID: "first")
+        XCTAssertEqual(store.ledger.trips.map(\.name), ["First"])
+        try store.activate(accountID: "second")
+        XCTAssertTrue(store.ledger.trips.isEmpty)
+    }
+
     func testInvalidAccountIdentifiersCannotTraverse() throws {
         let store = try CoastStore(directory: directory)
         try store.activate(accountID: "../../outside/😈")

@@ -50,11 +50,16 @@ final class RemoteLoginController: CoastController {
     }
     submit.accessibilityIdentifier = "auth.remote.submit"
     add(submit)
-    add(coastLabel(
-      env.t("By continuing, you agree to the Terms and acknowledge the Privacy Policy.", "继续即表示你同意服务条款并知悉隐私政策。"),
-      size: 11,
-      color: CoastStyle.muted
-    ))
+    let legal = UIStackView(); legal.axis = .horizontal; legal.distribution = .fillEqually; legal.spacing = 10
+    let terms = coastButton(env.t("Terms of Use", "用户协议"), secondary: true) { [weak self] in
+      guard let self else { return }; self.push(LegalWebController(self.env, document: .terms))
+    }
+    terms.accessibilityIdentifier = "auth.terms"
+    let privacy = coastButton(env.t("Privacy Policy", "隐私政策"), secondary: true) { [weak self] in
+      guard let self else { return }; self.push(LegalWebController(self.env, document: .privacy))
+    }
+    privacy.accessibilityIdentifier = "auth.privacy"
+    legal.addArrangedSubview(terms); legal.addArrangedSubview(privacy); add(legal)
   }
 
   private func performLogin(automatic: Bool) {

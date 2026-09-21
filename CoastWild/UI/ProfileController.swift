@@ -14,24 +14,29 @@ final class ProfileController: CoastController {
       ("\(env.store.ledger.entries.filter { !$0.isDraft }.count)", env.t("Entries", "手记")),
       ("\(env.store.ledger.progress.values.filter { $0.completed }.count)", env.t("Lessons", "已学课程"))
     ]))
-    add(coastPanel([
-      coastSettingRow(env.t("My account", "我的账号"), icon: "user") { [weak self] in
+    let account = coastSettingRow(env.t("My account", "我的账号"), icon: "user") { [weak self] in
         guard let self else { return }; self.push(AccountController(self.env))
-      },
+      }
+    account.accessibilityIdentifier = "profile.account"
+    let privacy = coastSettingRow(env.t("Data & privacy", "数据与隐私"), icon: "shield") { [weak self] in
+      guard let self else { return }; self.push(PrivacyController(self.env))
+    }
+    privacy.accessibilityIdentifier = "profile.privacy"
+    add(coastPanel([
+      account,
       coastSettingRow(env.t("Saved", "收藏"), value: "\(env.store.ledger.bookmarks.count)", icon: "bookmark") { [weak self] in
         guard let self else { return }; self.push(BookmarksController(self.env))
       },
       coastSettingRow(env.t("Preferences", "偏好设置"), icon: "settings") { [weak self] in
         guard let self else { return }; self.push(PreferencesController(self.env))
       },
-      coastSettingRow(env.t("Data & privacy", "数据与隐私"), icon: "shield") { [weak self] in
-        guard let self else { return }; self.push(PrivacyController(self.env))
-      }
+      privacy
     ], spacing: 0, inset: 0))
     add(coastNotice(env.t("Data stays on this device, in your own account space.", "数据保存在此设备中，演示账号使用独立空间。")))
   }
 }
 final class AccountController: CoastController {
+  private var deleteButton: UIButton!
   override func viewDidLoad() {
     super.viewDidLoad(); title = nil; contentTop.constant = 31; stack.spacing = 28
     navigationItem.rightBarButtonItem = UIBarButtonItem(customView: coastPreviewBadge(env))
@@ -41,11 +46,46 @@ final class AccountController: CoastController {
     accountType.addArrangedSubview(coastLabel(env.t("Device account", "设备账号"), size: 12, color: CoastStyle.muted))
     add(coastPanel([accountType], spacing: 0, inset: 14))
     note(env.t("Trips and journals remain on this device for this remote account after logout.", "退出后，当前远程账号的出游与手记仍保存在此设备。"))
-    add(coastButton(env.t("Log out", "退出登录"), secondary: true) { [weak self] in
+    let logout = coastButton(env.t("Log out", "退出登录"), secondary: true) { [weak self] in
       guard let self else { return }
       Task { try? await self.env.logout() }
-    })
+    }
+    logout.accessibilityIdentifier = "account.logout"
+    add(logout)
+    deleteButton = coastButton(env.t("Delete account", "注销账号"), secondary: true) { [weak self] in
+      self?.confirmDeletion()
+    }
+    deleteButton.accessibilityIdentifier = "account.delete"
+    add(deleteButton)
     add(coastLabel(env.t("This account signs in securely with this device.", "此账号通过当前设备安全登录。"), size: 11, color: CoastStyle.muted))
+  }
+
+  private func confirmDeletion() {
+    confirm(
+      env.t("Delete account permanently?", "永久注销账号？"),
+      env.t(
+        "This permanently removes this account's trips, journals, saved content and progress from this device. The current network request is simulated. Deleting the account does not cancel an Apple subscription; cancel it separately in Apple subscription settings.",
+        "这会永久删除此账号在本设备上的出游、手记、收藏和学习进度。当前网络注销请求为模拟流程。注销账号不会取消 Apple 订阅，请前往 Apple 订阅设置单独取消。"
+      )
+    ) { [weak self] in self?.performDeletion() }
+  }
+
+  private func performDeletion() {
+    deleteButton.isEnabled = false
+    deleteButton.configuration?.showsActivityIndicator = true
+    Task { [weak self] in
+      guard let self else { return }
+      do {
+        try await env.deleteAccount()
+      } catch {
+        deleteButton.isEnabled = true
+        deleteButton.configuration?.showsActivityIndicator = false
+        message(
+          env.t("Account deletion failed", "账号注销失败"),
+          env.errorText(error)
+        )
+      }
+    }
   }
 }
 final class PreferencesController: CoastController {
@@ -129,6 +169,16 @@ final class PrivacyController: CoastController {
       coastLabel(env.t("Your memories belong to you.", "你的回忆，属于你。"), size: 23, weight: .bold),
       coastLabel(env.t("Trips, saved content and journals stay on this device. Demo accounts are local and are not uploaded to the cloud.", "出游、收藏与手记保存在此设备上。演示账号仅在本地使用，不会上传云端。"), size: 16, color: CoastStyle.muted)
     ]))
+    let clearSpace = coastSettingRow(env.t("Clear this space", "清除此空间数据"), icon: "trash", destructive: true) { [weak self] in self?.clear() }
+    clearSpace.accessibilityIdentifier = "privacy.clear-space"
+    let privacyPolicy = coastSettingRow(env.t("Privacy Policy", "隐私政策"), icon: "shield") { [weak self] in
+      guard let self else { return }; self.push(LegalWebController(self.env, document: .privacy))
+    }
+    privacyPolicy.accessibilityIdentifier = "privacy.policy"
+    let terms = coastSettingRow(env.t("Terms of Use", "用户协议"), icon: "info") { [weak self] in
+      guard let self else { return }; self.push(LegalWebController(self.env, document: .terms))
+    }
+    terms.accessibilityIdentifier = "privacy.terms"
     add(coastPanel([
       coastSettingRow(env.t("Export my data", "导出我的数据"), icon: "share") { [weak self] in self?.export() },
       coastSettingRow(env.t("Manage saved content", "管理收藏内容"), icon: "bookmark") { [weak self] in
@@ -137,7 +187,9 @@ final class PrivacyController: CoastController {
       coastSettingRow(env.t("Photo access", "照片访问"), value: env.t("Selected only", "仅所选照片"), icon: "photo") { [weak self] in
         guard let self else { return }; self.message(self.env.t("Only the photos you choose", "只导入你主动选择的照片"), self.env.t("The system picker grants access only to selected photos. Originals remain in your library.", "系统照片选择器仅导入你选中的照片，不读取整个照片库，也不会修改原图。"))
       },
-      coastSettingRow(env.t("Clear this space", "清除此空间数据"), icon: "trash", destructive: true) { [weak self] in self?.clear() }
+      privacyPolicy,
+      terms,
+      clearSpace
     ], spacing: 0, inset: 0))
     add(coastNotice(env.t("Export includes preferences, progress, trips, journals and imported photos. Keep a copy before clearing data.", "导出包含偏好、学习进度、出游、手记及导入的照片。清除数据前，请先保留副本。")))
     stack.setCustomSpacing(0, after: stack.arrangedSubviews.last!)

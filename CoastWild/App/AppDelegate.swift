@@ -3,6 +3,11 @@ import IQKeyboardManagerSwift
 import IQKeyboardToolbarManager
 import IQKeyboardToolbar
 
+private enum SimulatedAccountDeletionError: LocalizedError {
+  case rejected
+  var errorDescription: String? { "account.deletion.simulated" }
+}
+
 @main final class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
   var coast: CoastEnvironment?
@@ -219,6 +224,29 @@ final class CoastEnvironment {
     try store.activate(accountID: nil)
     showRoot()
   }
+  @MainActor func deleteAccount() async throws {
+    let shouldFail = ProcessInfo.processInfo.arguments.contains("--account-deletion-fails")
+    let photoFolder = photoURL("unused").deletingLastPathComponent()
+    let service = AccountDeletionService(
+      remoteDelete: {
+        try await Task.sleep(nanoseconds: 350_000_000)
+        if shouldFail { throw SimulatedAccountDeletionError.rejected }
+      },
+      localDelete: { [store] in
+        try await MainActor.run {
+          if FileManager.default.fileExists(atPath: photoFolder.path) {
+            try FileManager.default.removeItem(at: photoFolder)
+          }
+          try store.deleteCurrentAccountData()
+        }
+      },
+      sessionDelete: { [remoteSessionCoordinator] in
+        await remoteSessionCoordinator.logout()
+      }
+    )
+    try await service.deleteAccount()
+    showRoot()
+  }
   func photoURL(_ filename: String) -> URL {
     directory.appendingPathComponent("Photos").appendingPathComponent(store.accountID ?? "none")
       .appendingPathComponent(URL(fileURLWithPath: filename).lastPathComponent)
@@ -243,6 +271,7 @@ final class CoastEnvironment {
         "Check your email, name and password (at least 10 characters).", "请检查邮箱、昵称与密码（至少 10 个字符）。"
       ), "auth.duplicate": ("This email already has a local account.", "该邮箱已注册本地账号。"),
       "auth.expired": ("Recovery code expired. Request a new code.", "验证码已过期或尝试过多，请重新获取。"),
+      "account.deletion.simulated": ("The simulated request failed. Nothing was deleted. Try again.", "模拟请求失败，未删除任何数据，请重试。"),
       "auth.code": ("Incorrect recovery code.", "验证码不正确。"),
       "auth.storage": ("Could not save credentials. Try again.", "账号未能保存，请重试。"),
     ]
