@@ -16,7 +16,7 @@ targets:
     sources: [CoastWild]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.coastwild.native
+        PRODUCT_BUNDLE_IDENTIFIER: test.duckegg.ios
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Coast & Wild
         INFOPLIST_KEY_UILaunchScreen_Generation: YES

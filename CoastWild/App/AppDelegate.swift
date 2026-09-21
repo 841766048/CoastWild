@@ -38,6 +38,7 @@ import IQKeyboardToolbar
   }
 }
 final class CoastEnvironment {
+  let integration: IntegrationEnvironment
   let store: CoastStore
   let vault: AccountVault
   let catalog: Catalog
@@ -45,6 +46,16 @@ final class CoastEnvironment {
   weak var window: UIWindow?
   var chinese: Bool { store.preferences.language != "en" }
   init() throws {
+    guard let integrationURL = Bundle.main.url(
+      forResource: "IntegrationConfig",
+      withExtension: "plist"
+    ) else {
+      throw IntegrationEnvironmentLoader.LoadError.invalidPropertyList
+    }
+    integration = try IntegrationEnvironmentLoader.load(
+      propertyListData: Data(contentsOf: integrationURL),
+      bundleIdentifier: Bundle.main.bundleIdentifier ?? ""
+    )
     let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing")
     directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(testing ? "CoastWildTests" : "CoastWild")

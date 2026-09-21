@@ -22,6 +22,12 @@ public struct IntegrationEnvironment: Equatable, Sendable {
     public let termsURL: URL
     public let appStoreID: String
     public let bundleIdentifier: String
+    public let adjustToken: String
+    public let adjustPurchaseToken: String
+    public let reportSubheading: String
+    public let reportDescription: String
+    public let smallIconName: String
+    public let launchImageName: String
 
     public init(
         mode: Mode,
@@ -32,7 +38,13 @@ public struct IntegrationEnvironment: Equatable, Sendable {
         privacyURL: String,
         termsURL: String,
         appStoreID: String,
-        bundleIdentifier: String
+        bundleIdentifier: String,
+        adjustToken: String = "",
+        adjustPurchaseToken: String = "",
+        reportSubheading: String = "",
+        reportDescription: String = "",
+        smallIconName: String = "",
+        launchImageName: String = ""
     ) throws {
         self.mode = mode
         self.primaryHost = try Self.normalizedURL(primaryHost, field: "primaryHost")
@@ -43,6 +55,12 @@ public struct IntegrationEnvironment: Equatable, Sendable {
         self.termsURL = try Self.normalizedURL(termsURL, field: "termsURL")
         self.appStoreID = appStoreID.trimmingCharacters(in: .whitespacesAndNewlines)
         self.bundleIdentifier = bundleIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.adjustToken = adjustToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.adjustPurchaseToken = adjustPurchaseToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.reportSubheading = reportSubheading
+        self.reportDescription = reportDescription
+        self.smallIconName = smallIconName.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.launchImageName = launchImageName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     public func validateForRelease() throws {

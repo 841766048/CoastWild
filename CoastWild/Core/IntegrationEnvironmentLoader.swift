@@ -4,6 +4,21 @@ public enum IntegrationEnvironmentLoader {
     public enum LoadError: Error, Equatable, Sendable {
         case missingKey(String)
         case invalidMode(String)
+        case invalidPropertyList
+    }
+
+    public static func load(
+        propertyListData: Data,
+        bundleIdentifier: String
+    ) throws -> IntegrationEnvironment {
+        guard let info = try? PropertyListSerialization.propertyList(
+            from: propertyListData,
+            options: [],
+            format: nil
+        ) as? [String: Any] else {
+            throw LoadError.invalidPropertyList
+        }
+        return try load(info: info, bundleIdentifier: bundleIdentifier)
     }
 
     public static func load(
@@ -27,7 +42,13 @@ public enum IntegrationEnvironmentLoader {
             privacyURL: string("CoastPrivacyURL", in: info),
             termsURL: string("CoastTermsURL", in: info),
             appStoreID: string("CoastAppStoreID", in: info),
-            bundleIdentifier: bundleIdentifier
+            bundleIdentifier: bundleIdentifier,
+            adjustToken: string("CoastAdjustToken", in: info),
+            adjustPurchaseToken: string("CoastAdjustPurchaseToken", in: info),
+            reportSubheading: string("CoastReportSubheading", in: info),
+            reportDescription: string("CoastReportDescription", in: info),
+            smallIconName: string("CoastSmallIconName", in: info),
+            launchImageName: string("CoastLaunchImageName", in: info)
         )
     }
 

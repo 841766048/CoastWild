@@ -68,6 +68,12 @@ final class IntegrationEnvironmentTests: XCTestCase {
                 "CoastPrivacyURL": "https://www.example.com/privacy",
                 "CoastTermsURL": "https://www.example.com/terms",
                 "CoastAppStoreID": "1234567890",
+                "CoastAdjustToken": "adjust-token",
+                "CoastAdjustPurchaseToken": "purchase-token",
+                "CoastReportSubheading": " - Coast & Wild",
+                "CoastReportDescription": "Outdoor learning and trip planning",
+                "CoastSmallIconName": "AppSmallIcon",
+                "CoastLaunchImageName": "LaunchImage",
             ],
             bundleIdentifier: "com.example.coast"
         )
@@ -75,6 +81,10 @@ final class IntegrationEnvironmentTests: XCTestCase {
         XCTAssertEqual(environment.mode, .development)
         XCTAssertEqual(environment.primaryHost.absoluteString, "https://api.example.com")
         XCTAssertEqual(environment.bundleIdentifier, "com.example.coast")
+        XCTAssertEqual(environment.adjustToken, "adjust-token")
+        XCTAssertEqual(environment.adjustPurchaseToken, "purchase-token")
+        XCTAssertEqual(environment.reportSubheading, " - Coast & Wild")
+        XCTAssertEqual(environment.smallIconName, "AppSmallIcon")
     }
 
     func testLoaderReportsMissingKeyWithoutCreatingPartialEnvironment() {
@@ -89,6 +99,38 @@ final class IntegrationEnvironmentTests: XCTestCase {
                 .missingKey("CoastPrimaryHost")
             )
         }
+    }
+
+    func testLoaderBuildsEnvironmentFromPropertyListData() throws {
+        let info: [String: Any] = [
+            "CoastIntegrationMode": "development",
+            "CoastPrimaryHost": "https://api.example.com",
+            "CoastWebHost": "https://web.example.com",
+            "CoastIMHost": "https://im.example.com",
+            "CoastLogHost": "https://log.example.com",
+            "CoastPrivacyURL": "https://www.example.com/privacy",
+            "CoastTermsURL": "https://www.example.com/terms",
+            "CoastAppStoreID": "1234567890",
+            "CoastAdjustToken": "adjust-token",
+            "CoastAdjustPurchaseToken": "purchase-token",
+            "CoastReportSubheading": " - Coast & Wild",
+            "CoastReportDescription": "Outdoor learning and trip planning",
+            "CoastSmallIconName": "AppSmallIcon",
+            "CoastLaunchImageName": "LaunchImage",
+        ]
+        let data = try PropertyListSerialization.data(
+            fromPropertyList: info,
+            format: .xml,
+            options: 0
+        )
+
+        let environment = try IntegrationEnvironmentLoader.load(
+            propertyListData: data,
+            bundleIdentifier: "com.example.coast"
+        )
+
+        XCTAssertEqual(environment.primaryHost.absoluteString, "https://api.example.com")
+        XCTAssertEqual(environment.adjustToken, "adjust-token")
     }
 
     func testLoaderRejectsUnknownMode() {
@@ -116,6 +158,15 @@ final class IntegrationEnvironmentTests: XCTestCase {
         }
     }
 
+    func testDefaultEndpointPathsMatchIntegrationContract() {
+        XCTAssertEqual(IntegrationEndpointPaths.default.getConfig, "/config/getAppConfigPostV2")
+        XCTAssertEqual(IntegrationEndpointPaths.default.getStrategy, "/config/getStrategyPostV2")
+        XCTAssertEqual(IntegrationEndpointPaths.default.oauth, "/security/oauth")
+        XCTAssertEqual(IntegrationEndpointPaths.default.createRecharge, "/coin/recharge/create")
+        XCTAssertEqual(IntegrationEndpointPaths.default.paymentRecharge, "/coin/recharge/payment/ipa")
+        XCTAssertEqual(IntegrationEndpointPaths.default.ascribeRecord, "/hit/ascribeRecordReqs")
+    }
+
     private func validEnvironment(
         mode: IntegrationEnvironment.Mode,
         primaryHost: String = "https://api.example.com"
@@ -129,7 +180,13 @@ final class IntegrationEnvironmentTests: XCTestCase {
             privacyURL: "https://www.example.com/privacy",
             termsURL: "https://www.example.com/terms",
             appStoreID: "1234567890",
-            bundleIdentifier: "com.example.coast"
+            bundleIdentifier: "com.example.coast",
+            adjustToken: "adjust-token",
+            adjustPurchaseToken: "purchase-token",
+            reportSubheading: " - Coast & Wild",
+            reportDescription: "Outdoor learning and trip planning",
+            smallIconName: "AppSmallIcon",
+            launchImageName: "LaunchImage"
         )
     }
 }
