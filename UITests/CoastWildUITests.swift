@@ -4,6 +4,14 @@ final class CoastWildUITests: XCTestCase {
   override func setUpWithError() throws {
     continueAfterFailure = false
   }
+  func testBusinessWebHidesNavigationBarWhenItAppears() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing", "--reset-test-data",
+                           "--ui-testing-business-web-navigation"]
+    app.launch()
+    XCTAssertTrue(app.webViews["business-web.main"].waitForExistence(timeout: 10))
+    XCTAssertFalse(app.navigationBars.firstMatch.exists)
+  }
   func testFreshInstallationRequiresPrivacyConsentBeforeLogin() {
     let app = XCUIApplication()
     app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login"]

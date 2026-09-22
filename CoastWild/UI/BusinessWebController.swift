@@ -41,6 +41,11 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     webView?.configuration.userContentController.removeAllScriptMessageHandlers()
   }
 
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    navigationController?.setNavigationBarHidden(true, animated: animated)
+  }
+
   override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = .black

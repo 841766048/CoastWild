@@ -28,6 +28,9 @@ private enum SimulatedAccountDeletionError: LocalizedError {
       environment.startPurchaseUpdates()
       environment.window = window
       environment.showRoot()
+      if ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web-navigation") {
+        environment.showBusinessWebNavigationFixture()
+      }
     } catch {
       let vc = UIViewController()
       vc.view.backgroundColor = .systemBackground
@@ -205,6 +208,35 @@ final class CoastEnvironment {
     } else {
       window?.rootViewController = PrivacyConsentController(self)
     }
+  }
+  @MainActor func showBusinessWebNavigationFixture() {
+    let bootstrap = BusinessWebBootstrap(
+      httpHeaders: [:],
+      baseURLs: .init(
+        app: integration.webHost.absoluteString,
+        im: integration.imHost.absoluteString,
+        log: integration.logHost.absoluteString,
+        privacy: integration.privacyURL.absoluteString,
+        terms: integration.termsURL.absoluteString),
+      packageInfo: .init(
+        localeIdentifier: Locale.current.identifier,
+        appName: "Coast & Wild",
+        packageName: integration.bundleIdentifier),
+      encryptedConfiguration: .object([:]),
+      strategy: .object([:]),
+      userInfo: .object([:]),
+      appID: integration.appStoreID,
+      reportSubheading: integration.reportSubheading,
+      reportDescription: integration.reportDescription)
+    let controller = BusinessWebController(
+      url: integration.webHost,
+      bootstrap: bootstrap,
+      allowedHosts: Set([integration.webHost.host!]),
+      appIconDataURL: "",
+      onBridgeMessage: { _ in })
+    let nav = UINavigationController(rootViewController: controller)
+    nav.setNavigationBarHidden(false, animated: false)
+    window?.rootViewController = nav
   }
   @MainActor func acceptPrivacy() {
     privacyConsent.accept()
