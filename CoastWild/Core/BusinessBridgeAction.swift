@@ -115,15 +115,98 @@ public enum BridgeLanguage {
 
 public enum BridgeNativeLog {
     public static func sanitizedSummary(_ message: String) -> String {
-        if let redactedJSON = redactedJSONSummary(from: message) {
-            return String(redactedJSON.prefix(160))
-        }
         return String(sanitizedText(message).prefix(160))
     }
 
     private static func sanitizedText(_ value: String) -> String {
+        if let redactedJSON = redactedJSONSummary(from: value) {
+            return redactedJSON
+        }
+
+        // Digest parameters may contain spaces and commas. Preserve the original
+        // line boundary until the complete credential payload has been removed.
+        let controlsSeparated = String(String.UnicodeScalarView(value.unicodeScalars.map { scalar in
+            scalar != "\r" && scalar != "\n" && CharacterSet.controlCharacters.contains(scalar) ? " " : scalar
+        }))
+        var placeholderPrefix = "__BRIDGE_JSON_"
+        while controlsSeparated.contains(placeholderPrefix) { placeholderPrefix += "_" }
+        var containers: [(placeholder: String, redacted: String)] = []
+        var result = ""
+        var cursor = controlsSeparated.startIndex
+        var plainTextStart = cursor
+        while cursor < controlsSeparated.endIndex {
+            if (controlsSeparated[cursor] == "{" || controlsSeparated[cursor] == "["),
+               let range = jsonContainerRange(in: controlsSeparated, from: cursor),
+               let redactedJSON = redactedJSONSummary(from: String(controlsSeparated[range])) {
+                let placeholder = placeholderPrefix + String(containers.count) + "__"
+                containers.append((placeholder, redactedJSON))
+                result += controlsSeparated[plainTextStart..<cursor]
+                result += placeholder
+                cursor = range.upperBound
+                plainTextStart = cursor
+            } else {
+                cursor = controlsSeparated.index(after: cursor)
+            }
+        }
+        result += controlsSeparated[plainTextStart...]
+        // Protect structured containers before line-based redaction so Digest
+        // text inside a JSON string cannot consume enclosing keys or brackets.
+        result = replacing(
+            #"(?i)(\bAuthorization[^\S\r\n]*[:=]?[^\S\r\n]*)Digest\b[^\r\n]*"#,
+            in: result,
+            with: "$1[REDACTED]"
+        )
+        // Sanitize the surrounding text as one message so an enclosing sensitive
+        // field or URL query also removes its entire embedded JSON value.
+        result = sanitizedPlainText(result)
+        let replacements = containers.compactMap { container -> (Range<String.Index>, String)? in
+            guard let range = result.range(of: container.placeholder) else { return nil }
+            return (range, container.redacted)
+        }
+        // Resolve every range before inserting JSON; decoded string contents must
+        // never be interpreted as another container placeholder.
+        for (range, redacted) in replacements.reversed() {
+            result.replaceSubrange(range, with: redacted)
+        }
+        return result
+    }
+
+    private static func jsonContainerRange(in value: String, from start: String.Index) -> Range<String.Index>? {
+        var closingBrackets: [Character] = []
+        var insideString = false
+        var escaped = false
+        var cursor = start
+        while cursor < value.endIndex {
+            let character = value[cursor]
+            if insideString {
+                if escaped {
+                    escaped = false
+                } else if character == "\\" {
+                    escaped = true
+                } else if character == "\"" {
+                    insideString = false
+                }
+            } else {
+                switch character {
+                case "\"": insideString = true
+                case "{": closingBrackets.append("}")
+                case "[": closingBrackets.append("]")
+                case "}", "]":
+                    guard closingBrackets.popLast() == character else { return nil }
+                    if closingBrackets.isEmpty {
+                        return start..<value.index(after: cursor)
+                    }
+                default: break
+                }
+            }
+            cursor = value.index(after: cursor)
+        }
+        return nil
+    }
+
+    private static func sanitizedPlainText(_ value: String) -> String {
         let withoutControls = String(String.UnicodeScalarView(
-            value.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }
+            value.unicodeScalars.map { CharacterSet.controlCharacters.contains($0) ? " " : $0 }
         ))
         let urlUserInfoStripped = replacing(
             #"([A-Za-z][A-Za-z0-9+.-]*://)[^\s/@]+@"#,
@@ -151,11 +234,14 @@ public enum BridgeNativeLog {
 
     private static func redactedJSONSummary(from value: String) -> String? {
         guard let data = value.data(using: .utf8),
-              let object = try? JSONSerialization.jsonObject(with: data),
-              object is [String: Any] || object is [Any] else { return nil }
+              let object = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]),
+              object is [String: Any] || object is [Any] || object is String else { return nil }
+        // Decoding a string removes one encoding layer before recursing, so a
+        // string root eventually reaches ordinary text or a structured container.
         let redacted = redactingJSON(object)
-        guard JSONSerialization.isValidJSONObject(redacted),
-              let summary = try? JSONSerialization.data(withJSONObject: redacted, options: [.sortedKeys, .withoutEscapingSlashes]) else { return nil }
+        guard let summary = try? JSONSerialization.data(
+            withJSONObject: redacted, options: [.fragmentsAllowed, .sortedKeys, .withoutEscapingSlashes]
+        ) else { return nil }
         return String(data: summary, encoding: .utf8)
     }
 

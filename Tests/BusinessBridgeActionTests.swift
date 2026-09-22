@@ -57,7 +57,7 @@ final class BusinessBridgeActionTests: XCTestCase {
 
         XCTAssertEqual(
             BridgeNativeLog.sanitizedSummary(message),
-            "startAuthorization: [REDACTED] url=https://example.com/path"
+            "start Authorization: [REDACTED]  url=https://example.com/path"
         )
     }
 
@@ -104,6 +104,151 @@ final class BusinessBridgeActionTests: XCTestCase {
         XCTAssertEqual(
             BridgeNativeLog.sanitizedSummary(message),
             #"{"receipt":"[REDACTED]","token":"[REDACTED]","userInfo":"[REDACTED]"}"#
+        )
+    }
+
+    func testNativeLogSummaryRedactsJSONObjectsEmbeddedInOrdinaryText() {
+        let message = #"response: {"token":"secret","userInfo":{"name":"Ada","email":"private@example.com"}} version 1.2.3 api.example.com"#
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            #"response: {"token":"[REDACTED]","userInfo":"[REDACTED]"} version 1.2.3 api.example.com"#
+        )
+    }
+
+    func testNativeLogSummaryRedactsEmbeddedJSONArrayAfterNonJSONBraces() {
+        let message = #"response {ready}: [{"access_token":"secret","userInfo":{"name":"Ada"}},{"label":"a } brace"}] done"#
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            #"response {ready}: [{"access_token":"[REDACTED]","userInfo":"[REDACTED]"},{"label":"a } brace"}] done"#
+        )
+    }
+
+    func testNativeLogSummaryRedactsJSONContainersUsedAsSensitiveNamedValues() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(#"ready userInfo={"name":"Ada","roles":["member"]} version 1.2.3"#),
+            "ready userInfo=[REDACTED] version 1.2.3"
+        )
+    }
+
+    func testNativeLogSummaryStripsURLQueriesContainingJSONContainers() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(#"url=https://api.example.com/path?context={"name":"Ada"} version 1.2.3"#),
+            "url=https://api.example.com/path version 1.2.3"
+        )
+    }
+
+    func testNativeLogSummaryDoesNotExpandJSONTextIntoAnotherRedactedContainer() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(#"response: {"note":"\u005f_BRIDGE_JSON_1__"} userInfo={"name":"Ada"}"#),
+            #"response: {"note":"__BRIDGE_JSON_1__"} userInfo=[REDACTED]"#
+        )
+    }
+
+    func testNativeLogSummaryRecursivelyRedactsJSONStringValuesContainingJSON() {
+        let message = #"{"note":"response: {\"token\":\"secret\",\"userInfo\":{\"name\":\"Ada\"}}","label":"1.2.3 api.example.com"}"#
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            #"{"label":"1.2.3 api.example.com","note":"response: {\"token\":\"[REDACTED]\",\"userInfo\":\"[REDACTED]\"}"}"#
+        )
+    }
+
+    func testNativeLogSummaryRedactsMultipleLayersOfJSONStringEncoding() throws {
+        let inner = #"{"note":"{\"userInfo\":{\"name\":\"Ada\"}}"}"#
+        let messageData = try JSONSerialization.data(withJSONObject: ["note": inner], options: [.sortedKeys])
+        let message = try XCTUnwrap(String(data: messageData, encoding: .utf8))
+        let expectedInner = #"{"note":"{\"userInfo\":\"[REDACTED]\"}"}"#
+        let expectedData = try JSONSerialization.data(withJSONObject: ["note": expectedInner], options: [.sortedKeys])
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            try XCTUnwrap(String(data: expectedData, encoding: .utf8))
+        )
+    }
+
+    func testNativeLogSummaryRedactsEmbeddedJSONInAJSONStringRoot() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(#""response: {\"token\":\"secret\",\"userInfo\":{\"name\":\"Ada\"}}""#),
+            #""response: {\"token\":\"[REDACTED]\",\"userInfo\":\"[REDACTED]\"}""#
+        )
+    }
+
+    func testNativeLogSummaryRedactsRepeatedJSONStringRootEncoding() throws {
+        var message = #"response: {"token":"secret"}"#
+        var expected = #"response: {"token":"[REDACTED]"}"#
+        for _ in 0..<3 {
+            let messageData = try JSONSerialization.data(withJSONObject: message, options: [.fragmentsAllowed])
+            let expectedData = try JSONSerialization.data(withJSONObject: expected, options: [.fragmentsAllowed])
+            message = try XCTUnwrap(String(data: messageData, encoding: .utf8))
+            expected = try XCTUnwrap(String(data: expectedData, encoding: .utf8))
+        }
+
+        XCTAssertEqual(BridgeNativeLog.sanitizedSummary(message), expected)
+    }
+
+    func testNativeLogSummaryPreservesFieldBoundariesWhenReplacingControlCharacters() {
+        for separator in ["\n", "\r", "\t", "\u{0000}", "\u{001B}"] {
+            XCTAssertEqual(
+                BridgeNativeLog.sanitizedSummary("ready" + separator + "token=secret"),
+                "ready token=[REDACTED]"
+            )
+        }
+    }
+
+    func testNativeLogSummaryPreservesControlBoundariesInsideJSONStrings() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(#"{"note":"ready\ntoken=secret"}"#),
+            #"{"note":"ready token=[REDACTED]"}"#
+        )
+    }
+
+    func testNativeLogSummaryRedactsCompleteDigestCredentialsToTheLineBoundary() {
+        let message = "ready\nAuthorization: Digest username=\"Ada\", realm=\"private\", nonce=\"nonce-secret\", uri=\"/private\", response=\"response-secret\", qop=auth, nc=00000001, cnonce=\"client-secret\"\nversion 1.2.3 api.example.com"
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            "ready Authorization: [REDACTED] version 1.2.3 api.example.com"
+        )
+    }
+
+    func testNativeLogSummaryRedactsDigestCredentialsWithControlSeparators() {
+        for separator in ["\u{0000}", "\t", "\u{001B}"] {
+            let message = "Authorization:" + separator + "Digest username=\"Ada\"," + separator
+                + "realm=\"private\", nonce=\"nonce-secret\"\nversion 1.2.3 api.example.com"
+
+            XCTAssertEqual(
+                BridgeNativeLog.sanitizedSummary(message),
+                "Authorization: [REDACTED] version 1.2.3 api.example.com"
+            )
+        }
+    }
+
+    func testNativeLogSummaryRedactsCompleteDigestCredentialsInsideJSONString() {
+        let message = #"{"note":"authorization=digest username=\"Ada\", realm=\"private\", nonce=\"nonce-secret\", uri=\"/private\", response=\"response-secret\"","label":"1.2.3 api.example.com"}"#
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            #"{"label":"1.2.3 api.example.com","note":"authorization=[REDACTED]"}"#
+        )
+    }
+
+    func testNativeLogSummaryRedactsEntireUserInfoWhenEmbeddedJSONContainsDigestCredentials() {
+        let message = #"response: {"userInfo":{"name":"Ada","note":"Authorization: Digest username=\"U\", realm=\"private\""}}"#
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            #"response: {"userInfo":"[REDACTED]"}"#
+        )
+    }
+
+    func testNativeLogSummaryPreservesEmbeddedJSONStructureWhenRedactingDigestCredentials() {
+        let message = #"response: {"note":"Authorization: Digest username=\"U\", realm=\"private\"","label":"version 1.2.3 api.example.com"}"#
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            #"response: {"label":"version 1.2.3 api.example.com","note":"Authorization: [REDACTED]"}"#
         )
     }
 

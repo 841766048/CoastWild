@@ -44,7 +44,7 @@ public final class IntegrationAPIClient: @unchecked Sendable {
     private let transport: any HTTPTransport
     private let cipher: any IntegrationCiphering
     private let contextProvider: any RequestContextProviding
-    private let keyStore: IntegrationKeyStore
+    private let runtimeState: IntegrationRuntimeState
     private let runtimeConfiguration: IntegrationRuntimeConfiguration?
     private let sleeper: Sleeper
 
@@ -65,12 +65,13 @@ public final class IntegrationAPIClient: @unchecked Sendable {
         self.transport = transport
         self.cipher = cipher
         self.contextProvider = contextProvider
-        self.keyStore = keyStore
+        self.runtimeState = IntegrationRuntimeState(keyStore: keyStore, configuration: runtimeConfiguration)
         self.runtimeConfiguration = runtimeConfiguration
         self.sleeper = sleeper
     }
 
     public func getConfig(session: RequestSession) async throws -> IntegrationConfigBundle {
+        let epoch = await runtimeState.requestState().epoch
         let configKeyData: Data
         do {
             configKeyData = try IntegrationKeyDeriver.configKey(from: primaryHost)
@@ -174,7 +175,7 @@ public final class IntegrationAPIClient: @unchecked Sendable {
         parameters: [String: Any],
         session: RequestSession
     ) async throws -> JSONValue {
-        guard let key = await keyStore.key(), !key.isEmpty else {
+        guard let key = await runtimeState.requestState().key, !key.isEmpty else {
             throw IntegrationAPIError.missingEncryptionKey
         }
         return try await post(path: path, parameters: parameters, key: key, session: session)
@@ -253,3 +254,64 @@ public final class IntegrationAPIClient: @unchecked Sendable {
 }
 
 extension IntegrationAPIClient: RemoteAuthenticationAPI {}
+
+/// One epoch and one mutation gate protect both stores across actor suspension points.
+/// Keeping the gate until both writes finish prevents reset from splitting a config/key commit.
+private actor IntegrationRuntimeState {
+    private let keyStore: IntegrationKeyStore
+    private let configuration: IntegrationRuntimeConfiguration?
+    private var epoch: UInt64 = 0
+    private var isMutating = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    init(keyStore: IntegrationKeyStore, configuration: IntegrationRuntimeConfiguration?) {
+        self.keyStore = keyStore
+        self.configuration = configuration
+    }
+
+    func requestState() async -> (epoch: UInt64, key: String?) {
+        await acquire()
+        defer { release() }
+        return (epoch, await keyStore.key())
+    }
+
+    func apply(configuration value: JSONValue, encryptedConfiguration: JSONValue,
+               key: String, epoch requestEpoch: UInt64) async {
+        await acquire()
+        defer { release() }
+        guard requestEpoch == epoch else { return }
+        await configuration?.apply(configuration: value, encryptedConfiguration: encryptedConfiguration)
+        await keyStore.store(key)
+    }
+
+    func apply(strategy: JSONValue, epoch requestEpoch: UInt64) async {
+        await acquire()
+        defer { release() }
+        guard requestEpoch == epoch else { return }
+        await configuration?.apply(strategy: strategy)
+    }
+
+    func reset() async {
+        await acquire()
+        defer { release() }
+        epoch &+= 1
+        await keyStore.clear()
+        await configuration?.reset()
+    }
+
+    private func acquire() async {
+        if !isMutating {
+            isMutating = true
+            return
+        }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+
+    private func release() {
+        if waiters.isEmpty {
+            isMutating = false
+        } else {
+            waiters.removeFirst().resume()
+        }
+    }
+}
