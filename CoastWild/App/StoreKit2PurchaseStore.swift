@@ -32,7 +32,9 @@ actor StoreKit2PurchaseStore: PurchaseStoreProviding {
       guard let fetched = try await Product.products(for: [productID]).first else { throw StoreKitPurchaseError.productNotFound }
       productsByID[productID] = fetched; product = fetched
     }
-    orderMappings.stage(orderID: orderID, forProductID: productID)
+    guard orderMappings.stage(orderID: orderID, forProductID: productID) else {
+      throw StoreKitPurchaseError.pendingPurchaseExists
+    }
     let result: Product.PurchaseResult
     do {
       result = try await product.purchase()
@@ -81,15 +83,13 @@ actor StoreKit2PurchaseStore: PurchaseStoreProviding {
   func transactionUpdates() async -> AsyncStream<StoreTransaction> {
     AsyncStream { continuation in
       let task = Task {
+        for await verification in Transaction.unfinished {
+          guard !Task.isCancelled else { break }
+          self.yieldMappedTransaction(verification, to: continuation)
+        }
         for await verification in Transaction.updates {
-          guard case let .verified(transaction) = verification else { continue }
-          let transactionID = String(transaction.id)
-          guard let orderID = self.orderMappings.resolveForUpdate(
-            transactionID: transactionID,
-            productID: transaction.productID
-          ) else { continue }
-          self.remember(transaction)
-          continuation.yield(.init(productID: transaction.productID, transactionID: transactionID, signedData: verification.jwsRepresentation, orderID: orderID))
+          guard !Task.isCancelled else { break }
+          self.yieldMappedTransaction(verification, to: continuation)
         }
         continuation.finish()
       }
@@ -97,12 +97,25 @@ actor StoreKit2PurchaseStore: PurchaseStoreProviding {
     }
   }
 
-  private func remember(_ transaction: Transaction) { transactionsByID[String(transaction.id)] = transaction }
+  private func yieldMappedTransaction(
+    _ verification: VerificationResult<Transaction>,
+    to continuation: AsyncStream<StoreTransaction>.Continuation
+  ) {
+    guard case let .verified(transaction) = verification else { return }
+    let transactionID = String(transaction.id)
+    guard let orderID = orderMappings.resolveForUpdate(
+      transactionID: transactionID,
+      productID: transaction.productID
+    ) else { return }
+    transactionsByID[transactionID] = transaction
+    continuation.yield(.init(productID: transaction.productID, transactionID: transactionID, signedData: verification.jwsRepresentation, orderID: orderID))
+  }
 }
 
 private enum StoreKitPurchaseError: Error {
   case paymentsNotAllowed
   case productNotFound
+  case pendingPurchaseExists
 }
 
 private extension Product.SubscriptionPeriod {

@@ -25,7 +25,6 @@ private enum SimulatedAccountDeletionError: LocalizedError {
     do {
       let environment = try CoastEnvironment()
       coast = environment
-      environment.startPurchaseUpdates()
       environment.window = window
       environment.showRoot()
       if ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web-navigation") {
@@ -326,6 +325,7 @@ final class CoastEnvironment {
     try store.updatePreferences(prefs)
     activeRemoteUserID = userID
     showMainInterface()
+    startPurchaseUpdates()
     Task { await startAttribution(userID: userID) }
   }
   @MainActor func authenticated() throws {

@@ -9,8 +9,14 @@ public struct PurchaseOrderMappingStore {
         self.keyPrefix = keyPrefix
     }
 
-    public func stage(orderID: String, forProductID productID: String) {
-        defaults.set(orderID, forKey: pendingKey(for: productID))
+    @discardableResult
+    public func stage(orderID: String, forProductID productID: String) -> Bool {
+        let key = pendingKey(for: productID)
+        if let pendingOrderID = defaults.string(forKey: key), !pendingOrderID.isEmpty {
+            return false
+        }
+        defaults.set(orderID, forKey: key)
+        return true
     }
 
     public func cancelPending(productID: String) {

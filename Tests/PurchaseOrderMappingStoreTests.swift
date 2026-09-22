@@ -37,6 +37,15 @@ final class PurchaseOrderMappingStoreTests: XCTestCase {
         XCTAssertNil(mapping.resolveForUpdate(transactionID: "tx-1", productID: "monthly"))
     }
 
+    func testSecondPendingOrderForSameProductIsRejectedWithoutOverwritingFirst() {
+        XCTAssertTrue(mapping.stage(orderID: "order-a", forProductID: "monthly"))
+        XCTAssertFalse(mapping.stage(orderID: "order-b", forProductID: "monthly"))
+        XCTAssertTrue(mapping.stage(orderID: "order-yearly", forProductID: "yearly"))
+
+        XCTAssertEqual(mapping.resolveForUpdate(transactionID: "tx-monthly", productID: "monthly"), "order-a")
+        XCTAssertEqual(mapping.resolveForUpdate(transactionID: "tx-yearly", productID: "yearly"), "order-yearly")
+    }
+
     func testExistingTransactionMappingWinsWithoutConsumingPendingOrder() {
         mapping.stage(orderID: "new-order", forProductID: "monthly")
         mapping.associate(orderID: "old-order", transactionID: "tx-old")

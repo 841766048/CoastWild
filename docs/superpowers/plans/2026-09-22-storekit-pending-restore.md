@@ -185,3 +185,43 @@ Run the new focused test, `swift test --filter IntegrationNetworkTests`, `swift 
 git add CoastWild/Core/IntegrationDTOs.swift CoastWild/Core/IntegrationPurchaseServer.swift Tests/IntegrationNetworkTests.swift docs/superpowers/plans/2026-09-22-storekit-pending-restore.md
 git commit -m "fix: verify restored purchases without order IDs"
 ```
+
+### Task 4: Protect pending orders and replay unfinished transactions after readiness
+
+**Files:**
+- Modify: `CoastWild/Core/PurchaseOrderMappingStore.swift`
+- Modify: `Tests/PurchaseOrderMappingStoreTests.swift`
+- Modify: `CoastWild/App/StoreKit2PurchaseStore.swift`
+- Modify: `CoastWild/App/AppDelegate.swift`
+- Modify: `docs/integration-plans/08-IAP内购与权益计划.md`
+
+**Interfaces:**
+- Changes: `PurchaseOrderMappingStore.stage(orderID:forProductID:) -> Bool` returns `false` without mutation when that product already has a pending order.
+- Produces: StoreKit transaction observation that begins only after remote configuration/login readiness and replays `Transaction.unfinished` before consuming live `Transaction.updates`.
+
+- [x] **Step 1: Write a failing pending-overwrite test**
+
+Stage `order-a` for `monthly`, attempt to stage `order-b` for the same product, assert the second result is `false`, then resolve a later transaction and assert it receives `order-a`. Also assert staging a different product succeeds.
+
+- [x] **Step 2: Verify RED and implement non-overwriting staging**
+
+Run the focused mapping test and confirm it fails because `stage` has no return value and overwrites the mapping. Change `stage` to return `false` when a non-empty pending mapping already exists; otherwise persist the order and return `true`.
+
+- [x] **Step 3: Reject duplicate StoreKit starts and defer observation**
+
+In `StoreKit2PurchaseStore.purchase`, require `stage(...) == true` before calling `product.purchase()`; otherwise throw a private `pendingPurchaseExists` error. Existing cancellation and thrown-purchase cleanup applies only to the order successfully staged by that call.
+
+Remove the unconditional `startPurchaseUpdates()` call from application launch. Call it from `remoteAuthenticated(session:strategy:)` only after the login pipeline has completed configuration and produced the authenticated session. Keep its existing single-task guard.
+
+- [x] **Step 4: Replay unfinished transactions before live updates**
+
+In `StoreKit2PurchaseStore.transactionUpdates`, process verified values from `Transaction.unfinished` first and then verified values from `Transaction.updates`, using the same mapping resolution and yield logic for both sequences. Unmapped verified transactions remain unfinished and unyielded; mapped verification failures remain unfinished for a later authenticated launch.
+
+- [x] **Step 5: Verify and commit**
+
+Run the focused mapping tests, `PurchaseTests`, full `swift test`, and the simulator build. Review the app lifecycle diff to confirm the listener starts only from the authenticated/configured path. Update plan 08 with the duplicate-pending and authenticated unfinished-replay evidence, then commit only the task hunks.
+
+```bash
+git add CoastWild/Core/PurchaseOrderMappingStore.swift Tests/PurchaseOrderMappingStoreTests.swift CoastWild/App/StoreKit2PurchaseStore.swift CoastWild/App/AppDelegate.swift docs/integration-plans/08-IAP内购与权益计划.md docs/superpowers/plans/2026-09-22-storekit-pending-restore.md
+git commit -m "fix: replay pending purchases after login"
+```
