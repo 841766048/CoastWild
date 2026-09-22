@@ -77,34 +77,40 @@ public enum BusinessBridgeApplicationDeliveryPolicy {
     }
 }
 
-public struct BusinessWebEdgePanBeginDecision: Equatable, Sendable {
+public struct BusinessWebEdgePanDecision: Equatable, Sendable {
+    public let shouldEnableRecognizer: Bool
     public let shouldBeginWebGesture: Bool
-    public let shouldSuspendNavigationPop: Bool
-    public let allowsNavigationPop: Bool
+    public let shouldNavigationPopWaitForWebGesture: Bool
 
     public init(
+        shouldEnableRecognizer: Bool,
         shouldBeginWebGesture: Bool,
-        shouldSuspendNavigationPop: Bool,
-        allowsNavigationPop: Bool
+        shouldNavigationPopWaitForWebGesture: Bool
     ) {
+        self.shouldEnableRecognizer = shouldEnableRecognizer
         self.shouldBeginWebGesture = shouldBeginWebGesture
-        self.shouldSuspendNavigationPop = shouldSuspendNavigationPop
-        self.allowsNavigationPop = allowsNavigationPop
+        self.shouldNavigationPopWaitForWebGesture = shouldNavigationPopWaitForWebGesture
     }
 }
 
-public enum BusinessWebEdgePanBeginPolicy {
+public enum BusinessWebEdgePanPolicy {
     public static func decision(
         payload: EdgePanPayload,
         webCanGoBack: Bool,
-        isNavigationRoot: Bool
-    ) -> BusinessWebEdgePanBeginDecision {
-        let shouldBeginWebGesture = payload.isEnabled && webCanGoBack
-        let webClaimsNavigationEdge = shouldBeginWebGesture && payload.isLeftEdge && !isNavigationRoot
+        isNavigationRoot: Bool,
+        isControllerVisible: Bool,
+        isOtherRecognizerCurrentNavigationPop: Bool
+    ) -> BusinessWebEdgePanDecision {
+        let shouldEnableRecognizer = isControllerVisible && payload.isEnabled
+        let shouldBeginWebGesture = shouldEnableRecognizer && webCanGoBack
+        let shouldNavigationPopWaitForWebGesture = shouldBeginWebGesture
+            && payload.isLeftEdge
+            && !isNavigationRoot
+            && isOtherRecognizerCurrentNavigationPop
         return .init(
+            shouldEnableRecognizer: shouldEnableRecognizer,
             shouldBeginWebGesture: shouldBeginWebGesture,
-            shouldSuspendNavigationPop: webClaimsNavigationEdge,
-            allowsNavigationPop: !isNavigationRoot && !webClaimsNavigationEdge
+            shouldNavigationPopWaitForWebGesture: shouldNavigationPopWaitForWebGesture
         )
     }
 }

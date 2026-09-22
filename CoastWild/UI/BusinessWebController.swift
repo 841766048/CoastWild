@@ -16,9 +16,7 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   private var progressObservation: NSKeyValueObservation?
   private var localActionState = BusinessWebLocalActionState()
   private var launchCover: UIView?
-  private weak var configuredNavigationPopRecognizer: UIGestureRecognizer?
-  private weak var suspendedNavigationPopRecognizer: UIGestureRecognizer?
-  private var suspendedNavigationPopWasEnabled: Bool?
+  private var isControllerVisible = false
   private let progress = UIProgressView(progressViewStyle: .bar)
   private let percent = UILabel()
   private let retry = UIButton(type: .system)
@@ -48,19 +46,20 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   }
   required init?(coder: NSCoder) { fatalError("init(coder:) unsupported") }
   deinit {
-    restoreNavigationPop()
     keyboardTokens.forEach(NotificationCenter.default.removeObserver)
     webView?.configuration.userContentController.removeAllScriptMessageHandlers()
   }
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
+    isControllerVisible = true
     navigationController?.setNavigationBarHidden(true, animated: animated)
-    configureNavigationGestureArbitration()
+    updateEdgePanAvailability()
   }
 
   override func viewWillDisappear(_ animated: Bool) {
-    restoreNavigationPop()
+    isControllerVisible = false
+    updateEdgePanAvailability()
     super.viewWillDisappear(animated)
   }
 
@@ -140,7 +139,6 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     ])
     webView = next
     applyEdgePan(localActionState.edgePan)
-    configureNavigationGestureArbitration()
     progress.progress = 0.05; percent.text = "5%"; progress.isHidden = false; percent.isHidden = false; retry.isHidden = true
     progressObservation = next.observe(\.estimatedProgress, options: [.new]) { [weak self] webView, _ in
       DispatchQueue.main.async { self?.updateProgress(webView.estimatedProgress) }
@@ -189,37 +187,32 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   }
 
   private func applyEdgePan(_ payload: EdgePanPayload) {
-    restoreNavigationPop()
     edgePanRecognizer.isEnabled = false
     localActionState.setEdgePan(payload)
     edgePanRecognizer.edges = payload.isLeftEdge ? .left : .right
-    edgePanRecognizer.isEnabled = payload.isEnabled
+    updateEdgePanAvailability()
   }
 
   @objc private func handleEdgePan(_ recognizer: UIScreenEdgePanGestureRecognizer) {
-    switch recognizer.state {
-    case .ended:
-      let webView = webView
-      let shouldGoBack = localActionState.edgePan.isEnabled && webView?.canGoBack == true
-      restoreNavigationPop()
-      if shouldGoBack { webView?.goBack() }
-    case .cancelled, .failed:
-      restoreNavigationPop()
-    default:
-      break
-    }
+    guard recognizer.state == .ended,
+          edgePanDecision(isOtherRecognizerCurrentNavigationPop: false).shouldBeginWebGesture else { return }
+    webView?.goBack()
   }
 
   func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
     guard gestureRecognizer === edgePanRecognizer else { return true }
-    restoreNavigationPop()
-    let isNavigationRoot = navigationController.map { $0.viewControllers.first === self } ?? true
-    let decision = BusinessWebEdgePanBeginPolicy.decision(
-      payload: localActionState.edgePan,
-      webCanGoBack: webView?.canGoBack == true,
-      isNavigationRoot: isNavigationRoot)
-    if decision.shouldSuspendNavigationPop { suspendNavigationPop() }
-    return decision.shouldBeginWebGesture
+    return edgePanDecision(isOtherRecognizerCurrentNavigationPop: false).shouldBeginWebGesture
+  }
+
+  func gestureRecognizer(
+    _ gestureRecognizer: UIGestureRecognizer,
+    shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer
+  ) -> Bool {
+    guard gestureRecognizer === edgePanRecognizer else { return false }
+    let isCurrentNavigationPop = navigationController?.interactivePopGestureRecognizer === otherGestureRecognizer
+    return edgePanDecision(
+      isOtherRecognizerCurrentNavigationPop: isCurrentNavigationPop
+    ).shouldNavigationPopWaitForWebGesture
   }
 
   func gestureRecognizer(
@@ -230,27 +223,22 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     return false
   }
 
-  private func configureNavigationGestureArbitration() {
-    guard let pop = navigationController?.interactivePopGestureRecognizer,
-          pop !== configuredNavigationPopRecognizer,
-          pop.view != nil, edgePanRecognizer.view != nil else { return }
-    pop.require(toFail: edgePanRecognizer)
-    configuredNavigationPopRecognizer = pop
+  private func edgePanDecision(
+    isOtherRecognizerCurrentNavigationPop: Bool
+  ) -> BusinessWebEdgePanDecision {
+    let isNavigationRoot = navigationController.map { $0.viewControllers.first === self } ?? true
+    return BusinessWebEdgePanPolicy.decision(
+      payload: localActionState.edgePan,
+      webCanGoBack: webView?.canGoBack == true,
+      isNavigationRoot: isNavigationRoot,
+      isControllerVisible: isControllerVisible,
+      isOtherRecognizerCurrentNavigationPop: isOtherRecognizerCurrentNavigationPop)
   }
 
-  private func suspendNavigationPop() {
-    guard let pop = navigationController?.interactivePopGestureRecognizer, pop.isEnabled else { return }
-    suspendedNavigationPopRecognizer = pop
-    suspendedNavigationPopWasEnabled = pop.isEnabled
-    pop.isEnabled = false
-  }
-
-  private func restoreNavigationPop() {
-    if let pop = suspendedNavigationPopRecognizer, let wasEnabled = suspendedNavigationPopWasEnabled {
-      pop.isEnabled = wasEnabled
-    }
-    suspendedNavigationPopRecognizer = nil
-    suspendedNavigationPopWasEnabled = nil
+  private func updateEdgePanAvailability() {
+    edgePanRecognizer.isEnabled = edgePanDecision(
+      isOtherRecognizerCurrentNavigationPop: false
+    ).shouldEnableRecognizer
   }
 
   private func observeKeyboard() {

@@ -135,50 +135,104 @@ final class BusinessWebTests: XCTestCase {
         )
     }
 
-    func testLeftEdgeWebBackOwnsGestureOnlyWhenEnabledAndHistoryExists() {
+    func testVisibleLeftEdgeWebBackMakesCurrentNavigationPopWait() {
+        let enabledLeft = EdgePanPayload(isEnabled: true, isLeftEdge: true)
+
+        XCTAssertEqual(
+            BusinessWebEdgePanPolicy.decision(
+                payload: enabledLeft,
+                webCanGoBack: true,
+                isNavigationRoot: false,
+                isControllerVisible: true,
+                isOtherRecognizerCurrentNavigationPop: true),
+            .init(
+                shouldEnableRecognizer: true,
+                shouldBeginWebGesture: true,
+                shouldNavigationPopWaitForWebGesture: true)
+        )
+        XCTAssertEqual(
+            BusinessWebEdgePanPolicy.decision(
+                payload: enabledLeft,
+                webCanGoBack: false,
+                isNavigationRoot: false,
+                isControllerVisible: true,
+                isOtherRecognizerCurrentNavigationPop: true),
+            .init(
+                shouldEnableRecognizer: true,
+                shouldBeginWebGesture: false,
+                shouldNavigationPopWaitForWebGesture: false)
+        )
+    }
+
+    func testHiddenOrDisabledControllerCannotClaimEdgePriority() {
         let enabledLeft = EdgePanPayload(isEnabled: true, isLeftEdge: true)
         let disabledLeft = EdgePanPayload(isEnabled: false, isLeftEdge: true)
 
         XCTAssertEqual(
-            BusinessWebEdgePanBeginPolicy.decision(
-                payload: enabledLeft, webCanGoBack: true, isNavigationRoot: false),
-            .init(shouldBeginWebGesture: true, shouldSuspendNavigationPop: true, allowsNavigationPop: false)
+            BusinessWebEdgePanPolicy.decision(
+                payload: enabledLeft,
+                webCanGoBack: true,
+                isNavigationRoot: false,
+                isControllerVisible: false,
+                isOtherRecognizerCurrentNavigationPop: true),
+            .init(
+                shouldEnableRecognizer: false,
+                shouldBeginWebGesture: false,
+                shouldNavigationPopWaitForWebGesture: false)
         )
         XCTAssertEqual(
-            BusinessWebEdgePanBeginPolicy.decision(
-                payload: enabledLeft, webCanGoBack: false, isNavigationRoot: false),
-            .init(shouldBeginWebGesture: false, shouldSuspendNavigationPop: false, allowsNavigationPop: true)
-        )
-        XCTAssertEqual(
-            BusinessWebEdgePanBeginPolicy.decision(
-                payload: disabledLeft, webCanGoBack: true, isNavigationRoot: false),
-            .init(shouldBeginWebGesture: false, shouldSuspendNavigationPop: false, allowsNavigationPop: true)
+            BusinessWebEdgePanPolicy.decision(
+                payload: disabledLeft,
+                webCanGoBack: true,
+                isNavigationRoot: false,
+                isControllerVisible: true,
+                isOtherRecognizerCurrentNavigationPop: true),
+            .init(
+                shouldEnableRecognizer: false,
+                shouldBeginWebGesture: false,
+                shouldNavigationPopWaitForWebGesture: false)
         )
     }
 
-    func testRootAndRightEdgeDecisionsDoNotSuspendNavigationPop() {
+    func testRootRightEdgeAndUnrelatedRecognizerDoNotCreateFailurePriority() {
         let enabledLeft = EdgePanPayload(isEnabled: true, isLeftEdge: true)
         let enabledRight = EdgePanPayload(isEnabled: true, isLeftEdge: false)
 
         XCTAssertEqual(
-            BusinessWebEdgePanBeginPolicy.decision(
-                payload: enabledLeft, webCanGoBack: true, isNavigationRoot: true),
-            .init(shouldBeginWebGesture: true, shouldSuspendNavigationPop: false, allowsNavigationPop: false)
+            BusinessWebEdgePanPolicy.decision(
+                payload: enabledLeft,
+                webCanGoBack: true,
+                isNavigationRoot: true,
+                isControllerVisible: true,
+                isOtherRecognizerCurrentNavigationPop: true),
+            .init(
+                shouldEnableRecognizer: true,
+                shouldBeginWebGesture: true,
+                shouldNavigationPopWaitForWebGesture: false)
         )
         XCTAssertEqual(
-            BusinessWebEdgePanBeginPolicy.decision(
-                payload: enabledLeft, webCanGoBack: false, isNavigationRoot: true),
-            .init(shouldBeginWebGesture: false, shouldSuspendNavigationPop: false, allowsNavigationPop: false)
+            BusinessWebEdgePanPolicy.decision(
+                payload: enabledRight,
+                webCanGoBack: true,
+                isNavigationRoot: false,
+                isControllerVisible: true,
+                isOtherRecognizerCurrentNavigationPop: true),
+            .init(
+                shouldEnableRecognizer: true,
+                shouldBeginWebGesture: true,
+                shouldNavigationPopWaitForWebGesture: false)
         )
         XCTAssertEqual(
-            BusinessWebEdgePanBeginPolicy.decision(
-                payload: enabledRight, webCanGoBack: true, isNavigationRoot: false),
-            .init(shouldBeginWebGesture: true, shouldSuspendNavigationPop: false, allowsNavigationPop: true)
-        )
-        XCTAssertEqual(
-            BusinessWebEdgePanBeginPolicy.decision(
-                payload: enabledRight, webCanGoBack: false, isNavigationRoot: false),
-            .init(shouldBeginWebGesture: false, shouldSuspendNavigationPop: false, allowsNavigationPop: true)
+            BusinessWebEdgePanPolicy.decision(
+                payload: enabledLeft,
+                webCanGoBack: true,
+                isNavigationRoot: false,
+                isControllerVisible: true,
+                isOtherRecognizerCurrentNavigationPop: false),
+            .init(
+                shouldEnableRecognizer: true,
+                shouldBeginWebGesture: true,
+                shouldNavigationPopWaitForWebGesture: false)
         )
     }
 
