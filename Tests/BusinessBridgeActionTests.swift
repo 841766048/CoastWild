@@ -57,7 +57,7 @@ final class BusinessBridgeActionTests: XCTestCase {
 
         XCTAssertEqual(
             BridgeNativeLog.sanitizedSummary(message),
-            "startAuthorization: [REDACTED] url=https://example.com/path?token=[REDACTED]&locale=[REDACTED]"
+            "startAuthorization: [REDACTED] url=https://example.com/path"
         )
     }
 
@@ -69,5 +69,32 @@ final class BusinessBridgeActionTests: XCTestCase {
         XCTAssertFalse(summary.contains(secret))
         XCTAssertLessThanOrEqual(summary.count, 160)
         XCTAssertTrue(summary.hasPrefix("[REDACTED]"))
+    }
+
+    func testNativeLogSummaryRedactsBasicAuthorizationCredentials() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary("Authorization: Basic dXNlcjpwYXNzd29yZA=="),
+            "Authorization: [REDACTED]"
+        )
+    }
+
+    func testNativeLogSummaryRedactsCaseInsensitiveSensitiveNamedFieldsWithColonAndEqualsForms() {
+        let message = "TOKEN=secret DeviceId: device-123 ORDERID=order-456 Receipt: receipt-data USERINFO=profile"
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            "TOKEN=[REDACTED] DeviceId: [REDACTED] ORDERID=[REDACTED] Receipt: [REDACTED] USERINFO=[REDACTED]"
+        )
+    }
+
+    func testNativeLogSummaryRedactsShortJWSLikeTokens() {
+        XCTAssertEqual(BridgeNativeLog.sanitizedSummary("token eyJ9.e30.sig"), "token [REDACTED]")
+    }
+
+    func testNativeLogSummaryStripsOpaqueURLQueriesAndFragments() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary("url=https://example.com/path?opaque-query#fragment"),
+            "url=https://example.com/path"
+        )
     }
 }

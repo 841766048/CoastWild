@@ -75,22 +75,32 @@ public enum BridgeNativeLog {
         let withoutControls = String(String.UnicodeScalarView(
             message.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }
         ))
-        let bearerRedacted = replacing(
-            #"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+"#,
+        let urlParametersStripped = replacing(
+            #"([A-Za-z][A-Za-z0-9+.-]*://[^\s?#]+)[?#][^\s]*"#,
             in: withoutControls,
+            with: "$1"
+        )
+        let authorizationRedacted = replacing(
+            #"(?i)(\bAuthorization\s*[:=]?\s*)(?:(?:Bearer|Basic|Digest|Token|Negotiate)\s+)?[^\s,;]+"#,
+            in: urlParametersStripped,
+            with: "$1[REDACTED]"
+        )
+        let schemeRedacted = replacing(
+            #"(?i)\b(?:Bearer|Basic|Digest|Negotiate)\s+[^\s,;]+"#,
+            in: authorizationRedacted,
             with: "[REDACTED]"
+        )
+        let namedValuesRedacted = replacing(
+            #"(?i)(\b(?:token|deviceId|orderId|receipt|userInfo)\s*[:=]\s*)(?:\"[^\"]*\"|'[^']*'|[^\s,;}&]+)"#,
+            in: schemeRedacted,
+            with: "$1[REDACTED]"
         )
         let jwsRedacted = replacing(
-            #"\b[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{3,}\b"#,
-            in: bearerRedacted,
+            #"\b[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b"#,
+            in: namedValuesRedacted,
             with: "[REDACTED]"
         )
-        let queryRedacted = replacing(
-            #"([?&][^=\s&#]+)=([^&#\s]*)"#,
-            in: jwsRedacted,
-            with: "$1=[REDACTED]"
-        )
-        return String(queryRedacted.prefix(160))
+        return String(jwsRedacted.prefix(160))
     }
 
     private static func replacing(_ pattern: String, in value: String, with replacement: String) -> String {
