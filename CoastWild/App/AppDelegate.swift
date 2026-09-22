@@ -57,6 +57,7 @@ final class CoastEnvironment {
   let deviceIdentity: DeviceIdentityStore
   let remoteSessions: RemoteSessionStore
   let integrationAPI: any RemoteAuthenticationAPI
+  let requestContext: RequestContextProvider
   let remoteSessionCoordinator: RemoteSessionCoordinator
   let attributionCoordinator: AttributionCoordinator?
   let attributionSubmissionCoordinator: AttributionSubmissionCoordinator?
@@ -96,7 +97,7 @@ final class CoastEnvironment {
     )
     let deviceID = try deviceIdentity.resolve()
     remoteSessions = RemoteSessionStore(defaults: defaults)
-    let contextProvider = RequestContextProvider(values: RequestContextValues(
+    requestContext = RequestContextProvider(values: RequestContextValues(
       deviceID: deviceID,
       model: UIDevice.current.model,
       language: Locale.preferredLanguages.first ?? "en",
@@ -107,7 +108,7 @@ final class CoastEnvironment {
       platformVersion: UIDevice.current.systemVersion,
       localeIdentifier: Locale.current.identifier,
       attributionSDK: "AJ",
-      adjustSDKVersion: "0.0.0"
+      adjustSDKVersion: "5.8.0" // Matches the pinned Adjust dependency in Podfile.lock.
     ))
     if testing {
       integrationAPI = UITestRemoteAuthenticationAPI()
@@ -118,7 +119,7 @@ final class CoastEnvironment {
     } else {
       let client = IntegrationAPIClient(
         primaryHost: integration.primaryHost,
-        contextProvider: contextProvider,
+        contextProvider: requestContext,
         keyStore: IntegrationKeyStore(),
         runtimeConfiguration: integrationRuntime
       )
@@ -318,13 +319,47 @@ final class CoastEnvironment {
     nav.navigationBar.prefersLargeTitles = false
     return nav
   }
-  @MainActor func remoteAuthenticated(userID: String) throws {
+  @MainActor func remoteAuthenticated(session: RemoteSession, strategy: JSONValue) async throws {
+    let userID = session.userID
+    let runtime = await integrationRuntime.snapshot()
+    let headers = runtime.headers(base: requestContext.headers(session: session.requestSession))
+    let bootstrap = try BusinessWebBootstrap.authenticated(
+      environment: integration, runtime: runtime, session: session, strategy: strategy,
+      headers: headers, package: .init(
+        localeIdentifier: store.preferences.language,
+        appName: Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Coast & Wild",
+        packageName: integration.bundleIdentifier), language: store.preferences.language)
+    let url = try BusinessWebEntry.url(
+      bundled: integration.webHost, configured: runtime.webIndexURL, strategy: strategy,
+      timestamp: Int64(Date().timeIntervalSince1970))
     try store.activate(accountID: userID)
     var prefs = store.preferences
     prefs.onboardingDone = true
     try store.updatePreferences(prefs)
     activeRemoteUserID = userID
-    showMainInterface()
+    if ProcessInfo.processInfo.arguments.contains("--ui-testing") &&
+       !ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web") {
+      // The existing native UI suite uses a fake authentication API and no remote H5.
+      showMainInterface()
+    } else {
+      let icon = UIImage(named: integration.smallIconName)?.jpegData(compressionQuality: 0.2)
+      weak var bridgeController: BusinessWebController?
+      let controller = BusinessWebController(
+        url: url, bootstrap: bootstrap, allowedHosts: Set([integration.webHost.host!]),
+        appIconDataURL: icon.map { "data:image/jpeg;base64," + $0.base64EncodedString() } ?? "",
+        iapBridgeHandler: iapBridgeHandler,
+        onApplicationAction: { [weak self] action in
+          Task { @MainActor [weak self, weak bridgeController] in
+            guard let self, self.isCurrentBusinessController(bridgeController) else { return }
+            await self.applicationBridgeHandler(for: bridgeController).handle(action)
+          }
+        },
+        onBridgeMessage: { _ in })
+      bridgeController = controller
+      let nav = navigation(controller)
+      nav.setNavigationBarHidden(true, animated: false)
+      window?.rootViewController = nav
+    }
     startPurchaseUpdates()
     Task { await startAttribution(userID: userID) }
   }

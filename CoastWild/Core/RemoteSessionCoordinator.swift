@@ -4,6 +4,11 @@ public protocol RemoteAuthenticationAPI: Sendable {
     func getConfig(session: RequestSession) async throws -> IntegrationConfigBundle
     func oauth(_ request: OAuthRequest, session: RequestSession) async throws -> JSONValue
     func getStrategy(session: RequestSession) async throws -> JSONValue
+    func resetRuntime() async
+}
+
+public extension RemoteAuthenticationAPI {
+    func resetRuntime() async {}
 }
 
 public enum RemoteLoginError: Error, Equatable, Sendable {
@@ -87,6 +92,7 @@ public actor RemoteSessionCoordinator {
             loggingOut = false
         }
         await sessions.clear()
+        await api.resetRuntime()
     }
 
     private func deviceLogin(riskInfo: String?, preserveSessionUntilStrategySucceeds: Bool = false) async -> RemoteLoginState {

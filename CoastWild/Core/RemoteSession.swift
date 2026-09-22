@@ -24,10 +24,7 @@ public struct RemoteSession: Codable, Equatable, Sendable {
               let token = Self.nonempty(object["token"]?.stringValue),
               case let .object(userInfo)? = object["userInfo"],
               let userID = Self.nonempty(userInfo["userId"]?.stringValue),
-              case let .number(firstRegisterNumber)? = object["isFirstRegister"],
-              firstRegisterNumber.rounded() == firstRegisterNumber,
-              firstRegisterNumber >= Double(Int.min),
-              firstRegisterNumber <= Double(Int.max)
+              let firstRegister = Self.registrationFlag(object["isFirstRegister"])
         else {
             throw RemoteSessionError.invalidOAuthResponse
         }
@@ -44,8 +41,16 @@ public struct RemoteSession: Codable, Equatable, Sendable {
 
         self.token = token
         self.userID = userID
-        isFirstRegister = Int(firstRegisterNumber)
+        isFirstRegister = firstRegister
         self.responseData = responseData
+    }
+
+    private static func registrationFlag(_ value: JSONValue?) -> Int? {
+        switch value {
+        case let .bool(flag): return flag ? 1 : 0
+        case let .number(number): return Int(exactly: number)
+        default: return nil
+        }
     }
 
     private static func nonempty(_ value: String?) -> String? {

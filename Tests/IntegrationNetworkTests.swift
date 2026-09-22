@@ -6,6 +6,68 @@ import XCTest
 @testable import CoastWildCore
 
 final class IntegrationNetworkTests: XCTestCase {
+    func testResetClearsDerivedKeyAndRuntimeState() async throws {
+        let environment = try makeIntegrationEnvironment()
+        let runtime = IntegrationRuntimeConfiguration(environment: environment)
+        await runtime.apply(configuration: try JSONValue(any: ["items": [[
+            "name": "app_fb_id", "data": "remote-id",
+        ]]]), encryptedConfiguration: .object(["k4": .string("cipher")]))
+        await runtime.apply(strategy: .object(["server": .bool(true)]))
+        let keyStore = IntegrationKeyStore(initialKey: "old-key")
+        let client = makeClient(transport: ScriptedTransport(results: []), keyStore: keyStore,
+                                runtimeConfiguration: runtime)
+        await client.resetRuntime()
+        let key = await keyStore.key()
+        let snapshot = await runtime.snapshot()
+        XCTAssertNil(key)
+        XCTAssertEqual(snapshot, IntegrationRuntimeSnapshot(environment: environment))
+        await assertThrows(.missingEncryptionKey) {
+            _ = try await client.getStrategy(session: .anonymous)
+        }
+    }
+
+    func testInvalidRiskKeyPreventsOAuthRequest() async throws {
+        let runtime = IntegrationRuntimeConfiguration(environment: try makeIntegrationEnvironment())
+        await runtime.apply(configuration: .object([
+            "riskControlInfoConfig": .object(["k_factor": .string("invalid")]),
+        ]))
+        let transport = ScriptedTransport(results: [])
+        let client = makeClient(transport: transport, keyStore: IntegrationKeyStore(initialKey: "key"),
+                                runtimeConfiguration: runtime)
+        await assertThrows(.encryption) {
+            _ = try await client.oauth(OAuthRequest(token: "device", relogin: false), session: .anonymous)
+        }
+        let requests = await transport.requests()
+        XCTAssertTrue(requests.isEmpty)
+    }
+
+    func testOAuthBuildsRiskInfoAndUsesRemoteHeaders() async throws {
+        let runtime = IntegrationRuntimeConfiguration(environment: try makeIntegrationEnvironment())
+        await runtime.apply(configuration: try JSONValue(any: [
+            "items": [
+                ["name": "rc_area_code", "data": "TW"],
+                ["name": "attribution_sdk", "data": "AF"],
+            ],
+            "riskControlInfoConfig": ["k_factor": "1234567890abcdef"],
+        ]))
+        let key = "derived-key"
+        let response = try encryptedResponse(["code": 0, "data": [:]], key: key,
+                                             url: URL(string: "https://test-app.bigegg.work")!)
+        let transport = ScriptedTransport(results: [.success(response)])
+        let client = makeClient(transport: transport, keyStore: IntegrationKeyStore(initialKey: key),
+                                runtimeConfiguration: runtime)
+        _ = try await client.oauth(OAuthRequest(token: "device-123", relogin: false), session: .anonymous)
+        let requests = await transport.requests()
+        let body = try IntegrationCipher.decryptJSONObject(
+            String(decoding: try XCTUnwrap(requests.first?.httpBody), as: UTF8.self), key: key)
+        XCTAssertEqual(body["info"] as? String, try IntegrationCipher.encryptRiskJSONObject(
+            makeContextProvider().riskParameters(session: .anonymous), rawKey: "1234567890abcdef"))
+        let headers = try XCTUnwrap(body["http_headers"] as? [String: String])
+        XCTAssertEqual(headers["rc_type"], "TW")
+        XCTAssertEqual(headers["attribution_sdk"], "AF")
+        XCTAssertEqual(headers["attribution_sdk_ver"], "0.0.0")
+    }
+
     func testGetConfigUsesHostKeyAndCachesDerivedKey() async throws {
         let host = URL(string: "https://test-app.bigegg.work")!
         let derivedKey = "1234567890abcdeffedcba9876543210"
@@ -85,8 +147,13 @@ final class IntegrationNetworkTests: XCTestCase {
             runtimeConfiguration: runtime
         )
 
-        _ = try await client.getConfig(session: .anonymous)
+        let config = try await client.getConfig(session: .anonymous)
         let snapshot = await runtime.snapshot()
+
+        XCTAssertEqual(snapshot.encryptedConfiguration["k2"], .string(config.k2))
+        XCTAssertEqual(snapshot.encryptedConfiguration["k3"], .string(config.k3))
+        XCTAssertEqual(snapshot.encryptedConfiguration["k4"], .string(config.k4))
+        XCTAssertEqual(snapshot.configuration, config.configuration)
 
         XCTAssertEqual(snapshot.privacyURL.absoluteString, "https://remote.example/privacy")
         XCTAssertEqual(snapshot.termsURL.absoluteString, "https://remote.example/terms")

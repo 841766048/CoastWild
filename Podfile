@@ -8,7 +8,8 @@ target 'CoastWild' do
   pod 'BRPickerView/DatePicker', '~> 3.0'
   pod 'Adjust', '5.8.0'
   target 'CoastWildUITests' do
-    inherit! :search_paths
+    # UI tests run out of process and import only XCTest, not the app's SDKs.
+    inherit! :none
   end
 end
 

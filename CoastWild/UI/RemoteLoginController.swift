@@ -69,15 +69,15 @@ final class RemoteLoginController: CoastController {
       let state = automatic
         ? await env.remoteSessionCoordinator.automaticLogin()
         : await env.remoteSessionCoordinator.manualLogin(riskInfo: nil)
-      handle(state)
+      await handle(state)
     }
   }
 
-  private func handle(_ state: RemoteLoginState) {
+  private func handle(_ state: RemoteLoginState) async {
     let presentation = RemoteLoginPresentation(state: state, isConnected: connectivity.isConnected)
     render(presentation)
-    if case let .authenticated(userID) = presentation {
-      do { try env.remoteAuthenticated(userID: userID) }
+    if case let .authenticated(session, strategy) = state {
+      do { try await env.remoteAuthenticated(session: session, strategy: strategy) }
       catch { render(.retryableFailure) }
     } else if presentation == .offline {
       showOfflineAlert()

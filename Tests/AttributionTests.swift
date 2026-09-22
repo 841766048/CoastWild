@@ -10,8 +10,7 @@ final class AttributionTests: XCTestCase {
         let coordinator = AttributionSubmissionCoordinator(
             provider: AttributionProviderFake(snapshot: snapshot),
             store: AttributionSnapshotStore(defaults: defaults),
-            reporter: reporter,
-            fallback: {}
+            reporter: reporter
         )
         try await coordinator.submitOnce(userID: "user-1")
         try await coordinator.submitOnce(userID: "user-1")
@@ -46,8 +45,7 @@ final class AttributionTests: XCTestCase {
         let coordinator = AttributionSubmissionCoordinator(
             provider: AttributionProviderFake(snapshot: snapshot),
             store: AttributionSnapshotStore(defaults: defaults),
-            reporter: reporter,
-            fallback: {}
+            reporter: reporter
         )
         do { try await coordinator.submitOnce(userID: "user-3"); XCTFail("Expected first submission failure") } catch {}
         try await coordinator.submitOnce(userID: "user-3")

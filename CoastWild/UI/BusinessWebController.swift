@@ -110,11 +110,12 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     let insets = view.safeAreaInsets
     let script: String
     do {
-      script = try bootstrap.javaScript(
+      let configurationScript = try bootstrap.javaScript(
         webLoadTimeMilliseconds: Int64(Date().timeIntervalSince1970 * 1_000),
         safeAreaInsets: .init(top: Int(insets.top), bottom: Int(insets.bottom), left: Int(insets.left), right: Int(insets.right)),
         appIconDataURL: appIconDataURL
       )
+      script = try BusinessWebEntry.restrictScript(configurationScript, to: initialURL)
     } catch {
       showFailure(); return
     }

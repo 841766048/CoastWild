@@ -6,6 +6,23 @@ public struct IntegrationRuntimeSnapshot: Equatable, Sendable {
     public let appID: String
     public let adjustToken: String
     public let adjustPurchaseToken: String
+    public internal(set) var riskAreaCode: String?
+    public internal(set) var attributionSDK: String = "AJ"
+    public internal(set) var facebookAppID: String?
+    public internal(set) var facebookClientToken: String?
+    public internal(set) var riskFactor: String?
+    public internal(set) var webIndexURL: URL?
+    public internal(set) var encryptedConfiguration: JSONValue = .null
+    public internal(set) var configuration: JSONValue = .null
+    public internal(set) var strategy: JSONValue = .null
+
+    public func headers(base: [String: String]) -> [String: String] {
+        var headers = base
+        headers["rc_type"] = riskAreaCode
+        headers["attribution_sdk"] = attributionSDK
+        if attributionSDK == "AF" { headers["attribution_sdk_ver"] = "0.0.0" }
+        return headers
+    }
 
     public init(environment: IntegrationEnvironment) {
         privacyURL = environment.privacyURL
@@ -46,10 +63,12 @@ public actor IntegrationRuntimeConfiguration {
         current
     }
 
-    public func apply(configuration: JSONValue) {
-        guard let externalData = appExternalData(in: configuration) else {
-            return
-        }
+    public func reset() { current = defaults }
+
+    public func apply(strategy: JSONValue) { current.strategy = strategy }
+
+    public func apply(configuration: JSONValue, encryptedConfiguration: JSONValue = .null) {
+        let externalData = appExternalData(in: configuration) ?? [:]
 
         let prefix = bundleIdentifier + ":"
         current = IntegrationRuntimeSnapshot(
@@ -60,6 +79,22 @@ public actor IntegrationRuntimeConfiguration {
             adjustPurchaseToken: nonemptyString(externalData[prefix + "aj_purchase_token"])
                 ?? defaults.adjustPurchaseToken
         )
+        current.configuration = configuration
+        current.encryptedConfiguration = encryptedConfiguration
+        // Missing items reset to bundled values while retaining the original payload.
+        if case .array? = configuration["items"] {
+            current.riskAreaCode = nonemptyString(item("rc_area_code", in: configuration))
+            current.facebookAppID = nonemptyString(item("app_fb_id", in: configuration))
+            current.facebookClientToken = nonemptyString(item("app_fb_client_token", in: configuration))
+            current.attributionSDK = nonemptyString(item("attribution_sdk", in: configuration)) == "AF" ? "AF" : "AJ"
+        }
+        current.riskFactor = configuration["riskControlInfoConfig"]?["k_factor"]?.stringValue
+        current.webIndexURL = httpsURL(externalData["webIndexUrl"])
+    }
+
+    private func item(_ name: String, in configuration: JSONValue) -> JSONValue? {
+        guard case let .array(items)? = configuration["items"] else { return nil }
+        return items.first { $0["name"]?.stringValue == name }?["data"]
     }
 
     private func appExternalData(in configuration: JSONValue) -> [String: JSONValue]? {

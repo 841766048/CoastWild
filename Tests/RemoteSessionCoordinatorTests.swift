@@ -78,6 +78,8 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
 
         XCTAssertNil(clearedSession)
         XCTAssertEqual(retainedIdentity, "device-uuid")
+        let callsAfterLogout = await dependencies.api.calls()
+        XCTAssertEqual(callsAfterLogout.last, "reset-runtime")
     }
 
     func testInvalidOAuthDoesNotReplaceExistingSession() async throws {
@@ -282,6 +284,7 @@ private actor RemoteAPIFake: RemoteAuthenticationAPI {
 
     func calls() -> [String] { callLog }
     func clearStrategyError() { strategyError = nil }
+    func resetRuntime() { callLog.append("reset-runtime") }
     func resetCalls() { callLog = [] }
 }
 

@@ -17,6 +17,8 @@ public actor IntegrationKeyStore {
     public func store(_ key: String) {
         derivedKey = key
     }
+
+    public func clear() { derivedKey = nil }
 }
 
 public protocol IntegrationCiphering: Sendable {
@@ -119,8 +121,8 @@ public final class IntegrationAPIClient: @unchecked Sendable {
             throw IntegrationAPIError.decryption
         }
         let configuration = try JSONValue(any: configurationObject)
-        await runtimeConfiguration?.apply(configuration: configuration)
-        await keyStore.store(derivedKey)
+        await runtimeState.apply(configuration: configuration, encryptedConfiguration: data,
+                                 key: derivedKey, epoch: epoch)
         return IntegrationConfigBundle(
             k2: k2,
             k3: k3,
@@ -130,11 +132,36 @@ public final class IntegrationAPIClient: @unchecked Sendable {
     }
 
     public func getStrategy(session: RequestSession) async throws -> JSONValue {
-        try await postWithDerivedKey(path: paths.getStrategy, parameters: [:], session: session)
+        let state = await runtimeState.requestState()
+        guard let key = state.key, !key.isEmpty else {
+            throw IntegrationAPIError.missingEncryptionKey
+        }
+        let strategy = try await post(path: paths.getStrategy, parameters: [:], key: key, session: session)
+        await runtimeState.apply(strategy: strategy, epoch: state.epoch)
+        return strategy
     }
 
     public func oauth(_ request: OAuthRequest, session: RequestSession) async throws -> JSONValue {
-        try await postWithDerivedKey(path: paths.oauth, parameters: request.parameters, session: session)
+        var parameters = request.parameters
+        if parameters["info"] == nil,
+           let factor = await runtimeConfiguration?.snapshot().riskFactor {
+            do {
+                parameters["info"] = try IntegrationCipher.encryptRiskJSONObject(
+                    contextProvider.riskParameters(session: session), rawKey: factor)
+            } catch {
+                throw IntegrationAPIError.encryption
+            }
+        }
+        return try await postWithDerivedKey(path: paths.oauth, parameters: parameters, session: session)
+    }
+
+    public func resetRuntime() async {
+        await runtimeState.reset()
+    }
+
+    public func headers(session: RequestSession) async -> [String: String] {
+        let base = contextProvider.headers(session: session)
+        return await runtimeConfiguration?.snapshot().headers(base: base) ?? base
     }
 
     public func createRecharge(
@@ -191,7 +218,7 @@ public final class IntegrationAPIClient: @unchecked Sendable {
             throw IntegrationAPIError.invalidURL
         }
         var body = parameters
-        body["http_headers"] = contextProvider.headers(session: session)
+        body["http_headers"] = await headers(session: session)
 
         let encryptedBody: String
         do {
