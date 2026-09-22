@@ -3,7 +3,7 @@ import WebKit
 import SafariServices
 import StoreKit
 
-final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, BridgeMessageHandling {
+final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, BridgeMessageHandling, UIGestureRecognizerDelegate {
   private let initialURL: URL
   private let bootstrap: BusinessWebBootstrap
   private let policy: BusinessWebNavigationPolicy
@@ -16,6 +16,9 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   private var progressObservation: NSKeyValueObservation?
   private var localActionState = BusinessWebLocalActionState()
   private var launchCover: UIView?
+  private weak var configuredNavigationPopRecognizer: UIGestureRecognizer?
+  private weak var suspendedNavigationPopRecognizer: UIGestureRecognizer?
+  private var suspendedNavigationPopWasEnabled: Bool?
   private let progress = UIProgressView(progressViewStyle: .bar)
   private let percent = UILabel()
   private let retry = UIButton(type: .system)
@@ -45,6 +48,7 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   }
   required init?(coder: NSCoder) { fatalError("init(coder:) unsupported") }
   deinit {
+    restoreNavigationPop()
     keyboardTokens.forEach(NotificationCenter.default.removeObserver)
     webView?.configuration.userContentController.removeAllScriptMessageHandlers()
   }
@@ -52,6 +56,12 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationController?.setNavigationBarHidden(true, animated: animated)
+    configureNavigationGestureArbitration()
+  }
+
+  override func viewWillDisappear(_ animated: Bool) {
+    restoreNavigationPop()
+    super.viewWillDisappear(animated)
   }
 
   override func viewDidLoad() {
@@ -66,6 +76,7 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     retry.accessibilityIdentifier = "business-web.retry"; retry.isHidden = true
     retry.addAction(UIAction { [weak self] _ in self?.reloadFromStart() }, for: .touchUpInside)
     retry.translatesAutoresizingMaskIntoConstraints = false
+    edgePanRecognizer.delegate = self
     view.addSubview(progress); view.addSubview(percent); view.addSubview(retry)
     NSLayoutConstraint.activate([
       progress.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
@@ -129,6 +140,7 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     ])
     webView = next
     applyEdgePan(localActionState.edgePan)
+    configureNavigationGestureArbitration()
     progress.progress = 0.05; percent.text = "5%"; progress.isHidden = false; percent.isHidden = false; retry.isHidden = true
     progressObservation = next.observe(\.estimatedProgress, options: [.new]) { [weak self] webView, _ in
       DispatchQueue.main.async { self?.updateProgress(webView.estimatedProgress) }
@@ -177,14 +189,68 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   }
 
   private func applyEdgePan(_ payload: EdgePanPayload) {
+    restoreNavigationPop()
+    edgePanRecognizer.isEnabled = false
     localActionState.setEdgePan(payload)
     edgePanRecognizer.edges = payload.isLeftEdge ? .left : .right
     edgePanRecognizer.isEnabled = payload.isEnabled
   }
 
   @objc private func handleEdgePan(_ recognizer: UIScreenEdgePanGestureRecognizer) {
-    guard recognizer.state == .ended, let webView, webView.canGoBack else { return }
-    webView.goBack()
+    switch recognizer.state {
+    case .ended:
+      let webView = webView
+      let shouldGoBack = localActionState.edgePan.isEnabled && webView?.canGoBack == true
+      restoreNavigationPop()
+      if shouldGoBack { webView?.goBack() }
+    case .cancelled, .failed:
+      restoreNavigationPop()
+    default:
+      break
+    }
+  }
+
+  func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+    guard gestureRecognizer === edgePanRecognizer else { return true }
+    restoreNavigationPop()
+    let isNavigationRoot = navigationController.map { $0.viewControllers.first === self } ?? true
+    let decision = BusinessWebEdgePanBeginPolicy.decision(
+      payload: localActionState.edgePan,
+      webCanGoBack: webView?.canGoBack == true,
+      isNavigationRoot: isNavigationRoot)
+    if decision.shouldSuspendNavigationPop { suspendNavigationPop() }
+    return decision.shouldBeginWebGesture
+  }
+
+  func gestureRecognizer(
+    _ gestureRecognizer: UIGestureRecognizer,
+    shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+  ) -> Bool {
+    guard gestureRecognizer === edgePanRecognizer || otherGestureRecognizer === edgePanRecognizer else { return false }
+    return false
+  }
+
+  private func configureNavigationGestureArbitration() {
+    guard let pop = navigationController?.interactivePopGestureRecognizer,
+          pop !== configuredNavigationPopRecognizer,
+          pop.view != nil, edgePanRecognizer.view != nil else { return }
+    pop.require(toFail: edgePanRecognizer)
+    configuredNavigationPopRecognizer = pop
+  }
+
+  private func suspendNavigationPop() {
+    guard let pop = navigationController?.interactivePopGestureRecognizer, pop.isEnabled else { return }
+    suspendedNavigationPopRecognizer = pop
+    suspendedNavigationPopWasEnabled = pop.isEnabled
+    pop.isEnabled = false
+  }
+
+  private func restoreNavigationPop() {
+    if let pop = suspendedNavigationPopRecognizer, let wasEnabled = suspendedNavigationPopWasEnabled {
+      pop.isEnabled = wasEnabled
+    }
+    suspendedNavigationPopRecognizer = nil
+    suspendedNavigationPopWasEnabled = nil
   }
 
   private func observeKeyboard() {
@@ -257,10 +323,16 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     case .openInternalWeb:
       break
     case .backgroundLogin, .logout, .setLanguage, .refreshEntitlements, .nativeLog:
-      if let onApplicationAction {
-        onApplicationAction(action)
-      } else {
-        onBridgeMessage(originalMessage)
+      switch BusinessBridgeApplicationDeliveryPolicy.delivery(
+        action: action,
+        originalMessage: originalMessage,
+        hasActionSink: onApplicationAction != nil) {
+      case let .action(deliveredAction):
+        onApplicationAction?(deliveredAction)
+      case let .legacyMessage(message):
+        onBridgeMessage(message)
+      case .discard:
+        break
       }
     }
   }

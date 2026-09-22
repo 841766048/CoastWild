@@ -105,6 +105,83 @@ final class BusinessWebTests: XCTestCase {
         XCTAssertEqual(state.edgePan, disabledLeftEdge)
     }
 
+    func testNativeLogDeliveryNeverUsesRawLegacyFallback() throws {
+        let secret = "token=super-secret"
+        let message = BridgeMessage.nativeLog(secret)
+        let action = try XCTUnwrap(BusinessBridgeActionPlanner.action(for: message))
+
+        XCTAssertEqual(
+            BusinessBridgeApplicationDeliveryPolicy.delivery(
+                action: action, originalMessage: message, hasActionSink: true),
+            .action(action)
+        )
+        XCTAssertEqual(
+            BusinessBridgeApplicationDeliveryPolicy.delivery(
+                action: action, originalMessage: message, hasActionSink: false),
+            .discard
+        )
+        XCTAssertNotEqual(
+            BusinessBridgeApplicationDeliveryPolicy.delivery(
+                action: action, originalMessage: message, hasActionSink: false),
+            .legacyMessage(message)
+        )
+    }
+
+    func testNonSensitiveApplicationActionCanUseLegacyFallbackWithoutActionSink() {
+        XCTAssertEqual(
+            BusinessBridgeApplicationDeliveryPolicy.delivery(
+                action: .logout, originalMessage: .logout, hasActionSink: false),
+            .legacyMessage(.logout)
+        )
+    }
+
+    func testLeftEdgeWebBackOwnsGestureOnlyWhenEnabledAndHistoryExists() {
+        let enabledLeft = EdgePanPayload(isEnabled: true, isLeftEdge: true)
+        let disabledLeft = EdgePanPayload(isEnabled: false, isLeftEdge: true)
+
+        XCTAssertEqual(
+            BusinessWebEdgePanBeginPolicy.decision(
+                payload: enabledLeft, webCanGoBack: true, isNavigationRoot: false),
+            .init(shouldBeginWebGesture: true, shouldSuspendNavigationPop: true, allowsNavigationPop: false)
+        )
+        XCTAssertEqual(
+            BusinessWebEdgePanBeginPolicy.decision(
+                payload: enabledLeft, webCanGoBack: false, isNavigationRoot: false),
+            .init(shouldBeginWebGesture: false, shouldSuspendNavigationPop: false, allowsNavigationPop: true)
+        )
+        XCTAssertEqual(
+            BusinessWebEdgePanBeginPolicy.decision(
+                payload: disabledLeft, webCanGoBack: true, isNavigationRoot: false),
+            .init(shouldBeginWebGesture: false, shouldSuspendNavigationPop: false, allowsNavigationPop: true)
+        )
+    }
+
+    func testRootAndRightEdgeDecisionsDoNotSuspendNavigationPop() {
+        let enabledLeft = EdgePanPayload(isEnabled: true, isLeftEdge: true)
+        let enabledRight = EdgePanPayload(isEnabled: true, isLeftEdge: false)
+
+        XCTAssertEqual(
+            BusinessWebEdgePanBeginPolicy.decision(
+                payload: enabledLeft, webCanGoBack: true, isNavigationRoot: true),
+            .init(shouldBeginWebGesture: true, shouldSuspendNavigationPop: false, allowsNavigationPop: false)
+        )
+        XCTAssertEqual(
+            BusinessWebEdgePanBeginPolicy.decision(
+                payload: enabledLeft, webCanGoBack: false, isNavigationRoot: true),
+            .init(shouldBeginWebGesture: false, shouldSuspendNavigationPop: false, allowsNavigationPop: false)
+        )
+        XCTAssertEqual(
+            BusinessWebEdgePanBeginPolicy.decision(
+                payload: enabledRight, webCanGoBack: true, isNavigationRoot: false),
+            .init(shouldBeginWebGesture: true, shouldSuspendNavigationPop: false, allowsNavigationPop: true)
+        )
+        XCTAssertEqual(
+            BusinessWebEdgePanBeginPolicy.decision(
+                payload: enabledRight, webCanGoBack: false, isNavigationRoot: false),
+            .init(shouldBeginWebGesture: false, shouldSuspendNavigationPop: false, allowsNavigationPop: true)
+        )
+    }
+
     func testInternalWebContractIsIsolatedAndOnlyRegistersCloseMessage() {
         XCTAssertTrue(InternalWebContract.usesDedicatedWebViewConfiguration)
         XCTAssertFalse(InternalWebContract.injectsBusinessBootstrap)

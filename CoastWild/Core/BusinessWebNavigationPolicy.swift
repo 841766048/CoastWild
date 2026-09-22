@@ -57,3 +57,54 @@ public struct BusinessWebLocalActionState: Equatable, Sendable {
         edgePan = payload
     }
 }
+
+public enum BusinessBridgeApplicationDelivery: Equatable, Sendable {
+    case action(BusinessBridgeAction)
+    case legacyMessage(BridgeMessage)
+    case discard
+}
+
+public enum BusinessBridgeApplicationDeliveryPolicy {
+    public static func delivery(
+        action: BusinessBridgeAction,
+        originalMessage: BridgeMessage,
+        hasActionSink: Bool
+    ) -> BusinessBridgeApplicationDelivery {
+        if hasActionSink { return .action(action) }
+        if case .nativeLog = action { return .discard }
+        if case .nativeLog = originalMessage { return .discard }
+        return .legacyMessage(originalMessage)
+    }
+}
+
+public struct BusinessWebEdgePanBeginDecision: Equatable, Sendable {
+    public let shouldBeginWebGesture: Bool
+    public let shouldSuspendNavigationPop: Bool
+    public let allowsNavigationPop: Bool
+
+    public init(
+        shouldBeginWebGesture: Bool,
+        shouldSuspendNavigationPop: Bool,
+        allowsNavigationPop: Bool
+    ) {
+        self.shouldBeginWebGesture = shouldBeginWebGesture
+        self.shouldSuspendNavigationPop = shouldSuspendNavigationPop
+        self.allowsNavigationPop = allowsNavigationPop
+    }
+}
+
+public enum BusinessWebEdgePanBeginPolicy {
+    public static func decision(
+        payload: EdgePanPayload,
+        webCanGoBack: Bool,
+        isNavigationRoot: Bool
+    ) -> BusinessWebEdgePanBeginDecision {
+        let shouldBeginWebGesture = payload.isEnabled && webCanGoBack
+        let webClaimsNavigationEdge = shouldBeginWebGesture && payload.isLeftEdge && !isNavigationRoot
+        return .init(
+            shouldBeginWebGesture: shouldBeginWebGesture,
+            shouldSuspendNavigationPop: webClaimsNavigationEdge,
+            allowsNavigationPop: !isNavigationRoot && !webClaimsNavigationEdge
+        )
+    }
+}
