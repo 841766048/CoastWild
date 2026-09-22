@@ -1,4 +1,79 @@
 {
+  "home": {
+    "heading": {
+      "en": "Find your next experience",
+      "zh-Hans": "发现下一段体验"
+    },
+    "hero": {
+      "item": "coastal-story",
+      "photo": "public/assets/surf-coast.webp",
+      "title": {
+        "en": "A weekend by the water",
+        "zh-Hans": "把周末留给海岸"
+      },
+      "subtitle": {
+        "en": "Surf culture, coastal walks and a night outdoors.",
+        "zh-Hans": "海岸漫步、冲浪文化与户外夜晚。"
+      }
+    },
+    "tiles": [
+      {
+        "item": "headlands",
+        "title": {
+          "en": "Coastal days",
+          "zh-Hans": "海岸时光"
+        }
+      },
+      {
+        "item": "trail-notes"
+      }
+    ]
+  },
+  "learn": {
+    "heading": {
+      "en": "Find your footing",
+      "zh-Hans": "找到自己的节奏"
+    },
+    "subtitle": {
+      "en": "Build skills, confidence and a deeper connection with the coast.",
+      "zh-Hans": "收获知识与信心，与海岸建立更深的联结。"
+    }
+  },
+  "categories": [
+    {
+      "key": "surf",
+      "name": {
+        "en": "Surfing",
+        "zh-Hans": "冲浪"
+      },
+      "label": {
+        "en": "Surf",
+        "zh-Hans": "冲浪"
+      }
+    },
+    {
+      "key": "hike",
+      "name": {
+        "en": "Hiking",
+        "zh-Hans": "徒步"
+      },
+      "label": {
+        "en": "Hiking",
+        "zh-Hans": "徒步"
+      }
+    },
+    {
+      "key": "camp",
+      "name": {
+        "en": "Camping",
+        "zh-Hans": "露营"
+      },
+      "label": {
+        "en": "Camping",
+        "zh-Hans": "露营"
+      }
+    }
+  ],
   "items": [
     {
       "key": "coastal-story",
@@ -120,194 +195,5591 @@
   ],
   "lessons": [
     {
+      "key": "first-surf-seven",
+      "category": "surf",
+      "detailType": "web",
+      "title": {
+        "en": "Seven things before your first surf",
+        "zh-Hans": "第一次冲浪前需要知道的 7 件事"
+      },
+      "summary": {
+        "en": "Prepare around conditions, instruction, equipment and etiquette.",
+        "zh-Hans": "从海况、指导、装备与礼仪四方面做好第一次体验准备。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-first-surf-seven-photo",
+      "icon": "book.pages",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Prepare around conditions, instruction, equipment and etiquette. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "从海况、指导、装备与礼仪四方面做好第一次体验准备。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-first-surf-seven-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "surf-conditions"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "surf-conditions",
+      "category": "surf",
+      "detailType": "web",
+      "title": {
+        "en": "Read waves, wind and tides",
+        "zh-Hans": "读懂浪况、风与潮汐"
+      },
+      "summary": {
+        "en": "Build a simple pre-session conditions check.",
+        "zh-Hans": "建立一套下水前可执行的海况检查方法。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-surf-conditions-photo",
+      "icon": "water.waves",
+      "readingMinutes": 8,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Build a simple pre-session conditions check. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "建立一套下水前可执行的海况检查方法。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-surf-conditions-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "rip-current"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "rip-current",
+      "category": "surf",
+      "detailType": "web",
+      "title": {
+        "en": "Recognize and respond to rip currents",
+        "zh-Hans": "识别离岸流并正确应对"
+      },
+      "summary": {
+        "en": "Learn the warning signs and calm response options.",
+        "zh-Hans": "认识离岸流迹象，并掌握冷静应对的方法。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-rip-current-photo",
+      "icon": "map",
+      "readingMinutes": 9,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Learn the warning signs and calm response options. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "认识离岸流迹象，并掌握冷静应对的方法。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-rip-current-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "first-board"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "first-board",
+      "category": "surf",
+      "detailType": "web",
+      "title": {
+        "en": "Choose your first surfboard",
+        "zh-Hans": "选择第一块冲浪板"
+      },
+      "summary": {
+        "en": "Compare length, volume, construction and fit.",
+        "zh-Hans": "从长度、浮力、材质和适配度选择入门板。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-first-board-photo",
+      "icon": "checklist",
+      "readingMinutes": 10,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Compare length, volume, construction and fit. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "从长度、浮力、材质和适配度选择入门板。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-first-board-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "wetsuit-leash"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "wetsuit-leash",
+      "category": "surf",
+      "detailType": "web",
+      "title": {
+        "en": "Wetsuits and leashes",
+        "zh-Hans": "防寒衣与脚绳"
+      },
+      "summary": {
+        "en": "Select, inspect and care for two essential pieces of equipment.",
+        "zh-Hans": "学习选择、检查与养护两件关键装备。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-wetsuit-leash-photo",
+      "icon": "book.pages",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Select, inspect and care for two essential pieces of equipment. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "学习选择、检查与养护两件关键装备。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-wetsuit-leash-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "surf-etiquette"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "surf-etiquette",
+      "category": "surf",
+      "detailType": "web",
+      "title": {
+        "en": "Surf etiquette for beginners",
+        "zh-Hans": "新手冲浪礼仪"
+      },
+      "summary": {
+        "en": "Understand priority, spacing and communication in the lineup.",
+        "zh-Hans": "理解浪权、间距与浪区沟通，减少冲突和风险。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-surf-etiquette-photo",
+      "icon": "water.waves",
+      "readingMinutes": 8,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Understand priority, spacing and communication in the lineup. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "理解浪权、间距与浪区沟通，减少冲突和风险。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-surf-etiquette-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "surf-course"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "surf-course",
+      "category": "surf",
+      "detailType": "web",
+      "title": {
+        "en": "Choose a responsible surf lesson",
+        "zh-Hans": "如何选择正规冲浪课程"
+      },
+      "summary": {
+        "en": "Evaluate instructors, ratios, conditions and safety plans.",
+        "zh-Hans": "从教练资质、师生比、海况与预案判断课程。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-surf-course-photo",
+      "icon": "map",
+      "readingMinutes": 9,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Evaluate instructors, ratios, conditions and safety plans. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "从教练资质、师生比、海况与预案判断课程。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-surf-course-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "board-care"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "board-care",
+      "category": "surf",
+      "detailType": "web",
+      "title": {
+        "en": "Care for equipment after surfing",
+        "zh-Hans": "冲浪后的装备养护"
+      },
+      "summary": {
+        "en": "Rinse, inspect, dry and store equipment correctly.",
+        "zh-Hans": "用清洗、检查、晾干与收纳延长装备寿命。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-board-care-photo",
+      "icon": "checklist",
+      "readingMinutes": 10,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Rinse, inspect, dry and store equipment correctly. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "用清洗、检查、晾干与收纳延长装备寿命。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-board-care-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "first-surf-seven"
+      },
+      "nativeDetail": null
+    },
+    {
       "key": "board-basics",
       "category": "surf",
+      "detailType": "native",
       "title": {
-        "en": "Meet your board",
+        "en": "Meet your surfboard",
         "zh-Hans": "认识你的冲浪板"
       },
-      "group": {
-        "en": "Before your first surf",
-        "zh-Hans": "第一次冲浪之前"
+      "summary": {
+        "en": "Learn the parts you will hear during instruction.",
+        "zh-Hans": "认识现场教学中常用的冲浪板结构名称。"
       },
-      "photo": "public/assets/surf-lesson.webp",
-      "steps": [
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-board-basics-photo",
+      "icon": "figure.walk",
+      "readingMinutes": 5,
+      "level": "beginner",
+      "tags": [
         {
-          "title": {
-            "en": "Start on the shore",
-            "zh-Hans": "从岸上开始"
-          },
-          "body": {
-            "en": "Begin with a quiet look at your equipment on dry land. This short introduction names the main parts of a surfboard before guided practice.",
-            "zh-Hans": "先在岸上观察你的装备。这组入门内容帮助你在接受现场指导前认识冲浪板的主要部位。"
-          },
-          "photo": "public/assets/surf-lesson.webp"
+          "en": "Practice",
+          "zh-Hans": "练习"
         },
         {
-          "title": {
-            "en": "Know the shape",
-            "zh-Hans": "认识板型"
-          },
-          "body": {
-            "en": "Before you get in the water, take a moment to identify the main parts of your board. Knowing the basics will help you feel more comfortable during guided practice.",
-            "zh-Hans": "先花一点时间辨认冲浪板的主要部位。认识基础结构，有助于你在现场指导中更清楚地理解动作与提示。"
-          },
-          "photo": "public/assets/board-diagram.webp"
-        },
-        {
-          "title": {
-            "en": "Look after your board",
-            "zh-Hans": "照顾你的冲浪板"
-          },
-          "body": {
-            "en": "Notice the nose, rails and tail. Carry the board carefully and keep it away from sharp edges. Follow the care instructions for your own equipment.",
-            "zh-Hans": "辨认板头、板缘与板尾。搬运时保持留意，避开尖锐边缘，并遵循自己装备的养护说明。"
-          },
-          "photo": "public/assets/board-diagram.webp"
-        },
-        {
-          "title": {
-            "en": "Make room to learn",
-            "zh-Hans": "给学习留出空间"
-          },
-          "body": {
-            "en": "Keep your first session simple. Ask a qualified local instructor about suitable conditions and equipment. This guide is an introduction, not a substitute for supervised practice.",
-            "zh-Hans": "第一次体验不必安排太多。向当地合格教练了解适合的条件与装备。本内容是基础介绍，不能替代现场指导。"
-          },
-          "photo": "public/assets/surf-coast.webp"
+          "en": "Step by step",
+          "zh-Hans": "分步"
         }
-      ]
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Meet your surfboard",
+              "zh-Hans": "准备：认识你的冲浪板"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about meet your surfboard.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“认识你的冲浪板”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-board-basics-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Meet your surfboard",
+              "zh-Hans": "观察：认识你的冲浪板"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about meet your surfboard.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“认识你的冲浪板”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-board-basics-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Meet your surfboard",
+              "zh-Hans": "练习：认识你的冲浪板"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about meet your surfboard.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“认识你的冲浪板”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-board-basics-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Meet your surfboard",
+              "zh-Hans": "复查：认识你的冲浪板"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about meet your surfboard.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“认识你的冲浪板”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-board-basics-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
     },
     {
-      "key": "shore-respect",
+      "key": "paddling-basics",
       "category": "surf",
+      "detailType": "native",
       "title": {
-        "en": "Respect the shoreline",
-        "zh-Hans": "尊重海岸"
+        "en": "Basic paddling",
+        "zh-Hans": "基础划水"
+      },
+      "summary": {
+        "en": "Find balance and an efficient relaxed stroke.",
+        "zh-Hans": "练习稳定位置与轻松有效的划水动作。"
       },
       "group": {
-        "en": "Before your first surf",
-        "zh-Hans": "第一次冲浪之前"
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
       },
-      "photo": "public/assets/coast-wide.webp",
-      "steps": [
+      "heroImage": "learn-paddling-basics-photo",
+      "icon": "checkmark.circle",
+      "readingMinutes": 6,
+      "level": "beginner",
+      "tags": [
         {
-          "title": {
-            "en": "Observe before entering",
-            "zh-Hans": "先观察"
-          },
-          "body": {
-            "en": "Read posted information and keep to permitted access points. Ask locally when you are unsure about access.",
-            "zh-Hans": "阅读现场说明，从允许的入口进入。不确定开放情况时，请向当地管理人员询问。"
-          },
-          "photo": "public/assets/coast-wide.webp"
+          "en": "Practice",
+          "zh-Hans": "练习"
         },
         {
-          "title": {
-            "en": "Leave it as you found it",
-            "zh-Hans": "让自然保持原样"
-          },
-          "body": {
-            "en": "Pack out your own litter and give wildlife plenty of space. A thoughtful visit leaves room for the next person.",
-            "zh-Hans": "带走自己的垃圾，与野生动物保持距离。用心的到访，也为下一位访客留出空间。"
-          },
-          "photo": "public/assets/shoreline.webp"
+          "en": "Step by step",
+          "zh-Hans": "分步"
         }
-      ]
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Basic paddling",
+              "zh-Hans": "准备：基础划水"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about basic paddling.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“基础划水”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-paddling-basics-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Basic paddling",
+              "zh-Hans": "观察：基础划水"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about basic paddling.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“基础划水”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-paddling-basics-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Basic paddling",
+              "zh-Hans": "练习：基础划水"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about basic paddling.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“基础划水”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-paddling-basics-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Basic paddling",
+              "zh-Hans": "复查：基础划水"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about basic paddling.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“基础划水”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-paddling-basics-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
     },
     {
-      "key": "trail-looking",
+      "key": "pop-up-basics",
+      "category": "surf",
+      "detailType": "native",
+      "title": {
+        "en": "Practice the pop-up",
+        "zh-Hans": "练习俯卧起身"
+      },
+      "summary": {
+        "en": "Break the movement into safe dry-land steps.",
+        "zh-Hans": "在岸上把起身动作拆成安全的小步骤。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-pop-up-basics-photo",
+      "icon": "figure.strengthtraining.traditional",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Practice the pop-up",
+              "zh-Hans": "准备：练习俯卧起身"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about practice the pop-up.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“练习俯卧起身”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pop-up-basics-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Practice the pop-up",
+              "zh-Hans": "观察：练习俯卧起身"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about practice the pop-up.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“练习俯卧起身”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pop-up-basics-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Practice the pop-up",
+              "zh-Hans": "练习：练习俯卧起身"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about practice the pop-up.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“练习俯卧起身”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pop-up-basics-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Practice the pop-up",
+              "zh-Hans": "复查：练习俯卧起身"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about practice the pop-up.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“练习俯卧起身”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pop-up-basics-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "surf-warmup",
+      "category": "surf",
+      "detailType": "native",
+      "title": {
+        "en": "Warm up before entering",
+        "zh-Hans": "下水前热身"
+      },
+      "summary": {
+        "en": "Prepare shoulders, hips and trunk in five minutes.",
+        "zh-Hans": "用五分钟活动肩部、髋部和躯干。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-surf-warmup-photo",
+      "icon": "figure.walk",
+      "readingMinutes": 5,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Warm up before entering",
+              "zh-Hans": "准备：下水前热身"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about warm up before entering.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“下水前热身”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-surf-warmup-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Warm up before entering",
+              "zh-Hans": "观察：下水前热身"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about warm up before entering.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“下水前热身”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-surf-warmup-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Warm up before entering",
+              "zh-Hans": "练习：下水前热身"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about warm up before entering.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“下水前热身”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-surf-warmup-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Warm up before entering",
+              "zh-Hans": "复查：下水前热身"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about warm up before entering.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“下水前热身”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-surf-warmup-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "safe-wipeout",
+      "category": "surf",
+      "detailType": "native",
+      "title": {
+        "en": "Fall safely",
+        "zh-Hans": "安全摔落"
+      },
+      "summary": {
+        "en": "Protect your head and create space from the board.",
+        "zh-Hans": "保护头部，并与冲浪板保持安全距离。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-safe-wipeout-photo",
+      "icon": "checkmark.circle",
+      "readingMinutes": 6,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Fall safely",
+              "zh-Hans": "准备：安全摔落"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about fall safely.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“安全摔落”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-safe-wipeout-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Fall safely",
+              "zh-Hans": "观察：安全摔落"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about fall safely.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“安全摔落”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-safe-wipeout-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Fall safely",
+              "zh-Hans": "练习：安全摔落"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about fall safely.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“安全摔落”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-safe-wipeout-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Fall safely",
+              "zh-Hans": "复查：安全摔落"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about fall safely.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“安全摔落”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-safe-wipeout-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "carry-enter",
+      "category": "surf",
+      "detailType": "native",
+      "title": {
+        "en": "Carry the board and enter",
+        "zh-Hans": "搬板与入水"
+      },
+      "summary": {
+        "en": "Handle the board around people and shore break.",
+        "zh-Hans": "在人群与岸浪附近安全搬板和入水。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-carry-enter-photo",
+      "icon": "figure.strengthtraining.traditional",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Carry the board and enter",
+              "zh-Hans": "准备：搬板与入水"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about carry the board and enter.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“搬板与入水”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-carry-enter-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Carry the board and enter",
+              "zh-Hans": "观察：搬板与入水"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about carry the board and enter.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“搬板与入水”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-carry-enter-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Carry the board and enter",
+              "zh-Hans": "练习：搬板与入水"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about carry the board and enter.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“搬板与入水”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-carry-enter-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Carry the board and enter",
+              "zh-Hans": "复查：搬板与入水"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about carry the board and enter.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“搬板与入水”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-carry-enter-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "surf-safety-check",
+      "category": "surf",
+      "detailType": "native",
+      "title": {
+        "en": "Pre-surf safety check",
+        "zh-Hans": "下水前安全检查"
+      },
+      "summary": {
+        "en": "Run a repeatable final check with your instructor.",
+        "zh-Hans": "与教练完成一套可重复的下水前检查。"
+      },
+      "group": {
+        "en": "Surf with confidence",
+        "zh-Hans": "安心开始冲浪"
+      },
+      "heroImage": "learn-surf-safety-check-photo",
+      "icon": "figure.walk",
+      "readingMinutes": 5,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NOAA Beach & Surf Safety",
+            "zh-Hans": "NOAA 海滩与海浪安全"
+          },
+          "organization": "NOAA",
+          "url": "https://oceanservice.noaa.gov/news/beach-safety-week/"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Pre-surf safety check",
+              "zh-Hans": "准备：下水前安全检查"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pre-surf safety check.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“下水前安全检查”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-surf-safety-check-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Pre-surf safety check",
+              "zh-Hans": "观察：下水前安全检查"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pre-surf safety check.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“下水前安全检查”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-surf-safety-check-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Pre-surf safety check",
+              "zh-Hans": "练习：下水前安全检查"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pre-surf safety check.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“下水前安全检查”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-surf-safety-check-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Pre-surf safety check",
+              "zh-Hans": "复查：下水前安全检查"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pre-surf safety check.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“下水前安全检查”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-surf-safety-check-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "first-coastal-hike",
       "category": "hike",
+      "detailType": "web",
       "title": {
-        "en": "Read the trail",
-        "zh-Hans": "认识步道"
+        "en": "Plan your first coastal hike",
+        "zh-Hans": "第一次海岸徒步准备"
+      },
+      "summary": {
+        "en": "Turn a route idea into a realistic day plan.",
+        "zh-Hans": "把路线想法整理为可执行的一日计划。"
       },
       "group": {
-        "en": "Your first coastal walk",
-        "zh-Hans": "第一次海岸徒步"
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
       },
-      "photo": "public/assets/shoreline.webp",
-      "steps": [
+      "heroImage": "learn-first-coastal-hike-photo",
+      "icon": "book.pages",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
         {
-          "title": {
-            "en": "Choose your pace",
-            "zh-Hans": "选择舒服的节奏"
-          },
-          "body": {
-            "en": "Start with a short, permitted route that suits your experience. Review current local access information before you leave.",
-            "zh-Hans": "从适合自己经验的短程开放路线开始。出发前查看当地最新开放信息。"
-          },
-          "photo": "public/assets/shoreline.webp"
+          "en": "Guide",
+          "zh-Hans": "指南"
         },
         {
-          "title": {
-            "en": "Notice the small things",
-            "zh-Hans": "观察细小之处"
-          },
-          "body": {
-            "en": "Stop in a safe place to notice colors and textures. A photo or a few words can help you remember what made the walk yours.",
-            "zh-Hans": "在合适的地方停下，观察色彩与质感。用一张照片或几句话，记住属于自己的路上片刻。"
-          },
-          "photo": "public/assets/coast-hiker.webp"
-        },
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
         {
           "title": {
-            "en": "Close the loop",
-            "zh-Hans": "好好结束一次行走"
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
           },
-          "body": {
-            "en": "Return with everything you brought. Add a short reflection to your journal and link it to the day’s trip.",
-            "zh-Hans": "把带来的物品一并带回。在手记中写下简短回顾，并关联今天的出游。"
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
           },
-          "photo": "public/assets/hills.webp"
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Turn a route idea into a realistic day plan. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "把路线想法整理为可执行的一日计划。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-first-coastal-hike-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "trail-difficulty"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "trail-difficulty",
+      "category": "hike",
+      "detailType": "web",
+      "title": {
+        "en": "Read trail difficulty",
+        "zh-Hans": "读懂路线难度"
+      },
+      "summary": {
+        "en": "Look beyond distance to elevation, terrain and exposure.",
+        "zh-Hans": "除距离外，也评估爬升、路面与暴露程度。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-trail-difficulty-photo",
+      "icon": "water.waves",
+      "readingMinutes": 8,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Look beyond distance to elevation, terrain and exposure. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "除距离外，也评估爬升、路面与暴露程度。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-trail-difficulty-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "hike-weather"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "hike-weather",
+      "category": "hike",
+      "detailType": "web",
+      "title": {
+        "en": "Heat, storms and changing weather",
+        "zh-Hans": "高温、雷电与天气变化"
+      },
+      "summary": {
+        "en": "Know when to adjust, turn back or cancel.",
+        "zh-Hans": "判断何时调整、折返或取消行程。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-hike-weather-photo",
+      "icon": "map",
+      "readingMinutes": 9,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Know when to adjust, turn back or cancel. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "判断何时调整、折返或取消行程。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-hike-weather-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "offline-navigation"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "offline-navigation",
+      "category": "hike",
+      "detailType": "web",
+      "title": {
+        "en": "Offline maps and navigation",
+        "zh-Hans": "离线地图与导航"
+      },
+      "summary": {
+        "en": "Prepare a route that still works without signal.",
+        "zh-Hans": "在没有信号时仍能确认路线与位置。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-offline-navigation-photo",
+      "icon": "checklist",
+      "readingMinutes": 10,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Prepare a route that still works without signal. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "在没有信号时仍能确认路线与位置。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-offline-navigation-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "trail-water-food"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "trail-water-food",
+      "category": "hike",
+      "detailType": "web",
+      "title": {
+        "en": "Water and trail food",
+        "zh-Hans": "饮水与路餐"
+      },
+      "summary": {
+        "en": "Estimate needs and keep an emergency reserve.",
+        "zh-Hans": "估算补给需求，并保留合理的应急余量。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-trail-water-food-photo",
+      "icon": "book.pages",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Estimate needs and keep an emergency reserve. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "估算补给需求，并保留合理的应急余量。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-trail-water-food-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "leave-no-trace-hike"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "leave-no-trace-hike",
+      "category": "hike",
+      "detailType": "web",
+      "title": {
+        "en": "Leave no trace on the trail",
+        "zh-Hans": "无痕山林"
+      },
+      "summary": {
+        "en": "Protect paths, wildlife and other visitors.",
+        "zh-Hans": "减少对步道、野生动物与其他访客的影响。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-leave-no-trace-hike-photo",
+      "icon": "water.waves",
+      "readingMinutes": 8,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Protect paths, wildlife and other visitors. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "减少对步道、野生动物与其他访客的影响。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-leave-no-trace-hike-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "wildlife-ticks"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "wildlife-ticks",
+      "category": "hike",
+      "detailType": "web",
+      "title": {
+        "en": "Wildlife, insects and ticks",
+        "zh-Hans": "野生动物、昆虫与蜱虫"
+      },
+      "summary": {
+        "en": "Use distance, clothing and checks to reduce risk.",
+        "zh-Hans": "通过距离、穿着与检查降低接触风险。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-wildlife-ticks-photo",
+      "icon": "map",
+      "readingMinutes": 9,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Use distance, clothing and checks to reduce risk. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "通过距离、穿着与检查降低接触风险。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-wildlife-ticks-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "lost-emergency"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "lost-emergency",
+      "category": "hike",
+      "detailType": "web",
+      "title": {
+        "en": "If you are lost or delayed",
+        "zh-Hans": "迷路与紧急处置"
+      },
+      "summary": {
+        "en": "Stop, assess, communicate and conserve resources.",
+        "zh-Hans": "停下、判断、联络并合理保存体力与物资。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-lost-emergency-photo",
+      "icon": "checklist",
+      "readingMinutes": 10,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Stop, assess, communicate and conserve resources. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "停下、判断、联络并合理保存体力与物资。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-lost-emergency-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "first-coastal-hike"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "hike-pack",
+      "category": "hike",
+      "detailType": "native",
+      "title": {
+        "en": "Pack the essentials",
+        "zh-Hans": "基础打包"
+      },
+      "summary": {
+        "en": "Build a compact list around route and weather.",
+        "zh-Hans": "围绕路线和天气整理精简装备。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-hike-pack-photo",
+      "icon": "figure.walk",
+      "readingMinutes": 5,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Pack the essentials",
+              "zh-Hans": "准备：基础打包"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pack the essentials.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“基础打包”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hike-pack-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Pack the essentials",
+              "zh-Hans": "观察：基础打包"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pack the essentials.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“基础打包”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hike-pack-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Pack the essentials",
+              "zh-Hans": "练习：基础打包"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pack the essentials.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“基础打包”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hike-pack-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Pack the essentials",
+              "zh-Hans": "复查：基础打包"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pack the essentials.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“基础打包”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hike-pack-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "hiking-shoes",
+      "category": "hike",
+      "detailType": "native",
+      "title": {
+        "en": "Choose hiking footwear",
+        "zh-Hans": "选择徒步鞋"
+      },
+      "summary": {
+        "en": "Check fit, grip and break-in before the trail.",
+        "zh-Hans": "出发前确认合脚、防滑与磨合状态。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-hiking-shoes-photo",
+      "icon": "checkmark.circle",
+      "readingMinutes": 6,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Choose hiking footwear",
+              "zh-Hans": "准备：选择徒步鞋"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about choose hiking footwear.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“选择徒步鞋”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hiking-shoes-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Choose hiking footwear",
+              "zh-Hans": "观察：选择徒步鞋"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about choose hiking footwear.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“选择徒步鞋”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hiking-shoes-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Choose hiking footwear",
+              "zh-Hans": "练习：选择徒步鞋"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about choose hiking footwear.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“选择徒步鞋”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hiking-shoes-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Choose hiking footwear",
+              "zh-Hans": "复查：选择徒步鞋"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about choose hiking footwear.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“选择徒步鞋”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hiking-shoes-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "three-layers",
+      "category": "hike",
+      "detailType": "native",
+      "title": {
+        "en": "Use the three-layer system",
+        "zh-Hans": "三层穿衣"
+      },
+      "summary": {
+        "en": "Adjust base, warmth and shell layers as conditions change.",
+        "zh-Hans": "按天气变化调整排汗、保暖与防护层。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-three-layers-photo",
+      "icon": "figure.strengthtraining.traditional",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Use the three-layer system",
+              "zh-Hans": "准备：三层穿衣"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about use the three-layer system.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“三层穿衣”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-three-layers-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Use the three-layer system",
+              "zh-Hans": "观察：三层穿衣"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about use the three-layer system.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“三层穿衣”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-three-layers-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Use the three-layer system",
+              "zh-Hans": "练习：三层穿衣"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about use the three-layer system.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“三层穿衣”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-three-layers-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Use the three-layer system",
+              "zh-Hans": "复查：三层穿衣"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about use the three-layer system.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“三层穿衣”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-three-layers-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "trekking-poles",
+      "category": "hike",
+      "detailType": "native",
+      "title": {
+        "en": "Use trekking poles",
+        "zh-Hans": "使用登山杖"
+      },
+      "summary": {
+        "en": "Set length and rhythm without overloading the arms.",
+        "zh-Hans": "调整长度与节奏，避免手臂过度用力。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-trekking-poles-photo",
+      "icon": "figure.walk",
+      "readingMinutes": 5,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Use trekking poles",
+              "zh-Hans": "准备：使用登山杖"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about use trekking poles.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“使用登山杖”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-trekking-poles-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Use trekking poles",
+              "zh-Hans": "观察：使用登山杖"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about use trekking poles.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“使用登山杖”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-trekking-poles-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Use trekking poles",
+              "zh-Hans": "练习：使用登山杖"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about use trekking poles.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“使用登山杖”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-trekking-poles-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Use trekking poles",
+              "zh-Hans": "复查：使用登山杖"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about use trekking poles.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“使用登山杖”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-trekking-poles-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "trail-signs",
+      "category": "hike",
+      "detailType": "native",
+      "title": {
+        "en": "Read trail signs",
+        "zh-Hans": "认识步道标识"
+      },
+      "summary": {
+        "en": "Confirm direction at every junction.",
+        "zh-Hans": "在每个岔路口确认方向与路线标记。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-trail-signs-photo",
+      "icon": "checkmark.circle",
+      "readingMinutes": 6,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Read trail signs",
+              "zh-Hans": "准备：认识步道标识"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about read trail signs.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“认识步道标识”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-trail-signs-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Read trail signs",
+              "zh-Hans": "观察：认识步道标识"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about read trail signs.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“认识步道标识”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-trail-signs-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Read trail signs",
+              "zh-Hans": "练习：认识步道标识"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about read trail signs.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“认识步道标识”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-trail-signs-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Read trail signs",
+              "zh-Hans": "复查：认识步道标识"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about read trail signs.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“认识步道标识”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-trail-signs-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "hiking-pace",
+      "category": "hike",
+      "detailType": "native",
+      "title": {
+        "en": "Find a sustainable pace",
+        "zh-Hans": "找到合适步频"
+      },
+      "summary": {
+        "en": "Use breathing and short breaks to manage effort.",
+        "zh-Hans": "通过呼吸与短休息分配体力。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-hiking-pace-photo",
+      "icon": "figure.strengthtraining.traditional",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Find a sustainable pace",
+              "zh-Hans": "准备：找到合适步频"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about find a sustainable pace.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“找到合适步频”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hiking-pace-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Find a sustainable pace",
+              "zh-Hans": "观察：找到合适步频"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about find a sustainable pace.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“找到合适步频”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hiking-pace-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Find a sustainable pace",
+              "zh-Hans": "练习：找到合适步频"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about find a sustainable pace.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“找到合适步频”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hiking-pace-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Find a sustainable pace",
+              "zh-Hans": "复查：找到合适步频"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about find a sustainable pace.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“找到合适步频”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hiking-pace-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "hike-recovery",
+      "category": "hike",
+      "detailType": "native",
+      "title": {
+        "en": "Recover after a hike",
+        "zh-Hans": "徒步后恢复"
+      },
+      "summary": {
+        "en": "Cool down, rehydrate and review equipment.",
+        "zh-Hans": "放松、补水并检查装备与身体状态。"
+      },
+      "group": {
+        "en": "Walk prepared",
+        "zh-Hans": "安心走上步道"
+      },
+      "heroImage": "learn-hike-recovery-photo",
+      "icon": "figure.walk",
+      "readingMinutes": 5,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Hiking Safety",
+            "zh-Hans": "美国国家公园管理局徒步安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/thingstodo/learn-about-hiking-safety.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Recover after a hike",
+              "zh-Hans": "准备：徒步后恢复"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about recover after a hike.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“徒步后恢复”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hike-recovery-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Recover after a hike",
+              "zh-Hans": "观察：徒步后恢复"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about recover after a hike.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“徒步后恢复”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hike-recovery-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Recover after a hike",
+              "zh-Hans": "练习：徒步后恢复"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about recover after a hike.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“徒步后恢复”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hike-recovery-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Recover after a hike",
+              "zh-Hans": "复查：徒步后恢复"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about recover after a hike.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“徒步后恢复”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-hike-recovery-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "first-camp-plan",
+      "category": "camp",
+      "detailType": "web",
+      "title": {
+        "en": "Plan your first camping trip",
+        "zh-Hans": "第一次露营规划"
+      },
+      "summary": {
+        "en": "Match location, group, weather and equipment.",
+        "zh-Hans": "让地点、同行者、天气和装备彼此匹配。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-first-camp-plan-photo",
+      "icon": "book.pages",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Match location, group, weather and equipment. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "让地点、同行者、天气和装备彼此匹配。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-first-camp-plan-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "choose-campsite"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "choose-campsite",
+      "category": "camp",
+      "detailType": "web",
+      "title": {
+        "en": "Choose a responsible campsite",
+        "zh-Hans": "选择合适营地"
+      },
+      "summary": {
+        "en": "Check rules, drainage, wind and natural hazards.",
+        "zh-Hans": "确认规定、排水、风向与自然风险。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-choose-campsite-photo",
+      "icon": "water.waves",
+      "readingMinutes": 8,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Check rules, drainage, wind and natural hazards. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "确认规定、排水、风向与自然风险。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-choose-campsite-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "tent-system"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "tent-system",
+      "category": "camp",
+      "detailType": "web",
+      "title": {
+        "en": "Understand your tent system",
+        "zh-Hans": "认识帐篷系统"
+      },
+      "summary": {
+        "en": "Coordinate footprint, body, poles, fly and guylines.",
+        "zh-Hans": "理解地布、内帐、支架、外帐与风绳的配合。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-tent-system-photo",
+      "icon": "map",
+      "readingMinutes": 9,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Coordinate footprint, body, poles, fly and guylines. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "理解地布、内帐、支架、外帐与风绳的配合。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-tent-system-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "sleep-system"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "sleep-system",
+      "category": "camp",
+      "detailType": "web",
+      "title": {
+        "en": "Build a warm sleep system",
+        "zh-Hans": "建立舒适睡眠系统"
+      },
+      "summary": {
+        "en": "Balance ground insulation, sleeping bag and clothing.",
+        "zh-Hans": "平衡地面隔热、睡袋与睡眠穿着。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-sleep-system-photo",
+      "icon": "checklist",
+      "readingMinutes": 10,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Balance ground insulation, sleeping bag and clothing. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "平衡地面隔热、睡袋与睡眠穿着。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-sleep-system-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "camp-cooking-fire"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "camp-cooking-fire",
+      "category": "camp",
+      "detailType": "web",
+      "title": {
+        "en": "Cooking and fire safety",
+        "zh-Hans": "营地烹饪与用火安全"
+      },
+      "summary": {
+        "en": "Cook in a stable ventilated area and follow local rules.",
+        "zh-Hans": "在稳定通风处烹饪，并遵守当地用火规定。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-camp-cooking-fire-photo",
+      "icon": "book.pages",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Cook in a stable ventilated area and follow local rules. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "在稳定通风处烹饪，并遵守当地用火规定。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-camp-cooking-fire-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "food-wildlife"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "food-wildlife",
+      "category": "camp",
+      "detailType": "web",
+      "title": {
+        "en": "Store food around wildlife",
+        "zh-Hans": "食物保存与野生动物"
+      },
+      "summary": {
+        "en": "Separate food and scented items from sleeping areas.",
+        "zh-Hans": "让食物和有气味物品远离睡眠区。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-food-wildlife-photo",
+      "icon": "water.waves",
+      "readingMinutes": 8,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Separate food and scented items from sleeping areas. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "让食物和有气味物品远离睡眠区。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-food-wildlife-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "camp-weather"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "camp-weather",
+      "category": "camp",
+      "detailType": "web",
+      "title": {
+        "en": "Wind and rain at camp",
+        "zh-Hans": "营地风雨应对"
+      },
+      "summary": {
+        "en": "Read the site and reinforce shelter before weather arrives.",
+        "zh-Hans": "在天气到来前判断营地并加固庇护。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-camp-weather-photo",
+      "icon": "map",
+      "readingMinutes": 9,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Read the site and reinforce shelter before weather arrives. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "在天气到来前判断营地并加固庇护。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-camp-weather-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "leave-no-trace-camp"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "leave-no-trace-camp",
+      "category": "camp",
+      "detailType": "web",
+      "title": {
+        "en": "Leave no trace at camp",
+        "zh-Hans": "无痕露营与废弃物"
+      },
+      "summary": {
+        "en": "Pack out waste and leave the site ready for the next visitor.",
+        "zh-Hans": "带走废弃物，让营地为下一位访客保持整洁。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-leave-no-trace-camp-photo",
+      "icon": "checklist",
+      "readingMinutes": 10,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Guide",
+          "zh-Hans": "指南"
+        },
+        {
+          "en": "Safety",
+          "zh-Hans": "安全"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": {
+        "author": {
+          "en": "Coast & Wild Editorial",
+          "zh-Hans": "海岸与山野编辑部"
+        },
+        "updatedAt": "2026-09",
+        "highlights": [
+          {
+            "en": "Check current local conditions and rules.",
+            "zh-Hans": "核实当地最新天气、开放信息与现场规定。"
+          },
+          {
+            "en": "Match the plan to your experience and group.",
+            "zh-Hans": "让计划与自己及同行者的经验相匹配。"
+          },
+          {
+            "en": "Stop and ask a qualified local professional when unsure.",
+            "zh-Hans": "不确定时停下来，询问当地合格专业人员。"
+          }
+        ],
+        "blocks": [
+          {
+            "type": "paragraph",
+            "title": {
+              "en": "Start with the situation",
+              "zh-Hans": "先从实际情况开始"
+            },
+            "body": {
+              "en": "Pack out waste and leave the site ready for the next visitor. Check official local information before leaving and keep the plan flexible when conditions change.",
+              "zh-Hans": "带走废弃物，让营地为下一位访客保持整洁。 出发前查看官方与现场信息，条件变化时及时调整计划。"
+            },
+            "icon": "binoculars"
+          },
+          {
+            "type": "image",
+            "title": {
+              "en": "Look closely",
+              "zh-Hans": "留意现场"
+            },
+            "body": {
+              "en": "Use the image as an observation prompt, then compare it with the real conditions in front of you.",
+              "zh-Hans": "把图片当作观察提示，再与眼前的真实环境进行比较。"
+            },
+            "image": "learn-leave-no-trace-camp-illustration"
+          },
+          {
+            "type": "callout",
+            "title": {
+              "en": "Safety note",
+              "zh-Hans": "安全提醒"
+            },
+            "body": {
+              "en": "This guide is introductory. It cannot replace current local advice, qualified instruction or emergency services.",
+              "zh-Hans": "本指南属于入门资料，不能替代当地实时信息、合格指导或紧急救援。"
+            },
+            "icon": "exclamationmark.shield"
+          },
+          {
+            "type": "checklist",
+            "title": {
+              "en": "Before you continue",
+              "zh-Hans": "继续之前"
+            },
+            "items": [
+              {
+                "en": "Check the forecast and access status",
+                "zh-Hans": "确认天气与开放状态"
+              },
+              {
+                "en": "Tell someone your plan",
+                "zh-Hans": "告知他人你的计划"
+              },
+              {
+                "en": "Carry suitable safety equipment",
+                "zh-Hans": "携带适合的安全装备"
+              }
+            ]
+          },
+          {
+            "type": "quote",
+            "body": {
+              "en": "Good preparation creates more room to notice, learn and enjoy the outdoors.",
+              "zh-Hans": "准备充分，才能把更多注意力留给观察、学习和享受户外。"
+            },
+            "icon": "quote.opening"
+          }
+        ],
+        "nextLessonID": "first-camp-plan"
+      },
+      "nativeDetail": null
+    },
+    {
+      "key": "pitch-tent",
+      "category": "camp",
+      "detailType": "native",
+      "title": {
+        "en": "Pitch a tent",
+        "zh-Hans": "搭建帐篷"
+      },
+      "summary": {
+        "en": "Practice the sequence before arriving at camp.",
+        "zh-Hans": "出发前熟悉从选位到拉紧风绳的顺序。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-pitch-tent-photo",
+      "icon": "figure.walk",
+      "readingMinutes": 5,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Pitch a tent",
+              "zh-Hans": "准备：搭建帐篷"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pitch a tent.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“搭建帐篷”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pitch-tent-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Pitch a tent",
+              "zh-Hans": "观察：搭建帐篷"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pitch a tent.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“搭建帐篷”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pitch-tent-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Pitch a tent",
+              "zh-Hans": "练习：搭建帐篷"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pitch a tent.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“搭建帐篷”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pitch-tent-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Pitch a tent",
+              "zh-Hans": "复查：搭建帐篷"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pitch a tent.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“搭建帐篷”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pitch-tent-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "pack-backpack",
+      "category": "camp",
+      "detailType": "native",
+      "title": {
+        "en": "Pack a camping backpack",
+        "zh-Hans": "装填露营背包"
+      },
+      "summary": {
+        "en": "Place weight for balance and easy access.",
+        "zh-Hans": "按重量和平衡整理物品，并保留快速取用区。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-pack-backpack-photo",
+      "icon": "checkmark.circle",
+      "readingMinutes": 6,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Pack a camping backpack",
+              "zh-Hans": "准备：装填露营背包"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pack a camping backpack.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“装填露营背包”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pack-backpack-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Pack a camping backpack",
+              "zh-Hans": "观察：装填露营背包"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pack a camping backpack.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“装填露营背包”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pack-backpack-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Pack a camping backpack",
+              "zh-Hans": "练习：装填露营背包"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pack a camping backpack.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“装填露营背包”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pack-backpack-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Pack a camping backpack",
+              "zh-Hans": "复查：装填露营背包"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about pack a camping backpack.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“装填露营背包”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-pack-backpack-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "camp-kitchen",
+      "category": "camp",
+      "detailType": "native",
+      "title": {
+        "en": "Set up a camp kitchen",
+        "zh-Hans": "建立营地厨房"
+      },
+      "summary": {
+        "en": "Separate cooking, storage and washing zones.",
+        "zh-Hans": "分开烹饪、储存与清洗区域。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-camp-kitchen-photo",
+      "icon": "figure.strengthtraining.traditional",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Set up a camp kitchen",
+              "zh-Hans": "准备：建立营地厨房"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about set up a camp kitchen.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“建立营地厨房”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-camp-kitchen-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Set up a camp kitchen",
+              "zh-Hans": "观察：建立营地厨房"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about set up a camp kitchen.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“建立营地厨房”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-camp-kitchen-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Set up a camp kitchen",
+              "zh-Hans": "练习：建立营地厨房"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about set up a camp kitchen.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“建立营地厨房”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-camp-kitchen-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Set up a camp kitchen",
+              "zh-Hans": "复查：建立营地厨房"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about set up a camp kitchen.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“建立营地厨房”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-camp-kitchen-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "water-treatment",
+      "category": "camp",
+      "detailType": "native",
+      "title": {
+        "en": "Treat water",
+        "zh-Hans": "净水步骤"
+      },
+      "summary": {
+        "en": "Collect carefully and follow the chosen treatment method.",
+        "zh-Hans": "谨慎取水，并按净水方式完成处理。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-water-treatment-photo",
+      "icon": "figure.walk",
+      "readingMinutes": 5,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Treat water",
+              "zh-Hans": "准备：净水步骤"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about treat water.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“净水步骤”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-water-treatment-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Treat water",
+              "zh-Hans": "观察：净水步骤"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about treat water.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“净水步骤”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-water-treatment-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Treat water",
+              "zh-Hans": "练习：净水步骤"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about treat water.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“净水步骤”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-water-treatment-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Treat water",
+              "zh-Hans": "复查：净水步骤"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about treat water.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“净水步骤”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-water-treatment-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "night-safety",
+      "category": "camp",
+      "detailType": "native",
+      "title": {
+        "en": "Headlamps and night safety",
+        "zh-Hans": "头灯与夜间安全"
+      },
+      "summary": {
+        "en": "Prepare light, layers and a clear route before dark.",
+        "zh-Hans": "天黑前准备照明、保暖与清晰通道。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-night-safety-photo",
+      "icon": "checkmark.circle",
+      "readingMinutes": 6,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Headlamps and night safety",
+              "zh-Hans": "准备：头灯与夜间安全"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about headlamps and night safety.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“头灯与夜间安全”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-night-safety-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Headlamps and night safety",
+              "zh-Hans": "观察：头灯与夜间安全"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about headlamps and night safety.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“头灯与夜间安全”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-night-safety-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Headlamps and night safety",
+              "zh-Hans": "练习：头灯与夜间安全"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about headlamps and night safety.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“头灯与夜间安全”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-night-safety-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Headlamps and night safety",
+              "zh-Hans": "复查：头灯与夜间安全"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about headlamps and night safety.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“头灯与夜间安全”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-night-safety-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "break-camp",
+      "category": "camp",
+      "detailType": "native",
+      "title": {
+        "en": "Break camp",
+        "zh-Hans": "撤收营地"
+      },
+      "summary": {
+        "en": "Dry, count, pack and inspect the site.",
+        "zh-Hans": "晾干、清点、收纳并检查营位。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-break-camp-photo",
+      "icon": "figure.strengthtraining.traditional",
+      "readingMinutes": 7,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Break camp",
+              "zh-Hans": "准备：撤收营地"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about break camp.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“撤收营地”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-break-camp-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Break camp",
+              "zh-Hans": "观察：撤收营地"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about break camp.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“撤收营地”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-break-camp-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Break camp",
+              "zh-Hans": "练习：撤收营地"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about break camp.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“撤收营地”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-break-camp-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Break camp",
+              "zh-Hans": "复查：撤收营地"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about break camp.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“撤收营地”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-break-camp-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "camp-emergency-check",
+      "category": "camp",
+      "detailType": "native",
+      "title": {
+        "en": "Camp emergency checklist",
+        "zh-Hans": "露营紧急检查表"
+      },
+      "summary": {
+        "en": "Confirm contacts, shelter, first aid and exit options.",
+        "zh-Hans": "确认联络、庇护、急救与撤离方案。"
+      },
+      "group": {
+        "en": "Camp thoughtfully",
+        "zh-Hans": "从容开始露营"
+      },
+      "heroImage": "learn-camp-emergency-check-photo",
+      "icon": "figure.walk",
+      "readingMinutes": 5,
+      "level": "beginner",
+      "tags": [
+        {
+          "en": "Practice",
+          "zh-Hans": "练习"
+        },
+        {
+          "en": "Step by step",
+          "zh-Hans": "分步"
+        }
+      ],
+      "sourceLinks": [
+        {
+          "title": {
+            "en": "NPS Camping Safety",
+            "zh-Hans": "美国国家公园管理局露营安全"
+          },
+          "organization": "National Park Service",
+          "url": "https://www.nps.gov/articles/camp-safety-before-the-trip.htm"
+        }
+      ],
+      "webDetail": null,
+      "nativeDetail": {
+        "steps": [
+          {
+            "title": {
+              "en": "Prepare: Camp emergency checklist",
+              "zh-Hans": "准备：露营紧急检查表"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about camp emergency checklist.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“露营紧急检查表”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-camp-emergency-check-illustration",
+            "icon": "checkmark.circle",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Observe: Camp emergency checklist",
+              "zh-Hans": "观察：露营紧急检查表"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about camp emergency checklist.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“露营紧急检查表”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-camp-emergency-check-illustration",
+            "icon": "eye",
+            "callout": null
+          },
+          {
+            "title": {
+              "en": "Practice: Camp emergency checklist",
+              "zh-Hans": "练习：露营紧急检查表"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about camp emergency checklist.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“露营紧急检查表”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-camp-emergency-check-illustration",
+            "icon": "figure.walk",
+            "callout": {
+              "en": "Pause if the environment or movement does not feel safe.",
+              "zh-Hans": "当环境或动作让你感到不安全时，请立即暂停。"
+            }
+          },
+          {
+            "title": {
+              "en": "Review: Camp emergency checklist",
+              "zh-Hans": "复查：露营紧急检查表"
+            },
+            "body": {
+              "en": "Work through this part slowly in a controlled setting. Focus on one clear action, notice how it feels, and ask a qualified instructor or local professional when you are uncertain about camp emergency checklist.",
+              "zh-Hans": "在可控环境中慢慢完成这一步。一次只关注一个明确动作，留意身体和装备反馈；对“露营紧急检查表”有疑问时，请询问合格教练或当地专业人员。"
+            },
+            "image": "learn-camp-emergency-check-illustration",
+            "icon": "arrow.triangle.2.circlepath",
+            "callout": null
+          }
+        ]
+      }
+    }
+  ],
+  "gearTemplates": [
+    {
+      "key": "surf-weekend",
+      "category": "surf",
+      "name": {
+        "en": "Surf, three days",
+        "zh-Hans": "冲浪三日"
+      },
+      "summary": {
+        "en": "Board, suit, wax and safety",
+        "zh-Hans": "板、防寒衣、蜡与安全"
+      },
+      "items": [
+        {
+          "key": "surfboard",
+          "title": {
+            "en": "Surfboard",
+            "zh-Hans": "冲浪板"
+          },
+          "category": "surf"
+        },
+        {
+          "key": "wetsuit",
+          "title": {
+            "en": "Wetsuit",
+            "zh-Hans": "防寒衣"
+          },
+          "category": "surf"
+        },
+        {
+          "key": "rash-guard",
+          "title": {
+            "en": "Rash guard",
+            "zh-Hans": "防磨衣"
+          },
+          "category": "surf"
+        },
+        {
+          "key": "surf-wax",
+          "title": {
+            "en": "Surf wax",
+            "zh-Hans": "冲浪蜡"
+          },
+          "category": "surf"
+        },
+        {
+          "key": "leash",
+          "title": {
+            "en": "Leash",
+            "zh-Hans": "脚绳"
+          },
+          "category": "surf"
+        },
+        {
+          "key": "fins",
+          "title": {
+            "en": "Fins and fin key",
+            "zh-Hans": "尾鳍与螺丝刀"
+          },
+          "category": "surf"
+        },
+        {
+          "key": "board-bag",
+          "title": {
+            "en": "Board bag",
+            "zh-Hans": "板袋"
+          },
+          "category": "surf"
+        },
+        {
+          "key": "ear-plugs",
+          "title": {
+            "en": "Ear plugs",
+            "zh-Hans": "耳塞"
+          },
+          "category": "surf"
+        },
+        {
+          "key": "towel",
+          "title": {
+            "en": "Towel and dry robe",
+            "zh-Hans": "浴巾与更衣袍"
+          },
+          "category": "general"
+        },
+        {
+          "key": "sunscreen",
+          "title": {
+            "en": "Reef safe sunscreen",
+            "zh-Hans": "防晒霜"
+          },
+          "category": "general"
+        },
+        {
+          "key": "water",
+          "title": {
+            "en": "Drinking water",
+            "zh-Hans": "饮用水"
+          },
+          "category": "general"
+        },
+        {
+          "key": "first-aid",
+          "title": {
+            "en": "First aid kit",
+            "zh-Hans": "急救包"
+          },
+          "category": "general"
         }
       ]
     },
     {
-      "key": "camp-evening",
+      "key": "day-hike",
+      "category": "hike",
+      "name": {
+        "en": "Day hike",
+        "zh-Hans": "轻徒步日行"
+      },
+      "summary": {
+        "en": "Shoes, water, sun care and navigation",
+        "zh-Hans": "鞋袜、水、护晒与导航"
+      },
+      "items": [
+        {
+          "key": "trail-shoes",
+          "title": {
+            "en": "Trail shoes",
+            "zh-Hans": "徒步鞋"
+          },
+          "category": "hike"
+        },
+        {
+          "key": "socks",
+          "title": {
+            "en": "Spare socks",
+            "zh-Hans": "备用袜子"
+          },
+          "category": "hike"
+        },
+        {
+          "key": "day-pack",
+          "title": {
+            "en": "Day pack",
+            "zh-Hans": "日行背包"
+          },
+          "category": "hike"
+        },
+        {
+          "key": "wind-shell",
+          "title": {
+            "en": "Wind shell",
+            "zh-Hans": "防风外套"
+          },
+          "category": "hike"
+        },
+        {
+          "key": "map-compass",
+          "title": {
+            "en": "Paper map and compass",
+            "zh-Hans": "纸质地图与指南针"
+          },
+          "category": "hike"
+        },
+        {
+          "key": "poles",
+          "title": {
+            "en": "Trekking poles",
+            "zh-Hans": "登山杖"
+          },
+          "category": "hike"
+        },
+        {
+          "key": "water",
+          "title": {
+            "en": "Drinking water",
+            "zh-Hans": "饮用水"
+          },
+          "category": "general"
+        },
+        {
+          "key": "snacks",
+          "title": {
+            "en": "Snacks",
+            "zh-Hans": "补充食物"
+          },
+          "category": "general"
+        },
+        {
+          "key": "sun-hat",
+          "title": {
+            "en": "Sun hat and sunscreen",
+            "zh-Hans": "遮阳帽与防晒霜"
+          },
+          "category": "general"
+        }
+      ]
+    },
+    {
+      "key": "overnight-camp",
       "category": "camp",
-      "title": {
-        "en": "A thoughtful camp evening",
-        "zh-Hans": "用心的露营夜晚"
+      "name": {
+        "en": "Camp overnight",
+        "zh-Hans": "露营过夜"
       },
-      "group": {
-        "en": "At home outdoors",
-        "zh-Hans": "自在户外"
+      "summary": {
+        "en": "Tent, sleep system, light and cooking",
+        "zh-Hans": "帐篷、睡袋、照明与炊具"
       },
-      "photo": "public/assets/camp.webp",
-      "steps": [
+      "items": [
         {
+          "key": "tent",
           "title": {
-            "en": "Find an allowed place",
-            "zh-Hans": "选择允许露营的地点"
+            "en": "Tent and footprint",
+            "zh-Hans": "帐篷与地布"
           },
-          "body": {
-            "en": "Check local access and camping rules before making plans. Use established areas where camping is allowed.",
-            "zh-Hans": "计划前核实当地开放情况与露营规定，使用明确允许露营的区域。"
-          },
-          "photo": "public/assets/camp.webp"
+          "category": "camp"
         },
         {
+          "key": "sleeping-bag",
           "title": {
-            "en": "Keep a simple setup",
-            "zh-Hans": "让营地简单整洁"
+            "en": "Sleeping bag",
+            "zh-Hans": "睡袋"
           },
-          "body": {
-            "en": "Keep belongings together and follow the instructions for your equipment. Leave space for others and the surrounding landscape.",
-            "zh-Hans": "把物品集中整理，遵循装备说明，为他人与周围环境留出空间。"
-          },
-          "photo": "public/assets/camp.webp"
+          "category": "camp"
         },
         {
+          "key": "sleeping-pad",
           "title": {
-            "en": "Carry the memory home",
-            "zh-Hans": "带回回忆"
+            "en": "Sleeping pad",
+            "zh-Hans": "睡垫"
           },
-          "body": {
-            "en": "Before leaving, check your space for belongings and litter. Keep the view in a photograph, then write a few words about the evening.",
-            "zh-Hans": "离开前检查是否遗留物品与垃圾。用照片留下风景，再写几句夜晚的回忆。"
+          "category": "camp"
+        },
+        {
+          "key": "head-lamp",
+          "title": {
+            "en": "Head lamp",
+            "zh-Hans": "头灯"
           },
-          "photo": "public/assets/journal-coast.webp"
+          "category": "camp"
+        },
+        {
+          "key": "batteries",
+          "title": {
+            "en": "Spare batteries",
+            "zh-Hans": "备用电池"
+          },
+          "category": "camp"
+        },
+        {
+          "key": "stove",
+          "title": {
+            "en": "Camp stove",
+            "zh-Hans": "炉具"
+          },
+          "category": "camp"
+        },
+        {
+          "key": "fuel",
+          "title": {
+            "en": "Fuel canister",
+            "zh-Hans": "气罐"
+          },
+          "category": "camp"
+        },
+        {
+          "key": "cookware",
+          "title": {
+            "en": "Cook pot and utensils",
+            "zh-Hans": "锅具与餐具"
+          },
+          "category": "camp"
+        },
+        {
+          "key": "warm-layer",
+          "title": {
+            "en": "Warm layer",
+            "zh-Hans": "保暖层"
+          },
+          "category": "camp"
+        },
+        {
+          "key": "rubbish-bag",
+          "title": {
+            "en": "Rubbish bag",
+            "zh-Hans": "垃圾袋"
+          },
+          "category": "camp"
+        },
+        {
+          "key": "water",
+          "title": {
+            "en": "Drinking water",
+            "zh-Hans": "饮用水"
+          },
+          "category": "general"
+        },
+        {
+          "key": "filter",
+          "title": {
+            "en": "Water filter",
+            "zh-Hans": "滤水器"
+          },
+          "category": "general"
+        },
+        {
+          "key": "first-aid",
+          "title": {
+            "en": "First aid kit",
+            "zh-Hans": "急救包"
+          },
+          "category": "general"
+        },
+        {
+          "key": "power-bank",
+          "title": {
+            "en": "Power bank",
+            "zh-Hans": "充电宝"
+          },
+          "category": "general"
         }
       ]
     }

@@ -4,23 +4,122 @@ final class CoastWildUITests: XCTestCase {
   override func setUpWithError() throws {
     continueAfterFailure = false
   }
-  func testOnboardingAndLoginGate() {
+  func testFirstLaunchPrivacyGateShowsPolicyAndRequiresConsent() {
     let app = XCUIApplication()
     app.launchArguments = ["--ui-testing", "--reset-test-data"]
     app.launch()
+
+    let continueButton = app.buttons["privacy.continue"]
+    XCTAssertTrue(continueButton.waitForExistence(timeout: 10))
+    XCTAssertFalse(app.buttons["onboarding.login"].exists)
+    continueButton.tap()
+    XCTAssertTrue(app.staticTexts["privacy.validation"].exists)
+
+    XCTAssertFalse(app.staticTexts["Notifications"].exists)
+    app.links["Privacy Policy"].tap()
+    XCTAssertTrue(app.navigationBars["Privacy Policy"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.webViews["legal.webview"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.links["Contact us"].waitForExistence(timeout: 5))
+    app.navigationBars.buttons["Done"].tap()
+
+    app.buttons["privacy.decline"].tap()
+    XCTAssertTrue(app.staticTexts["Continue without agreeing?"].waitForExistence(timeout: 5))
+    app.buttons["privacy.sheet.accept"].tap()
+    XCTAssertTrue(app.buttons["onboarding.login"].waitForExistence(timeout: 5))
+  }
+
+  func testOnboardingAndLoginGate() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--accept-privacy", "--language-zh"]
+    app.launch()
     XCTAssertTrue(app.buttons["onboarding.login"].waitForExistence(timeout: 10))
+    let hero = app.images["welcome.hero"]
+    XCTAssertTrue(hero.exists)
+    XCTAssertLessThanOrEqual(hero.frame.minY, 1)
     XCTAssertFalse(app.tabBars.firstMatch.exists)
     capture("00-Onboarding", app: app)
     app.buttons["onboarding.login"].tap()
     XCTAssertTrue(app.textFields["auth.email"].waitForExistence(timeout: 3))
     app.buttons["auth.submit"].tap()
-    XCTAssertTrue(app.staticTexts["auth.error"].exists)
+    XCTAssertTrue(app.staticTexts["auth.error"].waitForExistence(timeout: 3))
     XCTAssertFalse(app.tabBars.firstMatch.exists)
+  }
+
+  func testRapidTabsPushPopAndDialogRemainStable() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--accept-privacy", "--language-zh", "--seed-account"]
+    app.launch()
+    XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15))
+
+    for title in ["学习", "出游", "手记", "探索", "出游", "探索"] {
+      app.tabBars.buttons[title].tap()
+    }
+    XCTAssertTrue(app.buttons["个人空间"].waitForExistence(timeout: 5))
+    app.buttons["个人空间"].tap()
+    XCTAssertTrue(app.navigationBars["个人空间"].waitForExistence(timeout: 5))
+    let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+    let cancelledDestination = app.coordinate(withNormalizedOffset: CGVector(dx: 0.18, dy: 0.5))
+    edge.press(
+      forDuration: 0.05, thenDragTo: cancelledDestination,
+      withVelocity: .slow, thenHoldForDuration: 0)
+    XCTAssertTrue(app.navigationBars["个人空间"].waitForExistence(timeout: 5))
+
+    let destination = app.coordinate(withNormalizedOffset: CGVector(dx: 0.82, dy: 0.5))
+    edge.press(forDuration: 0.05, thenDragTo: destination)
+    XCTAssertTrue(app.buttons["个人空间"].waitForExistence(timeout: 5))
+
+    app.buttons["个人空间"].tap()
+    tap(app.buttons["数据与隐私"], in: app)
+    XCTAssertTrue(app.staticTexts["你的回忆，属于你。"].waitForExistence(timeout: 5))
+    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "照片访问")).firstMatch, in: app)
+    XCTAssertTrue(app.staticTexts["只导入你主动选择的照片"].waitForExistence(timeout: 5))
+    app.buttons["好"].tap()
+    XCTAssertFalse(app.staticTexts["只导入你主动选择的照片"].exists)
+  }
+
+  func testLearningLibraryLoadsWebAndNativeDetails() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--accept-privacy", "--language-zh", "--seed-account", "--show-learning-loading"]
+    app.launch()
+    XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15))
+    app.tabBars.buttons["学习"].tap()
+    XCTAssertTrue(app.descendants(matching: .any)["learn.loading"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.descendants(matching: .any)["learn.loading.hero"].exists)
+    XCTAssertTrue(app.descendants(matching: .any)["learn.loading.card"].exists)
+    capture("40-LearningSkeletonList", app: app)
+
+    let webLesson = app.buttons["learn.lesson.first-surf-seven"]
+    XCTAssertTrue(webLesson.waitForExistence(timeout: 5))
+    webLesson.tap()
+    XCTAssertTrue(app.descendants(matching: .any)["learn.web.loading.hero"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.descendants(matching: .any)["learn.web.loading.highlights"].exists)
+    capture("41-LearningSkeletonWeb", app: app)
+    XCTAssertTrue(app.navigationBars["第一次冲浪前需要知道的 7 件事"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["先记住这三件事"].waitForExistence(timeout: 5))
+    shareProducesAnImage(in: app, name: "43-LearningShareWeb")
+    app.navigationBars.buttons.firstMatch.tap()
+    XCTAssertTrue(webLesson.waitForExistence(timeout: 1))
+    XCTAssertFalse(app.descendants(matching: .any)["learn.loading"].exists,
+      "Returning from a detail must keep the loaded learning page")
+
+    let nativeLesson = app.buttons["learn.lesson.board-basics"]
+    tap(nativeLesson, in: app)
+    XCTAssertTrue(app.descendants(matching: .any)["learn.detail.loading"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.descendants(matching: .any)["learn.detail.loading.hero"].exists)
+    XCTAssertTrue(app.descendants(matching: .any)["learn.detail.loading.callout"].exists)
+    capture("42-LearningSkeletonNative", app: app)
+    XCTAssertTrue(app.navigationBars["认识你的冲浪板"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["下一步"].waitForExistence(timeout: 5))
+    shareProducesAnImage(in: app, name: "44-LearningShareNative")
+    app.navigationBars.buttons.firstMatch.tap()
+    XCTAssertTrue(nativeLesson.waitForExistence(timeout: 1))
+    XCTAssertTrue(nativeLesson.isHittable, "Returning must preserve the learning list scroll position")
+    XCTAssertFalse(app.descendants(matching: .any)["learn.loading"].exists)
   }
 
   func testRegisteredUserCanCreateTripAndJournalThenLogOut() {
     let app = XCUIApplication()
-    app.launchArguments = ["--ui-testing", "--reset-test-data"]
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--accept-privacy", "--language-zh"]
     app.launch()
     tap(app.buttons["注册账号"], in: app)
     let name = app.textFields["auth.name"]
@@ -170,7 +269,7 @@ final class CoastWildUITests: XCTestCase {
   }
   func testKeyboardNavigationKeepsRegistrationFieldsVisible() {
     let app = XCUIApplication()
-    app.launchArguments = ["--ui-testing", "--reset-test-data"]
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--accept-privacy", "--language-zh"]
     app.launch()
     tap(app.buttons["注册账号"], in: app)
     capture("10-Registration", app: app)
@@ -207,7 +306,8 @@ final class CoastWildUITests: XCTestCase {
     app.navigationBars.buttons.element(boundBy: 0).tap()
     app.tabBars.buttons["Learn"].tap()
     capture("15-EnglishLearn", app: app)
-    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Meet your board")).firstMatch, in: app)
+    tap(app.buttons["learn.lesson.first-surf-seven"], in: app)
+    XCTAssertTrue(app.navigationBars["Seven things before your first surf"].waitForExistence(timeout: 5))
     capture("16-EnglishLesson", app: app)
     app.navigationBars.buttons.element(boundBy: 0).tap()
     app.tabBars.buttons["Explore"].tap()
@@ -251,6 +351,21 @@ final class CoastWildUITests: XCTestCase {
     XCTAssertTrue(element.exists)
     element.tap()
   }
+  /// 分享按钮必须出图。出图失败时详情页会弹「无法生成图片」，
+  /// 所以只要系统分享面板起来了、告警没出现，就说明截图这一步成功了。
+  private func shareProducesAnImage(in app: XCUIApplication, name: String) {
+    let share = app.buttons["learn.share"]
+    XCTAssertTrue(share.waitForExistence(timeout: 5), "详情页应提供分享入口")
+    share.tap()
+    let sheet = app.otherElements["ActivityListView"]
+    XCTAssertTrue(sheet.waitForExistence(timeout: 20), "分享应打开系统面板而不是失败告警")
+    XCTAssertFalse(app.alerts["无法生成图片"].exists)
+    capture(name, app: app)
+    // 关掉面板，后面的返回操作才能点到导航栏。
+    sheet.buttons["header.closeButton"].tap()
+    XCTAssertTrue(sheet.waitForNonExistence(timeout: 10))
+  }
+
   private func capture(_ name: String, app: XCUIApplication) {
     // Record the settled navigation frame, not an in-flight UIKit transition.
     Thread.sleep(forTimeInterval: 0.5)

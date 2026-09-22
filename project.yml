@@ -25,6 +25,10 @@ targets:
         INFOPLIST_KEY_UIUserInterfaceStyle: Light
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Save the journal photos you choose to your photo library.
+        INFOPLIST_KEY_LEGAL_PRIVACY_URL_EN: $(LEGAL_PRIVACY_URL_EN)
+        INFOPLIST_KEY_LEGAL_PRIVACY_URL_ZH_HANS: $(LEGAL_PRIVACY_URL_ZH_HANS)
+        INFOPLIST_KEY_LEGAL_TERMS_URL_EN: $(LEGAL_TERMS_URL_EN)
+        INFOPLIST_KEY_LEGAL_TERMS_URL_ZH_HANS: $(LEGAL_TERMS_URL_ZH_HANS)
         TARGETED_DEVICE_FAMILY: 1
         MARKETING_VERSION: '1.0.0'
         CURRENT_PROJECT_VERSION: '1'

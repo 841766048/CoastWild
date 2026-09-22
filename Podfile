@@ -6,6 +6,7 @@ project 'CoastWild.xcodeproj'
 target 'CoastWild' do
   pod 'IQKeyboardManagerSwift', '~> 8.0'
   pod 'BRPickerView/DatePicker', '~> 3.0'
+  pod 'SkeletonView', '~> 1.30.4'
   target 'CoastWildUITests' do
     inherit! :search_paths
   end
@@ -13,7 +14,7 @@ end
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|
-    next unless target.name.start_with?('BRPickerView')
+    next unless target.name.start_with?('BRPickerView') || target.name == 'SkeletonView'
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
     end

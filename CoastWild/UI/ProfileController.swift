@@ -18,33 +18,40 @@ final class ProfileController: CoastController {
       coastSettingRow(env.t("My account", "我的账号"), icon: "user") { [weak self] in
         guard let self else { return }; self.push(AccountController(self.env))
       },
+      coastSettingRow(env.t("Your trail", "足迹"), icon: "trips") { [weak self] in
+        guard let self else { return }; self.push(TrailController(self.env))
+      },
       coastSettingRow(env.t("Saved", "收藏"), value: "\(env.store.ledger.bookmarks.count)", icon: "bookmark") { [weak self] in
         guard let self else { return }; self.push(BookmarksController(self.env))
       },
       coastSettingRow(env.t("Preferences", "偏好设置"), icon: "settings") { [weak self] in
         guard let self else { return }; self.push(PreferencesController(self.env))
       },
+      coastSettingRow(
+        env.t("Reminders", "提醒与通知"),
+        value: env.store.ledger.reminderPlan.tripEnabled
+          || env.store.ledger.reminderPlan.journalEnabled
+          ? env.t("On", "已开启") : env.t("Off", "未开启"),
+        icon: "clock"
+      ) { [weak self] in
+        guard let self else { return }; self.push(RemindersController(self.env))
+      },
       coastSettingRow(env.t("Data & privacy", "数据与隐私"), icon: "shield") { [weak self] in
         guard let self else { return }; self.push(PrivacyController(self.env))
       }
     ], spacing: 0, inset: 0))
-    add(coastNotice(env.t("Data stays on this device, in your own account space.", "数据保存在此设备中，演示账号使用独立空间。")))
+    add(coastNotice(env.t("Data stays on this device, in your own account space.", "数据保存在此设备中，每个账号使用独立空间。")))
   }
 }
 final class AccountController: CoastController {
   override func viewDidLoad() {
     super.viewDidLoad(); title = nil; contentTop.constant = 31; stack.spacing = 28
-    navigationItem.rightBarButtonItem = UIBarButtonItem(customView: coastPreviewBadge(env))
     add(accountPortrait(env, size: 32))
-    let accountType = UIStackView(); accountType.axis = .horizontal; accountType.alignment = .center
-    accountType.addArrangedSubview(coastLabel(env.t("Account type", "账号类型"), size: 15)); accountType.addArrangedSubview(UIView())
-    accountType.addArrangedSubview(coastLabel(env.t("Local preview", "本地演示"), size: 12, color: CoastStyle.muted))
-    add(coastPanel([accountType], spacing: 0, inset: 14))
-    note(env.t("Trips and journals are saved on this device for this account. Logging out keeps them for your next visit.", "出游与手记分开保存在此设备的当前演示账号下。退出不会删除它们，下次登录可以继续查看。"))
+    note(env.t("Trips and journals are saved on this device for this account. Logging out keeps them for your next visit.", "出游与手记分开保存在此设备的当前账号下。退出不会删除它们，下次登录可以继续查看。"))
     add(coastButton(env.t("Log out", "退出登录"), secondary: true) { [weak self] in
       guard let self else { return }; _ = self.save { try self.env.logout() }
     })
-    add(coastLabel(env.t("This is a local demo account. No email is sent.", "此账号仅用于本机演示，不会发送真实邮件。"), size: 11, color: CoastStyle.muted))
+    add(coastLabel(env.t("Your account is stored on this device. No email is sent.", "账号保存在此设备上，不会发送邮件。"), size: 11, color: CoastStyle.muted))
   }
 }
 final class PreferencesController: CoastController {
@@ -98,15 +105,15 @@ final class PreferencesController: CoastController {
     units.menu = UIMenu(children: (units.menu?.children ?? []) + [temperature])
     let interestTitle = coastLabel(env.t("Your interests", "你的兴趣"), size: 18, weight: .bold); add(interestTitle); stack.setCustomSpacing(26, after: interestTitle)
     let chips = UIStackView(); chips.axis = .horizontal; chips.spacing = 8
-    for key in ["surf", "hike", "camp"] {
-      let selected = (env.store.preferences.interests ?? ["surf", "hike", "camp"]).contains(key)
+    for key in env.categoryKeys {
+      let selected = (env.store.preferences.interests ?? env.categoryKeys).contains(key)
       let chip = UIButton(type: .system); chip.setTitle(env.category(key), for: .normal)
       chip.titleLabel?.font = CoastStyle.font(14); chip.setTitleColor(selected ? .white : CoastStyle.ink, for: .normal)
       chip.backgroundColor = selected ? CoastStyle.brand : CoastStyle.field; chip.layer.cornerRadius = 20
       chip.widthAnchor.constraint(greaterThanOrEqualToConstant: 62).isActive = true
       chip.heightAnchor.constraint(equalToConstant: 40).isActive = true
       chip.addAction(UIAction { [weak self] _ in self?.update { p in
-        var values = p.interests ?? ["surf", "hike", "camp"]
+        var values = p.interests ?? self?.env.categoryKeys ?? []
         if values.contains(key) { values.removeAll { $0 == key } } else { values.append(key) }; p.interests = values
       } }, for: .touchUpInside); chips.addArrangedSubview(chip)
     }
@@ -126,7 +133,7 @@ final class PrivacyController: CoastController {
     stack.setCustomSpacing(20, after: stack.arrangedSubviews.last!)
     add(coastFormPanel([
       coastLabel(env.t("Your memories belong to you.", "你的回忆，属于你。"), size: 23, weight: .bold),
-      coastLabel(env.t("Trips, saved content and journals stay on this device. Demo accounts are local and are not uploaded to the cloud.", "出游、收藏与手记保存在此设备上。演示账号仅在本地使用，不会上传云端。"), size: 16, color: CoastStyle.muted)
+      coastLabel(env.t("Trips, saved content and journals stay on this device. Accounts are local and are not uploaded to the cloud.", "出游、收藏与手记保存在此设备上。账号仅在本地使用，不会上传云端。"), size: 16, color: CoastStyle.muted)
     ]))
     add(coastPanel([
       coastSettingRow(env.t("Export my data", "导出我的数据"), icon: "share") { [weak self] in self?.export() },
@@ -139,6 +146,16 @@ final class PrivacyController: CoastController {
       coastSettingRow(env.t("Clear this space", "清除此空间数据"), icon: "trash", destructive: true) { [weak self] in self?.clear() }
     ], spacing: 0, inset: 0))
     add(coastNotice(env.t("Export includes preferences, progress, trips, journals and imported photos. Keep a copy before clearing data.", "导出包含偏好、学习进度、出游、手记及导入的照片。清除数据前，请先保留副本。")))
+    add(coastPanel([
+      coastSettingRow(env.t("Terms of Use", "用户协议"), icon: "info") { [weak self] in
+        guard let self else { return }
+        self.push(LegalWebController(self.env, document: .terms))
+      },
+      coastSettingRow(env.t("Privacy Policy", "隐私政策"), icon: "shield") { [weak self] in
+        guard let self else { return }
+        self.push(LegalWebController(self.env, document: .privacy))
+      }
+    ], spacing: 0, inset: 0))
     stack.setCustomSpacing(0, after: stack.arrangedSubviews.last!)
     add(coastFormPanel([
       coastLabel(env.t("About this app", "关于海岸与山野"), size: 18, weight: .bold),
@@ -153,10 +170,14 @@ final class PrivacyController: CoastController {
       let ledger = folder.appendingPathComponent("coast-wild.json")
       try env.store.exportData().write(to: ledger, options: .atomic)
       var urls = [ledger]
-      for filename in Set(env.store.ledger.entries.flatMap { $0.photos }) {
+      // 手记照片与出游封面都算用户数据，缺了任意一类导出就不完整。
+      for filename in env.store.ledger.referencedPhotoFilenames.sorted() {
         let source = env.photoURL(filename)
         let destination = folder.appendingPathComponent(filename)
-        try FileManager.default.copyItem(at: source, to: destination)
+        // 个别照片丢失不该让整次导出失败，其余内容照常带走。
+        guard (try? FileManager.default.copyItem(at: source, to: destination)) != nil else {
+          continue
+        }
         urls.append(destination)
       }
       let share = UIActivityViewController(activityItems: urls, applicationActivities: nil)

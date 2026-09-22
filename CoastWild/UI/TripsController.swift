@@ -333,6 +333,20 @@ final class TripDetailController: CoastController {
         categoryKey: content?.category, optionsLabel: env.t("Options for ", "更多选项：") + item.titleSnapshot) { [weak self] in self?.itemMenu(item, trip: trip) })
     }
     if !timeline.arrangedSubviews.isEmpty { add(timeline) }
+    let gear = trip.gearProgress
+    add(
+      coastPanel([
+        coastSettingRow(
+          env.t("Packing list", "装备清单"),
+          value: gear.total == 0
+            ? env.t("Not started", "未开始")
+            : env.t("\(gear.done) of \(gear.total) packed", "已备 \(gear.done) / \(gear.total) 项"),
+          icon: "check"
+        ) { [weak self] in
+          guard let self else { return }
+          self.push(GearController(self.env, tripID: self.id))
+        }
+      ], spacing: 0, inset: 0))
     add(
       coastButton(env.t("Add experience", "添加体验"), secondary: true) { [weak self] in
         guard let self else { return }

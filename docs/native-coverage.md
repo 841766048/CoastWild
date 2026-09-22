@@ -18,9 +18,20 @@
 | JO03 / ST14 | JournalDetailController | 详情、编辑、系统分享、删除 |
 | SA01 / ST10 | BookmarksController | 收藏及空态 |
 | ME01 | ProfileController | 账号、收藏、学习统计与设置 |
+| LE01 | LearnController | 三分类异步学习列表、Skeleton Loading、失败重试与 Web/原生分流 |
+| LE02 | LearningWebController | 本地结构化 JSON 生成的移动 Web 长文、图片、图标、来源、收藏与分享 |
+| LE03 | LessonController | 原生步骤课、图片与 SF Symbol、前后步骤和学习进度 |
 | SE01 | PreferencesController | 语言、地区、单位；与引导复用 |
 | SE02 / ST01 / ST16 | PrivacyController | 数据导出、清除确认与失败反馈 |
+| TR05 / ST17 | GearController | 装备清单分组勾选、进度、逐项改名换组删除与空态 |
+| TR06 | GearTemplateController | 三套原创模板多选套用，只补缺不改勾选 |
+| — | GearItemEditorController | 新增／改名单项装备，原生表单而非弹窗输入 |
+| SE03 / ST18 | RemindersController | 出发与手记提醒开关、时刻、系统通知权限与被拒引导 |
+| ME02 / ST19 | TrailController | 计数、体验分布、按月分布、三个里程碑与空态 |
+| JO04 | JournalCalendarController | 按月日历、当天手记列表与标签 |
 | ST02 / ST03 | 本地资源加载边界 | 当前内容打包在 App 中，没有远程加载请求；未伪造网络加载和重试成功 |
+
+HF-v1.3 新增功能的入口：出游详情（TR03）→ 装备清单；个人空间（ME01）→ 足迹、提醒与通知；手记（JO01）→ 日历。手记编辑（JO02）新增标签字段。
 
 ## 与静态稿的适配
 

@@ -96,6 +96,7 @@ class CoastController: UIViewController {
   let env: CoastEnvironment
   let scroll = UIScrollView()
   let stack = UIStackView()
+  var scrollTop: NSLayoutConstraint!
   var contentTop: NSLayoutConstraint!
   init(_ env: CoastEnvironment) {
     self.env = env
@@ -113,8 +114,9 @@ class CoastController: UIViewController {
     stack.translatesAutoresizingMaskIntoConstraints = false
     scroll.addSubview(stack)
     contentTop = stack.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor, constant: 16)
+    scrollTop = scroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
     NSLayoutConstraint.activate([
-      scroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+      scrollTop,
       scroll.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       scroll.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       scroll.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
@@ -358,6 +360,10 @@ final class CoastDialog: UIViewController {
   private let heading: String
   private let message: String
   private let actions: [(String, Bool, () -> Void)]
+  private let card = UIStackView()
+  private var hasAppeared = false
+  private var isClosing = false
+  private let overlayColor = UIColor(hex: 0x10252E).withAlphaComponent(0.35)
   init(title: String, message: String, actions: [(String, Bool, () -> Void)]) {
     self.heading = title; self.message = message; self.actions = actions
     super.init(nibName: nil, bundle: nil)
@@ -366,10 +372,15 @@ final class CoastDialog: UIViewController {
   required init?(coder: NSCoder) { fatalError("init(coder:) unsupported") }
   override func viewDidLoad() {
     super.viewDidLoad()
-    view.backgroundColor = UIColor(hex: 0x10252E).withAlphaComponent(0.35)
+    view.backgroundColor = .clear
     view.accessibilityViewIsModal = true
-    let card = UIStackView(); card.axis = .vertical; card.backgroundColor = .white
+    card.axis = .vertical; card.backgroundColor = .white
     card.layer.cornerRadius = 18; card.clipsToBounds = true; card.translatesAutoresizingMaskIntoConstraints = false
+    card.alpha = 0
+    card.transform = UIAccessibility.isReduceMotionEnabled
+      ? .identity
+      : CGAffineTransform(
+        scaleX: CoastMotion.dialogOpenScale, y: CoastMotion.dialogOpenScale)
     let title = coastLabel(heading, size: 19, weight: .bold); title.textAlignment = .center
     let body = coastLabel(message, size: 14, color: CoastStyle.muted); body.textAlignment = .center
     let content = UIStackView(arrangedSubviews: [title, body]); content.axis = .vertical; content.spacing = 12
@@ -383,7 +394,7 @@ final class CoastDialog: UIViewController {
       button.titleLabel?.font = CoastStyle.font(16)
       button.setTitleColor(destructive ? CoastStyle.red : CoastStyle.brand, for: .normal)
       button.heightAnchor.constraint(greaterThanOrEqualToConstant: 51).isActive = true
-      button.addAction(UIAction { [weak self] _ in self?.dismiss(animated: false, completion: action) }, for: .touchUpInside)
+      button.addAction(UIAction { [weak self] _ in self?.close(completion: action) }, for: .touchUpInside)
       card.addArrangedSubview(button)
     }
     let scroll = UIScrollView(); scroll.translatesAutoresizingMaskIntoConstraints = false
@@ -403,6 +414,42 @@ final class CoastDialog: UIViewController {
       card.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor)
     ])
   }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    guard !hasAppeared else { return }
+    hasAppeared = true
+    let reduced = UIAccessibility.isReduceMotionEnabled
+    UIView.animate(
+      withDuration: reduced ? CoastMotion.reducedDuration : CoastMotion.dialogOpenDuration,
+      delay: 0,
+      options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseOut]
+    ) {
+      self.view.backgroundColor = self.overlayColor
+      self.card.alpha = 1
+      self.card.transform = .identity
+    }
+  }
+
+  private func close(completion: @escaping () -> Void) {
+    guard !isClosing else { return }
+    isClosing = true
+    let reduced = UIAccessibility.isReduceMotionEnabled
+    UIView.animate(
+      withDuration: reduced ? CoastMotion.reducedDuration : CoastMotion.dialogCloseDuration,
+      delay: 0,
+      options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseOut]
+    ) {
+      self.view.backgroundColor = .clear
+      self.card.alpha = 0
+      self.card.transform = reduced
+        ? .identity
+        : CGAffineTransform(
+          scaleX: CoastMotion.dialogCloseScale, y: CoastMotion.dialogCloseScale)
+    } completion: { [weak self] _ in
+      self?.dismiss(animated: false, completion: completion)
+    }
+  }
 }
 
 func coastNotice(_ text: String) -> UIView {
@@ -419,20 +466,4 @@ func coastFormPanel(_ views: [UIView], spacing: CGFloat = 18) -> UIStackView {
   panel.layer.borderWidth = 0
   panel.layoutMargins = UIEdgeInsets(top: 18, left: 14, bottom: 18, right: 14)
   return panel
-}
-
-func coastPreviewBadge(_ env: CoastEnvironment) -> UIView {
-  let badge = UIView()
-  badge.backgroundColor = UIColor(hex: 0xF8EFDE)
-  badge.layer.cornerRadius = 6
-  let label = coastLabel(env.t("Local preview", "本地演示"), size: 11, color: UIColor(hex: 0x705523))
-  label.translatesAutoresizingMaskIntoConstraints = false; badge.addSubview(label)
-  NSLayoutConstraint.activate([
-    label.leadingAnchor.constraint(equalTo: badge.leadingAnchor, constant: 9),
-    label.trailingAnchor.constraint(equalTo: badge.trailingAnchor, constant: -9),
-    label.centerYAnchor.constraint(equalTo: badge.centerYAnchor),
-    badge.heightAnchor.constraint(greaterThanOrEqualToConstant: 25),
-    label.topAnchor.constraint(greaterThanOrEqualTo: badge.topAnchor, constant: 4)
-  ])
-  return badge
 }

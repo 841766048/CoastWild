@@ -14,9 +14,16 @@ final class JournalController: CoastController {
   func render() {
     reset()
     title = nil; contentTop.constant = 18; stack.spacing = 12
-    add(journalRootHeader(env.t("Journal", "手记"), label: env.t("New entry", "新手记")) { [weak self] in
-      guard let self else { return }; self.push(JournalEditorController(self.env, entry: nil))
-    })
+    add(
+      journalRootHeader(
+        env.t("Journal", "手记"), label: env.t("New entry", "新手记"),
+        calendarLabel: env.t("Calendar", "日历"),
+        calendar: { [weak self] in
+          guard let self else { return }; self.push(JournalCalendarController(self.env))
+        }
+      ) { [weak self] in
+        guard let self else { return }; self.push(JournalEditorController(self.env, entry: nil))
+      })
     add(coastLabel(env.t("Keep the moments that stay with you.", "把舍不得忘记的片刻留下。"), size: 16, color: CoastStyle.muted))
     let draftCount = env.store.ledger.entries.filter(\.isDraft).count
     chips([env.t("Entries", "手记"), env.t("Drafts", "草稿") + " · \(draftCount)"], selected: drafts ? 1 : 0) {
@@ -50,6 +57,7 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
   PHPickerViewControllerDelegate
 {
   var entry: CoastEntry
+  let tagStack = UIStackView()
   let original: CoastEntry?
   var dateField: CoastDateField!
   var titleField: UITextField!, bodyField: UITextView!,
@@ -92,8 +100,10 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     navigationItem.hidesBackButton = true
     navigationItem.leftBarButtonItem = UIBarButtonItem(
       title: env.t("Cancel", "取消"), primaryAction: UIAction { [weak self] _ in self?.cancel() })
-    navigationItem.rightBarButtonItem = UIBarButtonItem(
+    let saveItem = UIBarButtonItem(
       title: env.t("Save", "保存"), primaryAction: UIAction { [weak self] _ in self?.submit() })
+    saveItem.accessibilityIdentifier = "journal.save"
+    navigationItem.rightBarButtonItem = saveItem
     contentTop.constant = 23; stack.spacing = 14
     titleField = UITextField(); titleField.text = entry.title
     let titlePlaceholder = env.t("Give your memory a name", "给回忆起个名字")
@@ -128,6 +138,15 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     ]); bodyPlaceholder.isHidden = !entry.body.isEmpty; add(bodyContainer)
     bodyField.accessibilityIdentifier = "journal.body"
     bodyField.delegate = self
+    tagStack.axis = .vertical
+    tagStack.spacing = 10
+    // 标签区高度随内容变化，不能用固定高度的 journalFormPanel。
+    let tagPanel = coastPanel(
+      [journalFieldGroup(env.t("Tags", "标签"), control: tagStack)], inset: 14)
+    tagPanel.backgroundColor = UIColor(hex: 0xF3F8FA)
+    tagPanel.layer.borderWidth = 0
+    add(tagPanel)
+    refreshTags()
     tripButton = journalSelectButton(tripTitle()) { [weak self] in self?.chooseTrip() }
     tripButton.accessibilityIdentifier = "journal.link.trip"
     add(journalFormPanel([journalFieldGroup(env.t("Link a trip", "关联出游"), control: tripButton)]))
@@ -268,7 +287,9 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     guard !importing else { return }
     pending?.cancel()
     capture()
-    if original == nil && entry.title.isEmpty && entry.body.isEmpty && entry.photos.isEmpty {
+    if original == nil && entry.title.isEmpty && entry.body.isEmpty && entry.photos.isEmpty
+      && entry.tagList.isEmpty
+    {
       if env.store.ledger.entries.contains(where: { $0.id == entry.id }) {
         guard save({ try env.store.deleteEntry(id: entry.id) }) else { return }
       }
@@ -401,6 +422,94 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     }
     photoStack.isHidden = photoStack.arrangedSubviews.isEmpty
   }
+
+  /// 标签行：已有标签逐个可移除，未满 5 个时给出添加入口。
+  func refreshTags() {
+    tagStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+    let tags = entry.tagList
+    let counter = UIStackView()
+    counter.axis = .horizontal
+    counter.alignment = .firstBaseline
+    counter.addArrangedSubview(
+      coastLabel(
+        env.t(
+          "Tags filter your journal and calendar.", "标签用于手记列表与日历筛选。"),
+        size: 12, color: CoastStyle.muted))
+    counter.addArrangedSubview(UIView())
+    counter.addArrangedSubview(
+      coastLabel("\(tags.count) / \(CoastEntry.tagLimit)", size: 12, color: CoastStyle.muted))
+    tagStack.addArrangedSubview(counter)
+    for tag in tags {
+      let row = UIStackView()
+      row.axis = .horizontal
+      row.spacing = 8
+      row.alignment = .center
+      row.isLayoutMarginsRelativeArrangement = true
+      row.layoutMargins = UIEdgeInsets(top: 0, left: 14, bottom: 0, right: 4)
+      row.backgroundColor = CoastStyle.field
+      row.layer.cornerRadius = 20
+      row.addArrangedSubview(coastLabel(tag, size: 14, color: CoastStyle.brand))
+      row.addArrangedSubview(UIView())
+      let remove = UIButton(type: .system)
+      remove.setImage(UIImage(named: "icon-close"), for: .normal)
+      remove.tintColor = CoastStyle.muted
+      remove.accessibilityLabel = env.t("Remove tag ", "移除标签：") + tag
+      remove.widthAnchor.constraint(equalToConstant: 40).isActive = true
+      remove.heightAnchor.constraint(equalToConstant: 40).isActive = true
+      remove.addAction(
+        UIAction { [weak self] _ in
+          guard let self else { return }
+          self.entry.tagList.removeAll { $0 == tag }
+          self.refreshTags()
+          self.scheduleDraft()
+        }, for: .touchUpInside)
+      row.addArrangedSubview(remove)
+      row.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+      tagStack.addArrangedSubview(row)
+    }
+    if tags.count < CoastEntry.tagLimit {
+      let add = coastButton(env.t("Add a tag", "添加标签"), secondary: true) { [weak self] in
+        self?.promptTag()
+      }
+      add.configuration?.image = UIImage(named: "icon-plus")
+      add.configuration?.imagePadding = 8
+      add.accessibilityIdentifier = "journal.tag.add"
+      tagStack.addArrangedSubview(add)
+    }
+  }
+
+  /// 标签用系统输入弹窗收集，校验交给 Core，错误文案走既有映射。
+  func promptTag() {
+    let alert = UIAlertController(
+      title: env.t("Add a tag", "添加标签"),
+      message: env.t(
+        "Up to \(CoastEntry.tagLengthLimit) characters. Tags stay on this device.",
+        "最多 \(CoastEntry.tagLengthLimit) 个字符。标签只保存在本机。"),
+      preferredStyle: .alert)
+    alert.addTextField { field in
+      field.placeholder = self.env.t("For example: morning swell", "例如：晨浪")
+      field.autocapitalizationType = .none
+      field.accessibilityIdentifier = "journal.tag.input"
+      field.returnKeyType = .done
+    }
+    alert.addAction(UIAlertAction(title: env.t("Cancel", "取消"), style: .cancel))
+    alert.addAction(
+      UIAlertAction(title: env.t("Add", "添加"), style: .default) { [weak self, weak alert] _ in
+        guard let self else { return }
+        let raw = alert?.textFields?.first?.text ?? ""
+        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        let next = self.entry.tagList + [value]
+        if let issue = CoastValidation.tags(next) {
+          self.message(self.env.t("Tag not added", "标签未添加"), self.env.errorText(CoastStoreError(issue)))
+          return
+        }
+        self.entry.tagList = next
+        self.refreshTags()
+        self.scheduleDraft()
+      })
+    present(alert, animated: true)
+  }
 }
 final class JournalDetailController: CoastController {
   let id: String
@@ -493,9 +602,22 @@ final class JournalDetailController: CoastController {
   }
 }
 
-private func journalRootHeader(_ title: String, label: String, action: @escaping () -> Void) -> UIView {
-  let row = UIStackView(); row.axis = .horizontal; row.alignment = .center
+private func journalRootHeader(
+  _ title: String, label: String, calendarLabel: String, calendar: @escaping () -> Void,
+  action: @escaping () -> Void
+) -> UIView {
+  let row = UIStackView(); row.axis = .horizontal; row.alignment = .center; row.spacing = 8
   row.addArrangedSubview(coastLabel(title, size: 32, weight: .bold)); row.addArrangedSubview(UIView())
+  // 根页导航栏按 HF-v1.2 隐藏，日历入口只能放在内容里。
+  let calendarButton = UIButton(type: .system)
+  calendarButton.setImage(UIImage(named: "icon-calendar"), for: .normal)
+  calendarButton.tintColor = CoastStyle.brand
+  calendarButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
+  calendarButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+  calendarButton.accessibilityLabel = calendarLabel
+  calendarButton.accessibilityIdentifier = "journal.calendar"
+  calendarButton.addAction(UIAction { _ in calendar() }, for: .touchUpInside)
+  row.addArrangedSubview(calendarButton)
   let button = UIButton(type: .system); button.setImage(UIImage(systemName: "plus"), for: .normal)
   button.tintColor = CoastStyle.ink; button.backgroundColor = CoastStyle.sand; button.layer.cornerRadius = 22
   button.widthAnchor.constraint(equalToConstant: 44).isActive = true; button.heightAnchor.constraint(equalToConstant: 44).isActive = true

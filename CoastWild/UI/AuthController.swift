@@ -1,8 +1,23 @@
 import UIKit
 
+private final class WelcomeGradientView: UIView {
+  override class var layerClass: AnyClass { CAGradientLayer.self }
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    let gradient = layer as! CAGradientLayer
+    gradient.colors = [UIColor.black.withAlphaComponent(0.48).cgColor, UIColor.clear.cgColor]
+    gradient.locations = [0, 1]
+  }
+  required init?(coder: NSCoder) { fatalError("init(coder:) unsupported") }
+}
+
 final class WelcomeController: CoastController {
   override func viewDidLoad() {
     super.viewDidLoad()
+    scrollTop.isActive = false
+    scrollTop = scroll.topAnchor.constraint(equalTo: view.topAnchor)
+    scrollTop.isActive = true
+    scroll.contentInsetAdjustmentBehavior = .never
     render()
   }
   override func viewWillAppear(_ animated: Bool) {
@@ -16,25 +31,43 @@ final class WelcomeController: CoastController {
     let heroContainer = UIView()
     heroContainer.heightAnchor.constraint(equalToConstant: 372).isActive = true
     let hero = coastImage("onboarding", height: 372)
+    hero.accessibilityIdentifier = "welcome.hero"
     hero.layer.cornerRadius = 0
     hero.translatesAutoresizingMaskIntoConstraints = false
     heroContainer.addSubview(hero)
-    let title = coastLabel("Coast & Wild", size: 38, weight: .bold)
+    let overlay = WelcomeGradientView()
+    overlay.translatesAutoresizingMaskIntoConstraints = false
+    hero.addSubview(overlay)
+    let title = coastLabel("Coast & Wild", size: 38, weight: .bold, color: .white)
+    title.layer.shadowColor = UIColor.black.cgColor
+    title.layer.shadowOpacity = 0.35
+    title.layer.shadowRadius = 5
+    title.layer.shadowOffset = CGSize(width: 0, height: 2)
     title.translatesAutoresizingMaskIntoConstraints = false
     hero.addSubview(title)
-    let subtitle = coastLabel(env.t("From the shoreline to the trail.", "从海岸，到山野。"), size: 16)
+    let subtitle = coastLabel(
+      env.t("From the shoreline to the trail.", "从海岸，到山野。"), size: 16,
+      weight: .medium, color: .white)
+    subtitle.layer.shadowColor = UIColor.black.cgColor
+    subtitle.layer.shadowOpacity = 0.4
+    subtitle.layer.shadowRadius = 4
+    subtitle.layer.shadowOffset = CGSize(width: 0, height: 1)
     subtitle.translatesAutoresizingMaskIntoConstraints = false
     hero.addSubview(subtitle)
+    add(heroContainer)
     NSLayoutConstraint.activate([
       hero.topAnchor.constraint(equalTo: heroContainer.topAnchor),
       hero.leadingAnchor.constraint(equalTo: heroContainer.leadingAnchor, constant: -20),
       hero.trailingAnchor.constraint(equalTo: heroContainer.trailingAnchor, constant: 20),
-      title.topAnchor.constraint(equalTo: hero.topAnchor, constant: 14),
+      overlay.topAnchor.constraint(equalTo: hero.topAnchor),
+      overlay.leadingAnchor.constraint(equalTo: hero.leadingAnchor),
+      overlay.trailingAnchor.constraint(equalTo: hero.trailingAnchor),
+      overlay.heightAnchor.constraint(equalToConstant: 176),
+      title.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 14),
       title.centerXAnchor.constraint(equalTo: hero.centerXAnchor),
       subtitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 1),
       subtitle.centerXAnchor.constraint(equalTo: hero.centerXAnchor),
     ])
-    add(heroContainer)
     add(preferenceRow(icon: "globe", title: env.t("Language", "语言"), value: env.t("English", "简体中文")) { [weak self] in
       guard let self else { return }; self.push(PreferencesController(self.env))
     })
@@ -47,8 +80,8 @@ final class WelcomeController: CoastController {
     note(env.t("Choose as many as you like.", "可以选择多个方向。"))
     let interests = UIStackView()
     interests.axis = .horizontal; interests.spacing = 10; interests.distribution = .fillEqually
-    for key in ["surf", "hike", "camp"] {
-      let selected = (env.store.preferences.interests ?? ["surf", "hike", "camp"]).contains(key)
+    for key in env.categoryKeys {
+      let selected = (env.store.preferences.interests ?? env.categoryKeys).contains(key)
       let button = CoastActionButton(type: .custom)
       button.backgroundColor = selected ? UIColor(hex: 0xF8EFDE) : CoastStyle.field
       button.layer.cornerRadius = 12
@@ -72,7 +105,7 @@ final class WelcomeController: CoastController {
       button.addAction(UIAction { [weak self] _ in
         guard let self else { return }
         var prefs = self.env.store.preferences
-        var values = prefs.interests ?? ["surf", "hike", "camp"]
+        var values = prefs.interests ?? self.env.categoryKeys
         if values.contains(key) { values.removeAll { $0 == key } } else { values.append(key) }
         prefs.interests = values
         if self.save({ try self.env.store.updatePreferences(prefs) }) { self.render() }
@@ -122,14 +155,14 @@ final class WelcomeController: CoastController {
 final class AuthController: CoastController {
   enum Mode { case login, register, recover, reset }
   let mode: Mode
-  var demoCode: String?
+  var recoveryCode: String?
   let recoveryEmail: String?
   var email: UITextField!, password: UITextField!, name: UITextField!, confirmation: UITextField!,
     code: UITextField!
   var errorLabel = coastLabel("", size: 14, color: CoastStyle.red)
-  init(_ env: CoastEnvironment, mode: Mode, demoCode: String? = nil, recoveryEmail: String? = nil) {
+  init(_ env: CoastEnvironment, mode: Mode, recoveryCode: String? = nil, recoveryEmail: String? = nil) {
     self.mode = mode
-    self.demoCode = demoCode
+    self.recoveryCode = recoveryCode
     self.recoveryEmail = recoveryEmail
     super.init(env)
   }
@@ -142,7 +175,6 @@ final class AuthController: CoastController {
     title = nil
     stack.spacing = 16
     contentTop.constant = 27
-    navigationItem.rightBarButtonItem = UIBarButtonItem(customView: coastPreviewBadge(env))
     if mode == .login || mode == .register {
       let photo = coastImage("surf-coast", height: 137); photo.layer.cornerRadius = 14; add(photo); stack.setCustomSpacing(23, after: photo)
     }
@@ -152,7 +184,7 @@ final class AuthController: CoastController {
     add(headline); stack.setCustomSpacing(12, after: headline)
     if mode == .login || mode == .recover || mode == .reset {
       let subtitle = coastLabel(mode == .login ? env.t("Your next chapter starts outside.", "下一段故事，从户外开始。") : mode == .recover
-        ? env.t("Enter the email you used for this local preview account.", "输入你在此设备注册演示账号时使用的邮箱。")
+        ? env.t("Enter the email you used to sign up on this device.", "输入你在此设备注册时使用的邮箱。")
         : env.t("Reset the password for", "为以下账号重置密码"), size: 15, color: CoastStyle.muted)
       add(subtitle)
       if mode == .reset, let recoveryEmail {
@@ -160,12 +192,12 @@ final class AuthController: CoastController {
         account.accessibilityIdentifier = "auth.recovery.email"; add(account); stack.setCustomSpacing(23, after: account)
       } else { stack.setCustomSpacing(23, after: subtitle) }
     }
-    if let demoCode {
+    if let recoveryCode {
       let panel = UIStackView(); panel.axis = .vertical; panel.spacing = 8
       panel.isLayoutMarginsRelativeArrangement = true; panel.layoutMargins = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
       panel.backgroundColor = UIColor(hex: 0xF8EFDE); panel.layer.cornerRadius = 12
-      panel.addArrangedSubview(coastLabel(env.t("Demo code · No email sent", "演示验证码 · 未发送邮件"), size: 12, color: CoastStyle.muted))
-      panel.addArrangedSubview(coastLabel(demoCode, size: 27, weight: .bold))
+      panel.addArrangedSubview(coastLabel(env.t("Recovery code · No email sent", "验证码 · 未发送邮件"), size: 12, color: CoastStyle.muted))
+      panel.addArrangedSubview(coastLabel(recoveryCode, size: 27, weight: .bold))
       panel.addArrangedSubview(coastLabel(env.t("Valid for 10 minutes.", "10 分钟内有效。"), size: 11, color: CoastStyle.muted)); add(panel)
     }
     if mode == .register {
@@ -224,7 +256,7 @@ final class AuthController: CoastController {
         guard let self else { return }; self.push(AuthController(self.env, mode: .recover))
       })
     }
-    add(coastLabel(env.t("This demo account stays on this device. Use a test email and a unique demo password. No email is sent.", "此账号仅用于本机演示。请使用测试邮箱和专用测试密码，不会发送真实邮件。"), size: 11, color: CoastStyle.muted))
+    add(coastLabel(env.t("Your account stays on this device. Use a unique password, not one you use elsewhere. No email is sent.", "账号保存在此设备上。请使用专用密码，不要沿用其他服务的密码，不会发送邮件。"), size: 11, color: CoastStyle.muted))
   }
   private func textLink(_ title: String, size: CGFloat = 16, weight: UIFont.Weight = .regular, action: @escaping () -> Void) -> UIButton {
     let button = UIButton(type: .system); button.setTitle(title, for: .normal)
@@ -253,7 +285,7 @@ final class AuthController: CoastController {
       case .recover:
         let recoveryEmail = (email.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let value = try env.vault.requestRecovery(email: recoveryEmail)
-        push(AuthController(env, mode: .reset, demoCode: value, recoveryEmail: recoveryEmail))
+        push(AuthController(env, mode: .reset, recoveryCode: value, recoveryEmail: recoveryEmail))
       case .reset:
         try env.vault.reset(code: code.text ?? "", password: password.text ?? "")
         navigationController?.setViewControllers(

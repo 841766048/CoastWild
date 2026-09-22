@@ -55,26 +55,33 @@ final class ExploreController: CoastController {
     add(search)
     stack.setCustomSpacing(15, after: search)
 
-    let feature = UIStackView()
-    feature.axis = .vertical
-    feature.spacing = 7
-    let hero = imageButton(image: "surf-coast", height: 244, label: env.t("A weekend by the water", "把周末留给海岸")) { [weak self] in
-      guard let self, let item = self.env.item("coastal-story") else { return }; self.push(ContentController(self.env, item: item))
+    guard let home = env.catalog.home else { return }
+    if let hero = env.feature(home.hero) {
+      let feature = UIStackView()
+      feature.axis = .vertical
+      feature.spacing = 7
+      let button = imageButton(image: hero.image, height: 244, label: hero.title) { [weak self] in
+        guard let self else { return }
+        self.push(ContentController(self.env, item: hero.item))
+      }
+      feature.addArrangedSubview(button)
+      feature.addArrangedSubview(
+        exploreLabel(hero.title, size: 23, weight: .bold, lineHeight: 27.6))
+      feature.addArrangedSubview(
+        exploreLabel(hero.subtitle, size: 14, color: CoastStyle.muted, lineHeight: 19.6))
+      add(feature)
+      stack.setCustomSpacing(20, after: feature)
     }
-    feature.addArrangedSubview(hero)
-    feature.addArrangedSubview(exploreLabel(env.t("A weekend by the water", "把周末留给海岸"), size: 23, weight: .bold, lineHeight: 27.6))
-    feature.addArrangedSubview(exploreLabel(env.t("Surf culture, coastal walks and a night outdoors.", "海岸漫步、冲浪文化与户外夜晚。"), size: 14, color: CoastStyle.muted, lineHeight: 19.6))
-    add(feature)
-    stack.setCustomSpacing(20, after: feature)
-    let section = exploreLabel(env.t("Find your next experience", "发现下一段体验"), size: 21, weight: .bold, lineHeight: 25.2)
+    let section = exploreLabel(env.text(home.heading), size: 21, weight: .bold, lineHeight: 25.2)
     add(section)
     stack.setCustomSpacing(12, after: section)
     let tiles = UIStackView()
     tiles.axis = .horizontal
     tiles.spacing = 12
     tiles.distribution = .fillEqually
-    [("headlands", env.t("Coastal days", "海岸时光")), ("trail-notes", env.t("Into the hills", "走进山野"))].forEach { id, title in
-      if let item = env.item(id) { tiles.addArrangedSubview(imageTile(item, title: title)) }
+    for value in home.tiles {
+      guard let tile = env.feature(value) else { continue }
+      tiles.addArrangedSubview(imageTile(tile.item, title: tile.title, image: tile.image))
     }
     add(tiles)
   }
@@ -117,8 +124,8 @@ final class ExploreController: CoastController {
     return button
   }
 
-  private func imageTile(_ item: CoastContent, title: String) -> UIButton {
-    let button = imageButton(image: item.image, height: 155, label: title) { [weak self] in guard let self else { return }; self.push(ContentController(self.env, item: item)) }
+  private func imageTile(_ item: CoastContent, title: String, image: String) -> UIButton {
+    let button = imageButton(image: image, height: 155, label: title) { [weak self] in guard let self else { return }; self.push(ContentController(self.env, item: item)) }
     let shade = UIView()
     shade.backgroundColor = UIColor.black.withAlphaComponent(0.36)
     shade.translatesAutoresizingMaskIntoConstraints = false
@@ -172,7 +179,9 @@ final class SearchController: CoastController, UISearchBarDelegate {
   func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) { query = searchText.trimmingCharacters(in: .whitespacesAndNewlines); renderResults() }
   private func renderCategories() {
     categoryRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
-    let values = [(env.t("All", "全部"), ""), (env.t("Surfing", "冲浪"), "surf"), (env.t("Hiking", "徒步"), "hike"), (env.t("Camping", "露营"), "camp")]
+    let values =
+      [(env.t("All", "全部"), "")]
+      + (env.catalog.categories ?? []).map { (env.text($0.name), $0.key) }
     values.forEach { title, value in
       let button = UIButton(type: .system)
       var config = UIButton.Configuration.filled()

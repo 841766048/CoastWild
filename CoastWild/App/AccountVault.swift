@@ -15,39 +15,29 @@ final class AccountVault {
     var session: String?
   }
   private var data: VaultData
-  private let service: String
+  private let storage: any AccountDataStore
   private var recovery: (email: String, code: String, expires: Date, attempts: Int)?
   var current: CoastAccount? { data.accounts.first { $0.id == data.session } }
   init(testing: Bool) throws {
-    service = testing ? "com.coastwild.native.test" : "com.coastwild.native.accounts"
-    var result: CFTypeRef?
-    let status = SecItemCopyMatching(
-      [
-        kSecClass: kSecClassGenericPassword, kSecAttrService: service, kSecAttrAccount: "vault",
-        kSecReturnData: true, kSecMatchLimit: kSecMatchLimitOne,
-      ] as CFDictionary, &result)
-    if status == errSecItemNotFound {
-      data = VaultData()
-    } else if status == errSecSuccess, let bytes = result as? Data {
-      data = try JSONDecoder().decode(VaultData.self, from: bytes)
+    let namespace = testing ? "test" : "accounts"
+    let destination = UserDefaultsAccountDataStore(
+      defaults: .standard,
+      key: "com.coastwild.native.\(namespace).vault")
+    let legacy = KeychainAccountDataStore(service: "com.coastwild.native.\(namespace)")
+    storage = MigratingAccountDataStore(destination: destination, legacy: legacy)
+    if let bytes = try storage.load() {
+      do {
+        data = try JSONDecoder().decode(VaultData.self, from: bytes)
+      } catch {
+        throw VaultError.storage
+      }
     } else {
-      throw VaultError.storage
+      data = VaultData()
     }
   }
   private func persist(_ next: VaultData) throws {
     let bytes = try JSONEncoder().encode(next)
-    let query =
-      [kSecClass: kSecClassGenericPassword, kSecAttrService: service, kSecAttrAccount: "vault"]
-      as CFDictionary
-    var status = SecItemUpdate(query, [kSecValueData: bytes] as CFDictionary)
-    if status == errSecItemNotFound {
-      status = SecItemAdd(
-        [
-          kSecClass: kSecClassGenericPassword, kSecAttrService: service, kSecAttrAccount: "vault",
-          kSecValueData: bytes, kSecAttrAccessible: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-        ] as CFDictionary, nil)
-    }
-    guard status == errSecSuccess else { throw VaultError.storage }
+    try storage.save(bytes)
     data = next
   }
   private func derive(_ password: String, salt: Data) throws -> Data {
@@ -127,6 +117,63 @@ final class AccountVault {
   }
   func clearTestVault() throws { try persist(VaultData()) }
 }
+
+private struct KeychainAccountDataStore: AccountDataStore {
+  let service: String
+  private let account = "vault"
+
+  func load() throws -> Data? {
+    var result: CFTypeRef?
+    let status = SecItemCopyMatching(
+      [
+        kSecClass: kSecClassGenericPassword,
+        kSecAttrService: service,
+        kSecAttrAccount: account,
+        kSecReturnData: true,
+        kSecMatchLimit: kSecMatchLimitOne,
+      ] as CFDictionary,
+      &result)
+    if status == errSecItemNotFound { return nil }
+    guard status == errSecSuccess, let bytes = result as? Data else {
+      throw VaultError.storage
+    }
+    return bytes
+  }
+
+  func save(_ data: Data) throws {
+    let query = [
+      kSecClass: kSecClassGenericPassword,
+      kSecAttrService: service,
+      kSecAttrAccount: account,
+    ] as CFDictionary
+    var status = SecItemUpdate(query, [kSecValueData: data] as CFDictionary)
+    if status == errSecItemNotFound {
+      status = SecItemAdd(
+        [
+          kSecClass: kSecClassGenericPassword,
+          kSecAttrService: service,
+          kSecAttrAccount: account,
+          kSecValueData: data,
+          kSecAttrAccessible: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+        ] as CFDictionary,
+        nil)
+    }
+    guard status == errSecSuccess else { throw VaultError.storage }
+  }
+
+  func remove() throws {
+    let status = SecItemDelete(
+      [
+        kSecClass: kSecClassGenericPassword,
+        kSecAttrService: service,
+        kSecAttrAccount: account,
+      ] as CFDictionary)
+    guard status == errSecSuccess || status == errSecItemNotFound else {
+      throw VaultError.storage
+    }
+  }
+}
+
 enum VaultError: String, LocalizedError {
   case storage, invalid, duplicate, credentials, expired, code
   var errorDescription: String? { "auth.\(rawValue)" }

@@ -21,6 +21,10 @@ public final class CoastStore {
     public private(set) var preferences: CoastPreferences
     public private(set) var accountID: String?
 
+    /// 账本、偏好或当前账号发生变化后调用。本地提醒据此整体重排，
+    /// 这样调用方不必在每个写入点各加一次。初始化过程中的加载不触发。
+    public var onChange: (() -> Void)?
+
     private let directory: URL
     private let fileManager: FileManager
     private let encoder: JSONEncoder
@@ -47,6 +51,7 @@ public final class CoastStore {
         guard let accountID else {
             self.accountID = nil
             ledger = CoastLedger()
+            onChange?()
             return
         }
         let url = ledgerURL(for: accountID)
@@ -58,23 +63,55 @@ public final class CoastStore {
         }
         self.accountID = accountID
         ledger = loaded
+        try migrateLegacyReminders()
+        onChange?()
+    }
+
+    /// 提醒计划早期存在全局 preferences 里，会在同设备的多个账号之间串。
+    /// 首个登入的账号接手这份旧设置，随后清空全局字段，其余账号从默认值开始。
+    private func migrateLegacyReminders() throws {
+        guard let legacy = preferences.reminders else { return }
+        if ledger.reminders == nil {
+            var next = ledger
+            next.reminders = legacy
+            try commit(next, notify: false)
+        }
+        var cleared = preferences
+        cleared.reminders = nil
+        try updatePreferences(cleared, notify: false)
     }
 
     public func updatePreferences(_ next: CoastPreferences) throws {
+        try updatePreferences(next, notify: true)
+    }
+
+    private func updatePreferences(_ next: CoastPreferences, notify: Bool) throws {
         let data = try encode(next)
         try write(data, to: preferencesURL)
         preferences = next
+        if notify { onChange?() }
     }
 
     public func commit(_ next: CoastLedger) throws {
+        try commit(next, notify: true)
+    }
+
+    private func commit(_ next: CoastLedger, notify: Bool) throws {
         guard let accountID else { throw CoastStoreError("account.required") }
         let data = try encode(next)
         try write(data, to: ledgerURL(for: accountID))
         ledger = next
+        if notify { onChange?() }
     }
 
-    public func saveTrip(_ trip: CoastTrip) throws {
+    public func saveTrip(_ incoming: CoastTrip) throws {
         try requireAccount()
+        var trip = incoming
+        // 出游表单不提交装备清单；gear 为 nil 时保留已有清单，不当作清空。
+        // 要清空请用 clearGear(tripID:)。
+        if trip.gear == nil {
+            trip.gear = ledger.trips.first(where: { $0.id == trip.id })?.gear
+        }
         if let error = CoastValidation.trip(trip) { throw CoastStoreError(error) }
         if trip.items.contains(where: { $0.day < 0 }) {
             throw CoastStoreError("trip.activity.dayOutOfRange")
@@ -132,6 +169,8 @@ public final class CoastStore {
         if entry.title.count > 80 { throw CoastStoreError("entry.title.tooLong") }
         if entry.body.count > 10_000 { throw CoastStoreError("entry.body.tooLong") }
         if entry.photos.count > 12 { throw CoastStoreError("entry.photos.tooMany") }
+        // 标签上限对草稿同样生效，避免草稿里攒下越界数据。
+        if let error = CoastValidation.tags(entry.tagList) { throw CoastStoreError(error) }
         if !entry.isDraft, let error = CoastValidation.entry(entry) { throw CoastStoreError(error) }
         if let tripID = entry.tripID, !ledger.trips.contains(where: { $0.id == tripID }) {
             throw CoastStoreError("entry.trip.notFound")
@@ -199,8 +238,161 @@ public final class CoastStore {
         try commit(next)
     }
 
+    public func updateReminders(_ plan: CoastReminderPlan) throws {
+        try requireAccount()
+        if let error = CoastValidation.reminders(plan) { throw CoastStoreError(error) }
+        var next = ledger
+        next.reminderPlan = plan
+        try commit(next)
+    }
+
+    /// 新增一项装备。标题去首尾空白，排序追加到末尾。
+    public func addGearItem(tripID: String, item: CoastGearItem) throws {
+        try requireAccount()
+        guard let index = ledger.trips.firstIndex(where: { $0.id == tripID }) else {
+            throw CoastStoreError("trip.notFound")
+        }
+        var list = ledger.trips[index].gearList
+        if list.count >= CoastGearItem.itemLimit { throw CoastStoreError("checklist.tooMany") }
+        var incoming = item
+        incoming.title = item.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        incoming.sortOrder = (list.map(\.sortOrder).max() ?? -1) + 1
+        if let error = CoastValidation.gearItem(incoming) { throw CoastStoreError(error) }
+        if list.contains(where: { $0.category == incoming.category && $0.foldedTitle == incoming.foldedTitle }) {
+            throw CoastStoreError("checklist.duplicate")
+        }
+        list.append(incoming)
+        var next = ledger
+        next.trips[index].gearList = list
+        try commit(next)
+    }
+
+    /// 改名或换分组。不影响勾选状态。
+    public func updateGearItem(
+        tripID: String, itemID: String, title: String? = nil, category: String? = nil
+    ) throws {
+        try requireAccount()
+        guard let index = ledger.trips.firstIndex(where: { $0.id == tripID }) else {
+            throw CoastStoreError("trip.notFound")
+        }
+        var list = ledger.trips[index].gearList
+        guard let at = list.firstIndex(where: { $0.id == itemID }) else {
+            throw CoastStoreError("checklist.notFound")
+        }
+        var item = list[at]
+        if let title { item.title = title.trimmingCharacters(in: .whitespacesAndNewlines) }
+        if let category { item.category = category }
+        if let error = CoastValidation.gearItem(item) { throw CoastStoreError(error) }
+        if list.enumerated().contains(where: { offset, other in
+            offset != at && other.category == item.category && other.foldedTitle == item.foldedTitle
+        }) {
+            throw CoastStoreError("checklist.duplicate")
+        }
+        list[at] = item
+        var next = ledger
+        next.trips[index].gearList = list
+        try commit(next)
+    }
+
+    public func toggleGearItem(tripID: String, itemID: String) throws {
+        try requireAccount()
+        guard let index = ledger.trips.firstIndex(where: { $0.id == tripID }) else {
+            throw CoastStoreError("trip.notFound")
+        }
+        var list = ledger.trips[index].gearList
+        guard let at = list.firstIndex(where: { $0.id == itemID }) else {
+            throw CoastStoreError("checklist.notFound")
+        }
+        list[at].done.toggle()
+        var next = ledger
+        next.trips[index].gearList = list
+        try commit(next)
+    }
+
+    public func removeGearItem(tripID: String, itemID: String) throws {
+        try requireAccount()
+        guard let index = ledger.trips.firstIndex(where: { $0.id == tripID }) else {
+            throw CoastStoreError("trip.notFound")
+        }
+        var list = ledger.trips[index].gearList
+        guard list.contains(where: { $0.id == itemID }) else {
+            throw CoastStoreError("checklist.notFound")
+        }
+        list.removeAll { $0.id == itemID }
+        var next = ledger
+        next.trips[index].gearList = list
+        try commit(next)
+    }
+
+    /// 套用清单模板：只补充缺少的物品，已在清单里的一律跳过，
+    /// 不改动任何勾选状态。返回实际补充的数量。
+    /// 去重两把钥匙：模板物品用跨语言稳定的 sourceKey，手工添加的退回标题比对。
+    @discardableResult
+    public func applyGearTemplate(tripID: String, items: [CoastGearItem]) throws -> Int {
+        try requireAccount()
+        guard let index = ledger.trips.firstIndex(where: { $0.id == tripID }) else {
+            throw CoastStoreError("trip.notFound")
+        }
+        var list = ledger.trips[index].gearList
+        var present = Set<String>()
+        for item in list {
+            present.insert("t\u{0}\(item.category)\u{0}\(item.foldedTitle)")
+            if let key = item.sourceKey { present.insert("s\u{0}\(key)") }
+        }
+        var order = (list.map(\.sortOrder).max() ?? -1) + 1
+        var added: [CoastGearItem] = []
+        for raw in items {
+            var item = raw
+            item.title = raw.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            item.done = false
+            item.sortOrder = order
+            if let error = CoastValidation.gearItem(item) { throw CoastStoreError(error) }
+            var keys = ["t\u{0}\(item.category)\u{0}\(item.foldedTitle)"]
+            if let key = item.sourceKey { keys.append("s\u{0}\(key)") }
+            if keys.contains(where: present.contains) { continue }
+            for key in keys { present.insert(key) }
+            added.append(item)
+            order += 1
+        }
+        if list.count + added.count > CoastGearItem.itemLimit {
+            throw CoastStoreError("checklist.tooMany")
+        }
+        guard !added.isEmpty else { return 0 }
+        list.append(contentsOf: added)
+        var next = ledger
+        next.trips[index].gearList = list
+        try commit(next)
+        return added.count
+    }
+
+    public func clearGear(tripID: String) throws {
+        try requireAccount()
+        guard let index = ledger.trips.firstIndex(where: { $0.id == tripID }) else {
+            throw CoastStoreError("trip.notFound")
+        }
+        var next = ledger
+        next.trips[index].gearList = []
+        try commit(next)
+    }
+
+    /// 清空全部勾选，保留物品本身。
+    public func clearGearTicks(tripID: String) throws {
+        try requireAccount()
+        guard let index = ledger.trips.firstIndex(where: { $0.id == tripID }) else {
+            throw CoastStoreError("trip.notFound")
+        }
+        var next = ledger
+        next.trips[index].gearList = next.trips[index].gearList.map { item in
+            var copy = item
+            copy.done = false
+            return copy
+        }
+        try commit(next)
+    }
+
+    /// 清除内容，但保留提醒开关本身——确认文案只承诺删除出游、手记、收藏与进度。
     public func clearCurrentLedger() throws {
-        try commit(CoastLedger())
+        try commit(CoastLedger(reminders: ledger.reminders))
     }
 
     public func exportData() throws -> Data {

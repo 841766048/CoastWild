@@ -42,10 +42,12 @@ PODS:
     - IQKeyboardCore
   - IQTextView (1.0.5):
     - IQKeyboardToolbar/Placeholderable
+  - SkeletonView (1.30.4)
 
 DEPENDENCIES:
   - BRPickerView/DatePicker (~> 3.0)
   - IQKeyboardManagerSwift (~> 8.0)
+  - SkeletonView (~> 1.30.4)
 
 SPEC REPOS:
   trunk:
@@ -58,6 +60,7 @@ SPEC REPOS:
     - IQKeyboardToolbarManager
     - IQTextInputViewNotification
     - IQTextView
+    - SkeletonView
 
 SPEC CHECKSUMS:
   BRPickerView: cd2e0e3aa87af062bc7a1b6f78d3dfd5f04f04bb
@@ -69,7 +72,8 @@ SPEC CHECKSUMS:
   IQKeyboardToolbarManager: 242e858cc74e06e00aa989bea1355b24d4397854
   IQTextInputViewNotification: 3b9fb27a16e7ee8958cc9092cfb07a1a9e1fd559
   IQTextView: ae13b4922f22e6f027f62c557d9f4f236b19d5c7
+  SkeletonView: 5a050f6411e697abd4cda0a8d767013399dccd69
 
-PODFILE CHECKSUM: 22ba19f0216217d836156a0f284e5569e823873c
+PODFILE CHECKSUM: b340152d611f41a93f73a86404963b2ec0944433
 
 COCOAPODS: 1.16.2
