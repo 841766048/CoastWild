@@ -39,6 +39,7 @@
 		5BB277AAB8B8B4CBEBCC8806 /* AttributionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F81FF46B73065CA4F2C92FC /* AttributionCoordinator.swift */; };
 		661215A9296953ABAAEF33E8 /* AccountDeletionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32A8A6E29E612DD7755958B1 /* AccountDeletionService.swift */; };
 		67C3BA12B60AEF5D28E48BFC /* BridgeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 762FBF6B7671DF40F7F50188 /* BridgeMessage.swift */; };
+		A913C7164B5D6E7F8091A2B3 /* BusinessBridgeAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A913C7154B5D6E7F8091A2B3 /* BusinessBridgeAction.swift */; };
 		6A0B1CB9BAB010C72CD28013 /* IntegrationCipher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420FAC0F495802BE7D2DB555 /* IntegrationCipher.swift */; };
 		6C8D337C48F154EA6913D047 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F869631CBAECE9314BEC9 /* AppDelegate.swift */; };
 		6D2B1C571BAF52E95E1896A0 /* Pods_CoastWild.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0128D151685C16F128E707E9 /* Pods_CoastWild.framework */; };
@@ -129,6 +130,7 @@
 		7543C8F4F63036D5F64B777E /* BridgeEventEmitter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeEventEmitter.swift; sourceTree = "<group>"; };
 		75F9B0733ABA9E48DEB86C45 /* IntegrationKeyDeriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationKeyDeriver.swift; sourceTree = "<group>"; };
 		762FBF6B7671DF40F7F50188 /* BridgeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeMessage.swift; sourceTree = "<group>"; };
+		A913C7154B5D6E7F8091A2B3 /* BusinessBridgeAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BusinessBridgeAction.swift; sourceTree = "<group>"; };
 		775930C3DD272B9ED62F1962 /* AuthController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthController.swift; sourceTree = "<group>"; };
 		79197978EB3560204338E340 /* CoastWildUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CoastWildUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		795A71A1A46E7CCC8D44E8D2 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -255,6 +257,7 @@
 				B988C0EB76A5C9F1EFD0E318 /* AttributionSubmission.swift */,
 				7543C8F4F63036D5F64B777E /* BridgeEventEmitter.swift */,
 				762FBF6B7671DF40F7F50188 /* BridgeMessage.swift */,
+				A913C7154B5D6E7F8091A2B3 /* BusinessBridgeAction.swift */,
 				99BBD46587A3AF9C53149901 /* BridgeRouter.swift */,
 				59C6FE7092A670B27196CE5B /* BusinessWebBootstrap.swift */,
 				162169301B0EF0270543F52B /* BusinessWebNavigationPolicy.swift */,
@@ -549,6 +552,7 @@
 				F84B19E040B32240933651E8 /* AuthController.swift in Sources */,
 				498547FA71750B2B311E638A /* BridgeEventEmitter.swift in Sources */,
 				67C3BA12B60AEF5D28E48BFC /* BridgeMessage.swift in Sources */,
+				A913C7164B5D6E7F8091A2B3 /* BusinessBridgeAction.swift in Sources */,
 				163B4EAB1AB5193194472107 /* BridgeRouter.swift in Sources */,
 				447B1BCC3DC49989FFF32DF1 /* BusinessWebBootstrap.swift in Sources */,
 				86FC97FDFF7A988084FC4B22 /* BusinessWebController.swift in Sources */,
