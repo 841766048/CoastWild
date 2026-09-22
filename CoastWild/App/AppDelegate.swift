@@ -42,6 +42,9 @@ private enum SimulatedAccountDeletionError: LocalizedError {
     window.makeKeyAndVisible()
     return true
   }
+  func applicationDidBecomeActive(_ application: UIApplication) {
+    Task { await coast?.retryAttributionIfAuthenticated() }
+  }
 }
 final class CoastEnvironment {
   let integration: IntegrationEnvironment
@@ -51,6 +54,7 @@ final class CoastEnvironment {
   let integrationAPI: any RemoteAuthenticationAPI
   let remoteSessionCoordinator: RemoteSessionCoordinator
   let attributionCoordinator: AttributionCoordinator?
+  let attributionSubmissionCoordinator: AttributionSubmissionCoordinator?
   let purchaseCoordinator: PurchaseCoordinator?
   let iapBridgeHandler: IAPBridgeHandler?
   let privacyConsent: PrivacyConsentStore
@@ -60,6 +64,7 @@ final class CoastEnvironment {
   let directory: URL
   weak var window: UIWindow?
   private var purchaseUpdatesTask: Task<Void, Never>?
+  private var activeRemoteUserID: String?
   var chinese: Bool { store.preferences.language != "en" }
   init() throws {
     guard let integrationURL = Bundle.main.url(
@@ -102,6 +107,7 @@ final class CoastEnvironment {
     if testing {
       integrationAPI = UITestRemoteAuthenticationAPI()
       attributionCoordinator = nil
+      attributionSubmissionCoordinator = nil
       purchaseCoordinator = nil
       iapBridgeHandler = nil
     } else {
@@ -112,11 +118,23 @@ final class CoastEnvironment {
         runtimeConfiguration: integrationRuntime
       )
       integrationAPI = client
+      let attributionAdapter = AdjustAttributionAdapter(isProduction: integration.mode == .release)
       let attribution = AttributionCoordinator(
         authorization: SystemTrackingAuthorizationAdapter(),
-        sdk: AdjustAttributionAdapter(isProduction: integration.mode == .release)
+        sdk: attributionAdapter
       )
       attributionCoordinator = attribution
+      attributionSubmissionCoordinator = AttributionSubmissionCoordinator(
+        provider: attributionAdapter,
+        store: AttributionSnapshotStore(defaults: defaults),
+        reporter: IntegrationAttributionReporter(
+          client: client,
+          sessions: remoteSessions,
+          package: integration.bundleIdentifier,
+          version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
+          deviceID: deviceID
+        )
+      )
       let purchaseStore = StoreKit2PurchaseStore(defaults: defaults)
       let coordinator = PurchaseCoordinator(
         store: purchaseStore,
@@ -242,8 +260,9 @@ final class CoastEnvironment {
     var prefs = store.preferences
     prefs.onboardingDone = true
     try store.updatePreferences(prefs)
+    activeRemoteUserID = userID
     showMainInterface()
-    Task { await startAttribution() }
+    Task { await startAttribution(userID: userID) }
   }
   @MainActor func authenticated() throws {
     guard let accountID = vault.current?.id else { return }
@@ -252,6 +271,7 @@ final class CoastEnvironment {
   }
   @MainActor func logout() async throws {
     await remoteSessionCoordinator.logout()
+    activeRemoteUserID = nil
     try store.activate(accountID: nil)
     showRoot()
   }
@@ -286,7 +306,7 @@ final class CoastEnvironment {
     guard purchaseUpdatesTask == nil, let purchaseCoordinator else { return }
     purchaseUpdatesTask = Task { await purchaseCoordinator.observeTransactionUpdates() }
   }
-  func startAttribution() async {
+  func startAttribution(userID: String) async {
     guard let attributionCoordinator, privacyConsent.isAccepted else { return }
     let configuration = await integrationRuntime.snapshot()
     await attributionCoordinator.start(
@@ -294,6 +314,14 @@ final class CoastEnvironment {
       appToken: configuration.adjustToken,
       purchaseToken: configuration.adjustPurchaseToken
     )
+    let session = await remoteSessions.session()
+    if session?.userID == userID, session?.isFirstRegistration == true {
+      try? await attributionSubmissionCoordinator?.submitOnce(userID: userID)
+    }
+  }
+  func retryAttributionIfAuthenticated() async {
+    guard let activeRemoteUserID else { return }
+    await startAttribution(userID: activeRemoteUserID)
   }
   func photoURL(_ filename: String) -> URL {
     directory.appendingPathComponent("Photos").appendingPathComponent(store.accountID ?? "none")
