@@ -334,6 +334,7 @@ final class CoastEnvironment {
     showMainInterface()
   }
   @MainActor func logout() async throws {
+    stopPurchaseUpdates()
     await remoteSessionCoordinator.logout()
     activeRemoteUserID = nil
     try store.activate(accountID: nil)
@@ -360,6 +361,7 @@ final class CoastEnvironment {
       }
     )
     try await service.deleteAccount()
+    stopPurchaseUpdates()
     showRoot()
   }
   func restorePurchases() async throws -> [EntitlementSnapshot] {
@@ -369,6 +371,10 @@ final class CoastEnvironment {
   func startPurchaseUpdates() {
     guard purchaseUpdatesTask == nil, let purchaseCoordinator else { return }
     purchaseUpdatesTask = Task { await purchaseCoordinator.observeTransactionUpdates() }
+  }
+  func stopPurchaseUpdates() {
+    purchaseUpdatesTask?.cancel()
+    purchaseUpdatesTask = nil
   }
   func startAttribution(userID: String) async {
     guard let attributionCoordinator, privacyConsent.isAccepted else { return }

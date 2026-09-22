@@ -40,8 +40,10 @@
 - [x] 先写 App 启动交易更新、多笔并发验单和恢复购买测试。
 - [x] 实现恢复入口、进度、可重试错误和权益刷新；沙盒/正式交易仍需 App Store Connect 商品与服务端联调。
 - [x] 回归覆盖延迟交易更新迁移 pending 映射，以及恢复时对每笔已验证 entitlement 均发送服务端；无本地 order ID 仍传递 `nil`、激活权益并 finish。
-- [x] 监听从启动入口迁到配置/登录完成后的 `remoteAuthenticated`，保留单任务保护；先重放 `Transaction.unfinished` 再消费 `Transaction.updates`，两者共用验证、映射解析和投递逻辑。无映射交易不投递、不 finish；验单失败保留交易映射与未完成交易供后续登录启动重试。
+- [x] 监听从启动入口迁到配置/登录完成后的 `remoteAuthenticated`，保留单任务保护；先重放 `Transaction.unfinished` 再消费 `Transaction.updates`，两者共用验证、映射解析和投递逻辑。无映射交易不投递、不 finish；验单失败保留交易映射与未完成交易供后续认证登录重试（包括同进程登出后重新登录）。
+- [x] 登出开始时先取消监听并将任务置空，再清理远程会话；账号删除仅在服务成功返回后停止监听，远程/本地删除失败仍保留监听。再次登录会创建新监听并重新遍历 `Transaction.unfinished`。此 UIKit 生命周期没有现成可注入的单元测试入口，以聚焦代码审查和模拟器构建验证，未新增仅供测试的生产 API。
 - [x] 2026-09-22 验证：映射测试 6/6、购买测试 6/6、全量 Swift 测试 150/150；iPhone 17 Pro / iOS 26.1 模拟器构建退出码 0。真实 StoreKit 重放由适配器/登录链路代码审查和构建确认，沙盒交易仍待联调；构建有现存 Metal 工具链搜索路径警告。
+- [x] 登出/重登修订后重新验证：全量 Swift 测试 150/150（包含删除失败保留会话的核心测试），模拟器构建退出码 0；构建仍有 Metal 路径及既有 `Components.swift` 可选值转 `Any` 警告。
 
 ### Task 4: JS Bridge 接入
 

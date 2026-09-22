@@ -213,9 +213,11 @@ In `StoreKit2PurchaseStore.purchase`, require `stage(...) == true` before callin
 
 Remove the unconditional `startPurchaseUpdates()` call from application launch. Call it from `remoteAuthenticated(session:strategy:)` only after the login pipeline has completed configuration and produced the authenticated session. Keep its existing single-task guard.
 
+Review follow-up: `stopPurchaseUpdates()` cancels and clears the observation task. Invoke it at the beginning of logout before remote-session clearing, and only after account deletion succeeds before showing root. Failed remote/local deletion preserves the usable session's listener. A later authenticated login starts a fresh listener and replays unfinished transactions again, including within the same process.
+
 - [x] **Step 4: Replay unfinished transactions before live updates**
 
-In `StoreKit2PurchaseStore.transactionUpdates`, process verified values from `Transaction.unfinished` first and then verified values from `Transaction.updates`, using the same mapping resolution and yield logic for both sequences. Unmapped verified transactions remain unfinished and unyielded; mapped verification failures remain unfinished for a later authenticated launch.
+In `StoreKit2PurchaseStore.transactionUpdates`, process verified values from `Transaction.unfinished` first and then verified values from `Transaction.updates`, using the same mapping resolution and yield logic for both sequences. Unmapped verified transactions remain unfinished and unyielded; mapped verification failures remain unfinished for a later authenticated login.
 
 - [x] **Step 5: Verify and commit**
 
