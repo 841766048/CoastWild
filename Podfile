@@ -6,6 +6,7 @@ project 'CoastWild.xcodeproj'
 target 'CoastWild' do
   pod 'IQKeyboardManagerSwift', '~> 8.0'
   pod 'BRPickerView/DatePicker', '~> 3.0'
+  pod 'Adjust', '5.8.0'
   target 'CoastWildUITests' do
     inherit! :search_paths
   end

@@ -25,6 +25,7 @@ targets:
         INFOPLIST_KEY_UIUserInterfaceStyle: Light
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Save the journal photos you choose to your photo library.
+        INFOPLIST_KEY_NSUserTrackingUsageDescription: We use device-level attribution to understand which campaigns lead people to Coast & Wild. You can decline without losing app features.
         TARGETED_DEVICE_FAMILY: 1
         MARKETING_VERSION: '1.0.0'
         CURRENT_PROJECT_VERSION: '1'

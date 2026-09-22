@@ -50,6 +50,7 @@ final class CoastEnvironment {
   let remoteSessions: RemoteSessionStore
   let integrationAPI: any RemoteAuthenticationAPI
   let remoteSessionCoordinator: RemoteSessionCoordinator
+  let attributionCoordinator: AttributionCoordinator?
   let purchaseCoordinator: PurchaseCoordinator?
   let iapBridgeHandler: IAPBridgeHandler?
   let privacyConsent: PrivacyConsentStore
@@ -100,6 +101,7 @@ final class CoastEnvironment {
     ))
     if testing {
       integrationAPI = UITestRemoteAuthenticationAPI()
+      attributionCoordinator = nil
       purchaseCoordinator = nil
       iapBridgeHandler = nil
     } else {
@@ -110,6 +112,11 @@ final class CoastEnvironment {
         runtimeConfiguration: integrationRuntime
       )
       integrationAPI = client
+      let attribution = AttributionCoordinator(
+        authorization: SystemTrackingAuthorizationAdapter(),
+        sdk: AdjustAttributionAdapter(isProduction: integration.mode == .release)
+      )
+      attributionCoordinator = attribution
       let purchaseStore = StoreKit2PurchaseStore(defaults: defaults)
       let coordinator = PurchaseCoordinator(
         store: purchaseStore,
@@ -119,7 +126,10 @@ final class CoastEnvironment {
       purchaseCoordinator = coordinator
       iapBridgeHandler = IAPBridgeHandler(
         catalog: ProductCatalog(store: purchaseStore),
-        coordinator: coordinator
+        coordinator: coordinator,
+        trackPurchase: { payload in
+          await attribution.trackPurchase(amount: payload.amount, currency: payload.currency)
+        }
       )
     }
     remoteSessionCoordinator = RemoteSessionCoordinator(
@@ -130,7 +140,7 @@ final class CoastEnvironment {
     privacyConsent = PrivacyConsentStore(
       defaults: defaults,
       key: "com.coastwild.integration.privacy-consent",
-      currentVersion: 1
+      currentVersion: 2
     )
     if testing && ProcessInfo.processInfo.arguments.contains("--accept-privacy") {
       privacyConsent.accept()
@@ -233,6 +243,7 @@ final class CoastEnvironment {
     prefs.onboardingDone = true
     try store.updatePreferences(prefs)
     showMainInterface()
+    Task { await startAttribution() }
   }
   @MainActor func authenticated() throws {
     guard let accountID = vault.current?.id else { return }
@@ -274,6 +285,15 @@ final class CoastEnvironment {
   func startPurchaseUpdates() {
     guard purchaseUpdatesTask == nil, let purchaseCoordinator else { return }
     purchaseUpdatesTask = Task { await purchaseCoordinator.observeTransactionUpdates() }
+  }
+  func startAttribution() async {
+    guard let attributionCoordinator, privacyConsent.isAccepted else { return }
+    let configuration = await integrationRuntime.snapshot()
+    await attributionCoordinator.start(
+      privacyConsentGranted: true,
+      appToken: configuration.adjustToken,
+      purchaseToken: configuration.adjustPurchaseToken
+    )
   }
   func photoURL(_ filename: String) -> URL {
     directory.appendingPathComponent("Photos").appendingPathComponent(store.accountID ?? "none")
