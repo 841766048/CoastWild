@@ -1,5 +1,7 @@
 import UIKit
 import WebKit
+import SafariServices
+import StoreKit
 
 final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, BridgeMessageHandling {
   private let initialURL: URL
@@ -8,15 +10,19 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   private let allowedHosts: Set<String>
   private let appIconDataURL: String
   private let iapBridgeHandler: (any IAPBridgeHandling)?
+  private let onApplicationAction: ((BusinessBridgeAction) -> Void)?
   private let onBridgeMessage: (BridgeMessage) -> Void
   private var webView: WKWebView?
   private var progressObservation: NSKeyValueObservation?
+  private var localActionState = BusinessWebLocalActionState()
+  private var launchCover: UIView?
   private let progress = UIProgressView(progressViewStyle: .bar)
   private let percent = UILabel()
   private let retry = UIButton(type: .system)
   private var configured = false
   private var keyboardTokens: [NSObjectProtocol] = []
   private lazy var router = BridgeRouter(allowedHosts: allowedHosts, handler: self)
+  private lazy var edgePanRecognizer = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
   private lazy var eventEmitter = BridgeEventEmitter(
     resumedName: UIApplication.didBecomeActiveNotification,
     pausedName: UIApplication.didEnterBackgroundNotification,
@@ -25,6 +31,7 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
 
   init(url: URL, bootstrap: BusinessWebBootstrap, allowedHosts: Set<String>, appIconDataURL: String,
        iapBridgeHandler: (any IAPBridgeHandling)? = nil,
+       onApplicationAction: ((BusinessBridgeAction) -> Void)? = nil,
        onBridgeMessage: @escaping (BridgeMessage) -> Void) {
     initialURL = url
     self.bootstrap = bootstrap
@@ -32,6 +39,7 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     policy = BusinessWebNavigationPolicy(allowedHosts: allowedHosts)
     self.appIconDataURL = appIconDataURL
     self.iapBridgeHandler = iapBridgeHandler
+    self.onApplicationAction = onApplicationAction
     self.onBridgeMessage = onBridgeMessage
     super.init(nibName: nil, bundle: nil)
   }
@@ -82,6 +90,8 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   private func rebuildAndLoad() {
     progressObservation = nil
     webView?.removeFromSuperview()
+    localActionState.beginLoading()
+    installLaunchCover()
     let configuration = WKWebViewConfiguration()
     configuration.websiteDataStore = .default()
     configuration.allowsInlineMediaPlayback = true
@@ -111,12 +121,14 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     next.scrollView.contentInsetAdjustmentBehavior = .never
     next.scrollView.delaysContentTouches = false; next.scrollView.keyboardDismissMode = .none
     next.accessibilityIdentifier = "business-web.main"; next.translatesAutoresizingMaskIntoConstraints = false
+    next.addGestureRecognizer(edgePanRecognizer)
     view.insertSubview(next, at: 0)
     NSLayoutConstraint.activate([
       next.topAnchor.constraint(equalTo: view.topAnchor), next.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       next.leadingAnchor.constraint(equalTo: view.leadingAnchor), next.trailingAnchor.constraint(equalTo: view.trailingAnchor),
     ])
     webView = next
+    applyEdgePan(localActionState.edgePan)
     progress.progress = 0.05; percent.text = "5%"; progress.isHidden = false; percent.isHidden = false; retry.isHidden = true
     progressObservation = next.observe(\.estimatedProgress, options: [.new]) { [weak self] webView, _ in
       DispatchQueue.main.async { self?.updateProgress(webView.estimatedProgress) }
@@ -132,6 +144,48 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   private func reloadFromStart() { rebuildAndLoad() }
   private func showFailure() { progress.isHidden = true; percent.isHidden = true; retry.isHidden = false }
   private func evaluate(_ script: String) { webView?.evaluateJavaScript(script) }
+
+  private func installLaunchCover() {
+    launchCover?.removeFromSuperview()
+    let cover = UIView()
+    cover.backgroundColor = .black
+    cover.translatesAutoresizingMaskIntoConstraints = false
+    view.insertSubview(cover, belowSubview: progress)
+    NSLayoutConstraint.activate([
+      cover.topAnchor.constraint(equalTo: view.topAnchor), cover.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      cover.leadingAnchor.constraint(equalTo: view.leadingAnchor), cover.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+    ])
+    launchCover = cover
+  }
+
+  private func revealBusinessWeb() {
+    guard localActionState.reveal() else { return }
+    progress.setProgress(1, animated: true); percent.text = "100%"
+    guard let cover = launchCover else {
+      progress.isHidden = true; percent.isHidden = true
+      return
+    }
+    UIView.animate(withDuration: 0.2, animations: {
+      cover.alpha = 0
+    }, completion: { [weak self, weak cover] _ in
+      guard let self, let cover else { return }
+      cover.removeFromSuperview()
+      guard launchCover === cover else { return }
+      launchCover = nil
+      progress.isHidden = true; percent.isHidden = true
+    })
+  }
+
+  private func applyEdgePan(_ payload: EdgePanPayload) {
+    localActionState.setEdgePan(payload)
+    edgePanRecognizer.edges = payload.isLeftEdge ? .left : .right
+    edgePanRecognizer.isEnabled = payload.isEnabled
+  }
+
+  @objc private func handleEdgePan(_ recognizer: UIScreenEdgePanGestureRecognizer) {
+    guard recognizer.state == .ended, let webView, webView.canGoBack else { return }
+    webView.goBack()
+  }
 
   private func observeKeyboard() {
     let center = NotificationCenter.default
@@ -170,7 +224,44 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
           evaluate(script)
         }
       }
-    default: onBridgeMessage(message)
+    default:
+      guard let action = BusinessBridgeActionPlanner.action(for: message) else { return }
+      execute(action, originalMessage: message)
+    }
+  }
+
+  private func execute(_ action: BusinessBridgeAction, originalMessage: BridgeMessage) {
+    switch action {
+    case .revealBusinessWeb:
+      revealBusinessWeb()
+    case .presentBrowser:
+      guard let url = policy.validatedURL(for: action) else { return }
+      present(SFSafariViewController(url: url), animated: true)
+    case .openExternalLink:
+      guard let url = policy.validatedURL(for: action), UIApplication.shared.canOpenURL(url) else { return }
+      UIApplication.shared.open(url)
+    case .openSettings:
+      guard let url = URL(string: UIApplication.openSettingsURLString), UIApplication.shared.canOpenURL(url) else { return }
+      UIApplication.shared.open(url)
+    case .requestReview:
+      guard let scene = view.window?.windowScene else { return }
+      SKStoreReviewController.requestReview(in: scene)
+    case let .setEdgePan(payload):
+      applyEdgePan(payload)
+    case let .callback(callback):
+      switch callback {
+      case .closeInternalWeb: evaluate(JavaScriptCallbackEncoder.closeInternalWeb())
+      case .openVIPService: evaluate(JavaScriptCallbackEncoder.openVIPService())
+      case .recharge: evaluate(JavaScriptCallbackEncoder.recharge())
+      }
+    case .openInternalWeb:
+      break
+    case .backgroundLogin, .logout, .setLanguage, .refreshEntitlements, .nativeLog:
+      if let onApplicationAction {
+        onApplicationAction(action)
+      } else {
+        onBridgeMessage(originalMessage)
+      }
     }
   }
 

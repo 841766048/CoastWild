@@ -22,4 +22,38 @@ public struct BusinessWebNavigationPolicy: Equatable, Sendable {
         }
         return .allow
     }
+
+    public func validatedURL(for action: BusinessBridgeAction) -> URL? {
+        let url: URL
+        switch action {
+        case let .presentBrowser(value), let .openExternalLink(value):
+            url = value
+        default:
+            return nil
+        }
+        guard url.scheme?.lowercased() == "https", url.host?.isEmpty == false else { return nil }
+        return url
+    }
+}
+
+public struct BusinessWebLocalActionState: Equatable, Sendable {
+    public private(set) var isRevealed = false
+    public private(set) var edgePan = EdgePanPayload(isEnabled: false, isLeftEdge: true)
+
+    public init() {}
+
+    public mutating func beginLoading() {
+        isRevealed = false
+    }
+
+    @discardableResult
+    public mutating func reveal() -> Bool {
+        guard !isRevealed else { return false }
+        isRevealed = true
+        return true
+    }
+
+    public mutating func setEdgePan(_ payload: EdgePanPayload) {
+        edgePan = payload
+    }
 }

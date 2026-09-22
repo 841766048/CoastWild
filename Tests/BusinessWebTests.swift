@@ -68,6 +68,43 @@ final class BusinessWebTests: XCTestCase {
         XCTAssertEqual(policy.decision(for: nil), .deny)
     }
 
+    func testBridgeBrowserAndExternalActionsAcceptOnlyHTTPSURLs() {
+        let policy = BusinessWebNavigationPolicy(allowedHosts: ["h5.example.com"])
+        let httpsURL = URL(string: "https://outside.example/help")!
+        let httpURL = URL(string: "http://outside.example/help")!
+
+        XCTAssertEqual(policy.validatedURL(for: .presentBrowser(httpsURL)), httpsURL)
+        XCTAssertEqual(policy.validatedURL(for: .openExternalLink(httpsURL)), httpsURL)
+        XCTAssertNil(policy.validatedURL(for: .presentBrowser(httpURL)))
+        XCTAssertNil(policy.validatedURL(for: .openExternalLink(httpURL)))
+        XCTAssertNil(policy.validatedURL(for: .openSettings))
+    }
+
+    func testBusinessWebRevealIsIdempotentUntilANewLoadBegins() {
+        var state = BusinessWebLocalActionState()
+
+        XCTAssertTrue(state.reveal())
+        XCTAssertTrue(state.isRevealed)
+        XCTAssertFalse(state.reveal())
+
+        state.beginLoading()
+
+        XCTAssertFalse(state.isRevealed)
+        XCTAssertTrue(state.reveal())
+    }
+
+    func testEdgePanStatePreservesEnabledFlagAndRequestedEdge() {
+        var state = BusinessWebLocalActionState()
+        let rightEdge = EdgePanPayload(isEnabled: true, isLeftEdge: false)
+        let disabledLeftEdge = EdgePanPayload(isEnabled: false, isLeftEdge: true)
+
+        state.setEdgePan(rightEdge)
+        XCTAssertEqual(state.edgePan, rightEdge)
+
+        state.setEdgePan(disabledLeftEdge)
+        XCTAssertEqual(state.edgePan, disabledLeftEdge)
+    }
+
     func testInternalWebContractIsIsolatedAndOnlyRegistersCloseMessage() {
         XCTAssertTrue(InternalWebContract.usesDedicatedWebViewConfiguration)
         XCTAssertFalse(InternalWebContract.injectsBusinessBootstrap)
