@@ -136,4 +136,13 @@ final class BusinessBridgeActionTests: XCTestCase {
             "version 1.2.3 host api.example.com"
         )
     }
+
+    func testNativeLogSummarySanitizesNonSensitiveJSONStringsWithoutChangingOrdinaryText() {
+        let message = #"{"url":"https://user:password@example.com/path?token=secret","proof":"eyJhbGciOiJub25lIn0..signature","note":"Authorization: Basic credentials","label":"1.2.3 api.example.com"}"#
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            #"{"label":"1.2.3 api.example.com","note":"Authorization: [REDACTED]","proof":"[REDACTED]","url":"https://example.com/path"}"#
+        )
+    }
 }

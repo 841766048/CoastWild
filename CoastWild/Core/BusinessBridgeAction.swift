@@ -72,12 +72,16 @@ public enum BridgeLanguage {
 
 public enum BridgeNativeLog {
     public static func sanitizedSummary(_ message: String) -> String {
-        let withoutControls = String(String.UnicodeScalarView(
-            message.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }
-        ))
-        if let redactedJSON = redactedJSONSummary(from: withoutControls) {
+        if let redactedJSON = redactedJSONSummary(from: message) {
             return String(redactedJSON.prefix(160))
         }
+        return String(sanitizedText(message).prefix(160))
+    }
+
+    private static func sanitizedText(_ value: String) -> String {
+        let withoutControls = String(String.UnicodeScalarView(
+            value.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }
+        ))
         let urlUserInfoStripped = replacing(
             #"([A-Za-z][A-Za-z0-9+.-]*://)[^\s/@]+@"#,
             in: withoutControls,
@@ -99,7 +103,7 @@ public enum BridgeNativeLog {
             with: "[REDACTED]"
         )
         let namedValuesRedacted = redactingSensitiveFields(in: schemeRedacted)
-        return String(redactingJWS(in: namedValuesRedacted).prefix(160))
+        return redactingJWS(in: namedValuesRedacted)
     }
 
     private static func redactedJSONSummary(from value: String) -> String? {
@@ -108,11 +112,14 @@ public enum BridgeNativeLog {
               object is [String: Any] || object is [Any] else { return nil }
         let redacted = redactingJSON(object)
         guard JSONSerialization.isValidJSONObject(redacted),
-              let summary = try? JSONSerialization.data(withJSONObject: redacted, options: [.sortedKeys]) else { return nil }
+              let summary = try? JSONSerialization.data(withJSONObject: redacted, options: [.sortedKeys, .withoutEscapingSlashes]) else { return nil }
         return String(data: summary, encoding: .utf8)
     }
 
     private static func redactingJSON(_ value: Any) -> Any {
+        if let string = value as? String {
+            return sanitizedText(string)
+        }
         if let dictionary = value as? [String: Any] {
             return dictionary.reduce(into: [String: Any]()) { result, entry in
                 result[entry.key] = isSensitiveKey(entry.key) ? "[REDACTED]" : redactingJSON(entry.value)
