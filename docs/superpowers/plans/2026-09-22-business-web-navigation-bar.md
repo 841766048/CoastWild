@@ -92,3 +92,10 @@ Expected: all Swift tests pass and the simulator build succeeds.
 git add CoastWild/App/AppDelegate.swift CoastWild/UI/BusinessWebController.swift UITests/CoastWildUITests.swift docs/superpowers/plans/2026-09-22-business-web-navigation-bar.md
 git commit -m "fix: hide navigation bar for business web"
 ```
+
+### Task 2: Preserve the business-Web contract in CoastNavigationController
+
+- Keep the plain-`UINavigationController` regression as the direct proof of `BusinessWebController.viewWillAppear(_:)`.
+- Add a second UI-test-only fixture using `CoastNavigationController` with its bar initially visible, and assert the primary business WebView hides it.
+- Add `BusinessWebController` to the hidden-controller condition in `CoastNavigationController`; do not change `InternalWebController` behavior.
+- Run each fully qualified UI-test selector independently, then `swift test` and the simulator build.

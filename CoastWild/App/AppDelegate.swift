@@ -31,6 +31,9 @@ private enum SimulatedAccountDeletionError: LocalizedError {
       if ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web-navigation") {
         environment.showBusinessWebNavigationFixture()
       }
+      if ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web-coast-navigation") {
+        environment.showBusinessWebCoastNavigationFixture()
+      }
     } catch {
       let vc = UIViewController()
       vc.view.backgroundColor = .systemBackground
@@ -238,6 +241,35 @@ final class CoastEnvironment {
     nav.setNavigationBarHidden(false, animated: false)
     window?.rootViewController = nav
   }
+  @MainActor func showBusinessWebCoastNavigationFixture() {
+    let bootstrap = BusinessWebBootstrap(
+      httpHeaders: [:],
+      baseURLs: .init(
+        app: integration.webHost.absoluteString,
+        im: integration.imHost.absoluteString,
+        log: integration.logHost.absoluteString,
+        privacy: integration.privacyURL.absoluteString,
+        terms: integration.termsURL.absoluteString),
+      packageInfo: .init(
+        localeIdentifier: Locale.current.identifier,
+        appName: "Coast & Wild",
+        packageName: integration.bundleIdentifier),
+      encryptedConfiguration: .object([:]),
+      strategy: .object([:]),
+      userInfo: .object([:]),
+      appID: integration.appStoreID,
+      reportSubheading: integration.reportSubheading,
+      reportDescription: integration.reportDescription)
+    let controller = BusinessWebController(
+      url: integration.webHost,
+      bootstrap: bootstrap,
+      allowedHosts: Set([integration.webHost.host!]),
+      appIconDataURL: "",
+      onBridgeMessage: { _ in })
+    let nav = navigation(controller)
+    nav.setNavigationBarHidden(false, animated: false)
+    window?.rootViewController = nav
+  }
   @MainActor func acceptPrivacy() {
     privacyConsent.accept()
     showRoot()
@@ -421,7 +453,7 @@ final class CoastEnvironment {
 final class CoastNavigationController: UINavigationController, UINavigationControllerDelegate {
   override func viewDidLoad() { super.viewDidLoad(); delegate = self }
   func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-    let root = viewController is ExploreController || viewController is LearnController || viewController is TripsController || viewController is JournalController || viewController is WelcomeController
+    let root = viewController is ExploreController || viewController is LearnController || viewController is TripsController || viewController is JournalController || viewController is WelcomeController || viewController is BusinessWebController
     setNavigationBarHidden(root, animated: animated)
   }
 }

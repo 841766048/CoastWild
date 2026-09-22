@@ -12,6 +12,14 @@ final class CoastWildUITests: XCTestCase {
     XCTAssertTrue(app.webViews["business-web.main"].waitForExistence(timeout: 10))
     XCTAssertFalse(app.navigationBars.firstMatch.exists)
   }
+  func testBusinessWebHidesNavigationBarInCoastNavigationController() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing", "--reset-test-data",
+                           "--ui-testing-business-web-coast-navigation"]
+    app.launch()
+    XCTAssertTrue(app.webViews["business-web.main"].waitForExistence(timeout: 10))
+    XCTAssertFalse(app.navigationBars.firstMatch.exists)
+  }
   func testFreshInstallationRequiresPrivacyConsentBeforeLogin() {
     let app = XCUIApplication()
     app.launchArguments = ["--ui-testing", "--reset-test-data", "--ui-testing-manual-login"]
