@@ -204,6 +204,31 @@ final class BusinessBridgeActionTests: XCTestCase {
         )
     }
 
+    func testNativeLogSummaryRedactsStandaloneDigestCredentials() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary("Digest username=alice, response=secret-response"),
+            "[REDACTED]"
+        )
+    }
+
+    func testNativeLogSummaryRedactsDigestCredentialsOnTheLineAfterAuthorization() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary("Authorization:\nDigest username=alice, response=secret-response"),
+            "Authorization: [REDACTED]"
+        )
+    }
+
+    func testNativeLogSummaryPreservesNextEventAfterStandaloneOrSplitAuthorizationDigest() {
+        for prefix in ["", "Authorization:\n"] {
+            let message = prefix + "Digest username=alice, response=secret-response\nevent=ready version 1.2.3"
+            let expectedPrefix = prefix.isEmpty ? "" : "Authorization: "
+            XCTAssertEqual(
+                BridgeNativeLog.sanitizedSummary(message),
+                expectedPrefix + "[REDACTED] event=ready version 1.2.3"
+            )
+        }
+    }
+
     func testNativeLogSummaryRedactsCompleteDigestCredentialsToTheLineBoundary() {
         let message = "ready\nAuthorization: Digest username=\"Ada\", realm=\"private\", nonce=\"nonce-secret\", uri=\"/private\", response=\"response-secret\", qop=auth, nc=00000001, cnonce=\"client-secret\"\nversion 1.2.3 api.example.com"
 

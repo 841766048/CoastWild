@@ -156,6 +156,13 @@ public enum BridgeNativeLog {
             in: result,
             with: "$1[REDACTED]"
         )
+        // Digest can stand alone or follow Authorization on its own line.
+        // Require a credential parameter and keep both whitespace and payload on that line.
+        result = replacing(
+            #"(?i)\bDigest[^\S\r\n]+(?=[A-Za-z][A-Za-z0-9_-]*[^\S\r\n]*=)[^\r\n]*"#,
+            in: result,
+            with: "[REDACTED]"
+        )
         // Sanitize the surrounding text as one message so an enclosing sensitive
         // field or URL query also removes its entire embedded JSON value.
         result = sanitizedPlainText(result)
