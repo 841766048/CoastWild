@@ -72,6 +72,28 @@ final class PurchaseTests: XCTestCase {
         XCTAssertEqual(Set(finished), ["tx-1", "tx-2"])
     }
 
+    func testRestoreForwardsMissingOrderIDAndFinishesAfterActiveVerification() async throws {
+        let events = EventLog()
+        let store = PurchaseStoreFake(products: [], restored: [
+            .init(productID: "monthly", transactionID: "tx-unmapped", signedData: "secret", orderID: nil),
+        ], events: events)
+        let server = PurchaseServerFake(scenario: .success, events: events)
+        let entitlements = EntitlementStore()
+        let coordinator = PurchaseCoordinator(store: store, server: server, entitlements: entitlements)
+
+        let restored = try await coordinator.restorePurchases()
+        let receivedOrderIDs = await server.receivedOrderIDs()
+        let entitlement = await entitlements.snapshot()
+        let finishedTransactionIDs = await store.finishedTransactionIDs()
+        let recordedEvents = await events.values
+
+        XCTAssertEqual(restored, [.init(productID: "monthly", isActive: true)])
+        XCTAssertEqual(receivedOrderIDs, [nil])
+        XCTAssertTrue(entitlement.isActive)
+        XCTAssertEqual(finishedTransactionIDs, ["tx-unmapped"])
+        XCTAssertEqual(recordedEvents, ["verify", "finish"])
+    }
+
     func testTransactionUpdatesAreVerifiedAndFinished() async {
         let transaction = StoreTransaction(productID: "monthly", transactionID: "tx-update", signedData: "secret", orderID: "order-update")
         let store = PurchaseStoreFake(products: [], restored: [transaction])
@@ -120,13 +142,16 @@ private actor PurchaseStoreFake: PurchaseStoreProviding {
 
 private actor PurchaseServerFake: PurchaseServerProviding {
     let scenario: PurchaseScenario; let events: EventLog
+    private var orderIDs: [String?] = []
     init(scenario: PurchaseScenario, events: EventLog) { self.scenario = scenario; self.events = events }
     func createOrder(_ request: PurchaseRequest) async throws -> PurchaseOrder {
         await events.add("order"); if scenario == .orderFailure { throw FakeError.failed }
         return PurchaseOrder(orderID: "order-1", productID: request.productID)
     }
     func verify(orderID: String?, transaction: StoreTransaction) async throws -> EntitlementSnapshot {
+        orderIDs.append(orderID)
         await events.add("verify"); if scenario == .verificationFailure { throw FakeError.failed }
         return .init(productID: transaction.productID, isActive: true)
     }
+    func receivedOrderIDs() -> [String?] { orderIDs }
 }

@@ -4,10 +4,11 @@ import StoreKit
 actor StoreKit2PurchaseStore: PurchaseStoreProviding {
   private var productsByID: [String: Product] = [:]
   private var transactionsByID: [String: Transaction] = [:]
-  private let defaults: UserDefaults
-  private let keyPrefix = "com.coastwild.iap.order."
+  private let orderMappings: PurchaseOrderMappingStore
 
-  init(defaults: UserDefaults = .standard) { self.defaults = defaults }
+  init(defaults: UserDefaults = .standard) {
+    orderMappings = PurchaseOrderMappingStore(defaults: defaults)
+  }
 
   func products(for ids: [String]) async throws -> [StoreProduct] {
     let products = try await Product.products(for: ids)
@@ -31,26 +32,34 @@ actor StoreKit2PurchaseStore: PurchaseStoreProviding {
       guard let fetched = try await Product.products(for: [productID]).first else { throw StoreKitPurchaseError.productNotFound }
       productsByID[productID] = fetched; product = fetched
     }
-    defaults.set(orderID, forKey: keyPrefix + "pending." + productID)
-    let result = try await product.purchase()
+    orderMappings.stage(orderID: orderID, forProductID: productID)
+    let result: Product.PurchaseResult
+    do {
+      result = try await product.purchase()
+    } catch {
+      orderMappings.cancelPending(productID: productID)
+      throw error
+    }
     switch result {
     case .userCancelled:
-      defaults.removeObject(forKey: keyPrefix + "pending." + productID); return .cancelled
+      orderMappings.cancelPending(productID: productID)
+      return .cancelled
     case .pending: return .pending
     case let .success(verification):
       guard case let .verified(transaction) = verification else { return .unverified }
       let transactionID = String(transaction.id)
       transactionsByID[transactionID] = transaction
-      defaults.set(orderID, forKey: keyPrefix + transactionID)
-      defaults.removeObject(forKey: keyPrefix + "pending." + productID)
+      orderMappings.associate(orderID: orderID, transactionID: transactionID)
+      orderMappings.cancelPending(productID: productID)
       return .verified(.init(productID: transaction.productID, transactionID: transactionID, signedData: verification.jwsRepresentation, orderID: orderID))
     @unknown default: return .unverified
     }
   }
 
   func finish(transactionID: String) async {
-    if let transaction = transactionsByID.removeValue(forKey: transactionID) { await transaction.finish() }
-    defaults.removeObject(forKey: keyPrefix + transactionID)
+    guard let transaction = transactionsByID.removeValue(forKey: transactionID) else { return }
+    await transaction.finish()
+    orderMappings.finish(transactionID: transactionID)
   }
 
   func restore() async throws -> [StoreTransaction] {
@@ -59,9 +68,12 @@ actor StoreKit2PurchaseStore: PurchaseStoreProviding {
     for await verification in Transaction.currentEntitlements {
       guard case let .verified(transaction) = verification else { continue }
       let transactionID = String(transaction.id)
-      guard let orderID = defaults.string(forKey: keyPrefix + transactionID), !orderID.isEmpty else { continue }
       transactionsByID[transactionID] = transaction
-      restored.append(.init(productID: transaction.productID, transactionID: transactionID, signedData: verification.jwsRepresentation, orderID: orderID))
+      restored.append(orderMappings.restoredTransaction(
+        productID: transaction.productID,
+        transactionID: transactionID,
+        signedData: verification.jwsRepresentation
+      ))
     }
     return restored
   }
@@ -72,7 +84,10 @@ actor StoreKit2PurchaseStore: PurchaseStoreProviding {
         for await verification in Transaction.updates {
           guard case let .verified(transaction) = verification else { continue }
           let transactionID = String(transaction.id)
-          guard let orderID = self.defaults.string(forKey: self.keyPrefix + transactionID), !orderID.isEmpty else { continue }
+          guard let orderID = self.orderMappings.resolveForUpdate(
+            transactionID: transactionID,
+            productID: transaction.productID
+          ) else { continue }
           self.remember(transaction)
           continuation.yield(.init(productID: transaction.productID, transactionID: transactionID, signedData: verification.jwsRepresentation, orderID: orderID))
         }

@@ -26,6 +26,7 @@
 		41D8080511F488ABF36269F9 /* UITestRemoteAuthenticationAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68CF5D16C9FF2556A075E833 /* UITestRemoteAuthenticationAPI.swift */; };
 		447B1BCC3DC49989FFF32DF1 /* BusinessWebBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C6FE7092A670B27196CE5B /* BusinessWebBootstrap.swift */; };
 		480C2A18590A43EDF5071B75 /* CoastStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BE46D2AEEBA347131A3685 /* CoastStore.swift */; };
+		A1B2C3D4E5F60718293A4B5D /* PurchaseOrderMappingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* PurchaseOrderMappingStore.swift */; };
 		4879CB5C2C2131CEA907614F /* PrivacyConsentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC7E4D8570AFA86313B4A52 /* PrivacyConsentStore.swift */; };
 		498547FA71750B2B311E638A /* BridgeEventEmitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7543C8F4F63036D5F64B777E /* BridgeEventEmitter.swift */; };
 		49A12E2F85CC4E4F1CD2EE30 /* ExploreController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08986A7911CC6DD0EEE621B8 /* ExploreController.swift */; };
@@ -140,6 +141,7 @@
 		9B5A0EBFAAE1D271745ECEFA /* IntegrationAttributionReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationAttributionReporter.swift; sourceTree = "<group>"; };
 		9F81FF46B73065CA4F2C92FC /* AttributionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionCoordinator.swift; sourceTree = "<group>"; };
 		A10E4FF688C12DE2E48B106F /* RequestContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestContext.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5C /* PurchaseOrderMappingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseOrderMappingStore.swift; sourceTree = "<group>"; };
 		A8921B8A7F1EA60DFADD3FC9 /* PrivacyConsentController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyConsentController.swift; sourceTree = "<group>"; };
 		AA7B283FCC923E8C799EDF0B /* privacy-zh-Hans.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "privacy-zh-Hans.html"; sourceTree = "<group>"; };
 		ACA2AE963AB5E017A91484FC /* privacy-en.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "privacy-en.html"; sourceTree = "<group>"; };
@@ -278,6 +280,7 @@
 				4FC7E4D8570AFA86313B4A52 /* PrivacyConsentStore.swift */,
 				DBB23854022CDB46C63A5A87 /* ProductCatalog.swift */,
 				BC82AF1AC873DC8EF8C626C9 /* PurchaseCoordinator.swift */,
+				A1B2C3D4E5F60718293A4B5C /* PurchaseOrderMappingStore.swift */,
 				CF2D1D6A29160652379A96C0 /* PurchaseLog.swift */,
 				CDEC3BAE85FF009B00C1274A /* RemoteLoginPresentation.swift */,
 				05AE2F4DB4D5DC48B6472574 /* RemoteSession.swift */,
@@ -583,6 +586,7 @@
 				EB42919255D0F7BB42098513 /* ProductCatalog.swift in Sources */,
 				2D33BBACDF2314391BC6B30A /* ProfileController.swift in Sources */,
 				5B5813400CCEBF97FA65DD3B /* PurchaseCoordinator.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5D /* PurchaseOrderMappingStore.swift in Sources */,
 				F37F17F6AEC9E07BA7F3C528 /* PurchaseLog.swift in Sources */,
 				4DA346878D7F8FFA7525FA15 /* RemoteLoginController.swift in Sources */,
 				70E742AC0B72224729938F51 /* RemoteLoginPresentation.swift in Sources */,

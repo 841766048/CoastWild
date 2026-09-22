@@ -30,6 +30,7 @@
 - [x] 先写建单失败、取消、pending、unverified、验单失败和成功测试。
 - [x] 实现建单→购买→本地验证→服务端验单→finish 顺序。
 - [x] 生成结构化、不含收据全文的 IAP 日志。
+- [x] StoreKit 订单映射覆盖 pending 保留，用户取消与 `product.purchase()` 抛错清理，立即验证成功关联交易后清理；由适配器聚焦代码审查及模拟器编译验证。
 
 ### Task 3: 恢复与权益
 
@@ -37,6 +38,7 @@
 
 - [x] 先写 App 启动交易更新、多笔并发验单和恢复购买测试。
 - [x] 实现恢复入口、进度、可重试错误和权益刷新；沙盒/正式交易仍需 App Store Connect 商品与服务端联调。
+- [x] 回归覆盖延迟交易更新迁移 pending 映射，以及恢复时对每笔已验证 entitlement 均发送服务端；无本地 order ID 仍传递 `nil`、激活权益并 finish。
 
 ### Task 4: JS Bridge 接入
 
