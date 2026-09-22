@@ -23,6 +23,10 @@ public struct PurchaseOrderMappingStore {
 
     public func resolveForUpdate(transactionID: String, productID: String) -> String? {
         if let orderID = orderID(forTransactionID: transactionID) {
+            let pendingKey = pendingKey(for: productID)
+            if defaults.string(forKey: pendingKey) == orderID {
+                defaults.removeObject(forKey: pendingKey)
+            }
             return orderID
         }
 

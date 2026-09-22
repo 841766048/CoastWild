@@ -102,6 +102,8 @@ git commit -m "fix: persist pending purchase associations"
 
 Extend the purchase server fake to record received order IDs. Add a test that restores a verified fake transaction whose `orderID` is `nil`, asserts the server receives `nil`, asserts the entitlement becomes active, and asserts the transaction is finished. This proves the coordinator contract accepts mapping-free restoration.
 
+Extract an injectable, testable purchase-operation seam if doing so stays small and localized. Use it to add a regression test that a thrown `product.purchase()` clears the staged pending mapping before rethrowing, while a normal `.pending` result retains that mapping. The existing cancellation path must also clear the staged mapping. If a seam would add disproportionate StoreKit-facing indirection, document focused code-review and simulator-build evidence instead of adding a brittle source-reading test; that review must confirm `product.purchase()` is wrapped in `do`/`catch`, the catch calls `cancelPending(productID:)` before rethrowing, normal `.pending` does not clear the mapping, and cancellation does.
+
 - [ ] **Step 2: Verify RED for mapping-free restoration**
 
 Before adding `restoredTransaction` to the mapping store, run its focused test and confirm it fails because the method is missing. After Task 1 supplies the method, run the new coordinator test to prove that the downstream server contract accepts and finishes a restored transaction whose order ID is `nil`.
@@ -112,13 +114,14 @@ In `StoreKit2PurchaseStore`:
 
 - Replace direct pending and transaction `UserDefaults` access with the mapping store.
 - On immediate verified success, associate the transaction ID and cancel the pending product mapping.
+- Wrap `product.purchase()` in `do`/`catch`; on a thrown purchase call `cancelPending(productID:)` before rethrowing. Keep the staged mapping for a normal `.pending` result, and clear it for cancellation.
 - In `transactionUpdates`, use `resolveForUpdate(transactionID:productID:)`; yield only when it returns an order ID because a delayed purchase must retain its server-order association.
 - In `restore`, append `restoredTransaction(productID:transactionID:signedData:)` for every verified current entitlement without an order-mapping guard.
 - In `finish`, remove only the temporary transaction mapping after finishing StoreKit.
 
 - [ ] **Step 4: Update plan evidence and verify**
 
-Mark the pending and restore regression coverage in plan 08. Run:
+Mark the pending, thrown-purchase cleanup, cancellation cleanup, and restore regression coverage in plan 08. Run:
 
 ```bash
 swift test --filter PurchaseOrderMappingStoreTests

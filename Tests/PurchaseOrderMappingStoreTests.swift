@@ -45,6 +45,14 @@ final class PurchaseOrderMappingStoreTests: XCTestCase {
         XCTAssertEqual(mapping.resolveForUpdate(transactionID: "tx-new", productID: "monthly"), "new-order")
     }
 
+    func testExistingTransactionMappingRecoversMatchingPendingOrderAfterCrash() {
+        mapping.stage(orderID: "order-pending", forProductID: "monthly")
+        mapping.associate(orderID: "order-pending", transactionID: "tx-1")
+
+        XCTAssertEqual(mapping.resolveForUpdate(transactionID: "tx-1", productID: "monthly"), "order-pending")
+        XCTAssertNil(mapping.resolveForUpdate(transactionID: "tx-2", productID: "monthly"))
+    }
+
     func testRestoreLookupAndFinishAllowMissingMapping() {
         XCTAssertNil(mapping.orderID(forTransactionID: "unknown"))
         XCTAssertEqual(
