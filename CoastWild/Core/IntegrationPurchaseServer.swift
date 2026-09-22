@@ -20,7 +20,6 @@ public actor IntegrationPurchaseServer: PurchaseServerProviding {
     }
     public func verify(orderID: String?, transaction: StoreTransaction) async throws -> EntitlementSnapshot {
         guard let session = await sessions.session() else { throw PurchaseServerError.missingSession }
-        guard let orderID, !orderID.isEmpty else { throw PurchaseServerError.invalidOrder }
         _ = try await client.verifyReceipt(
             ReceiptVerificationRequest(orderNumber: orderID, receipt: transaction.signedData, transactionID: transaction.transactionID),
             session: session.requestSession

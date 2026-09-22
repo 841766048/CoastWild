@@ -99,23 +99,26 @@ public struct RechargeRequest: Equatable, Sendable {
 }
 
 public struct ReceiptVerificationRequest: Equatable, Sendable {
-    public let orderNumber: String
+    public let orderNumber: String?
     public let receipt: String
     public let transactionID: String
 
-    public init(orderNumber: String, receipt: String, transactionID: String) {
+    public init(orderNumber: String?, receipt: String, transactionID: String) {
         self.orderNumber = orderNumber
         self.receipt = receipt
         self.transactionID = transactionID
     }
 
     var parameters: [String: Any] {
-        [
-            "orderNo": orderNumber,
+        var value: [String: Any] = [
             "payload": receipt,
             "transactionId": transactionID,
             "type": "1",
         ]
+        if let orderNumber, !orderNumber.isEmpty {
+            value["orderNo"] = orderNumber
+        }
+        return value
     }
 }
 

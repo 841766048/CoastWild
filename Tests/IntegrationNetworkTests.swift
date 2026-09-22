@@ -205,6 +205,52 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertTrue(bodies.allSatisfy { $0["http_headers"] != nil })
     }
 
+    func testProductionPurchaseServerVerifiesRestoreWithoutOrderID() async throws {
+        let host = URL(string: "https://test-app.bigegg.work")!
+        let key = "1234567890abcdeffedcba9876543210"
+        let response = try encryptedResponse(
+            ["code": 0, "msg": "", "data": [:]],
+            key: key,
+            url: host
+        )
+        let transport = ScriptedTransport(results: [.success(response)])
+        let client = makeClient(
+            host: host,
+            transport: transport,
+            keyStore: IntegrationKeyStore(initialKey: key)
+        )
+        let suiteName = "IntegrationNetworkTests.\(#function).\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let sessions = RemoteSessionStore(defaults: defaults)
+        try await sessions.save(RemoteSession(oauthResponse: try JSONValue(any: [
+            "token": "session-token",
+            "userInfo": ["userId": "user-42"],
+            "isFirstRegister": 0,
+        ])))
+        let server = IntegrationPurchaseServer(client: client, sessions: sessions)
+
+        _ = try await server.verify(
+            orderID: nil,
+            transaction: StoreTransaction(
+                productID: "monthly",
+                transactionID: "tx-restore",
+                signedData: "signed-transaction"
+            )
+        )
+
+        let requests = await transport.requests()
+        let request = try XCTUnwrap(requests.first)
+        let body = try IntegrationCipher.decryptJSONObject(
+            String(decoding: try XCTUnwrap(request.httpBody), as: UTF8.self),
+            key: key
+        )
+        XCTAssertNil(body["orderNo"])
+        XCTAssertEqual(body["payload"] as? String, "signed-transaction")
+        XCTAssertEqual(body["transactionId"] as? String, "tx-restore")
+        XCTAssertEqual(body["type"] as? String, "1")
+    }
+
     func testRequestRetriesTwiceThenReturnsThirdSuccess() async throws {
         let host = URL(string: "https://test-app.bigegg.work")!
         let key = "1234567890abcdeffedcba9876543210"

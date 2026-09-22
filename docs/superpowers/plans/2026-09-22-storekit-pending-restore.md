@@ -138,3 +138,50 @@ Expected: all filtered tests and all Swift tests pass; simulator build succeeds.
 git add CoastWild/App/StoreKit2PurchaseStore.swift Tests/PurchaseTests.swift docs/integration-plans/08-IAP内购与权益计划.md
 git commit -m "fix: restore StoreKit transactions without local orders"
 ```
+
+### Task 3: Allow mapping-free verification in the production server adapter
+
+**Files:**
+- Modify: `CoastWild/Core/IntegrationDTOs.swift`
+- Modify: `CoastWild/Core/IntegrationPurchaseServer.swift`
+- Modify: `Tests/IntegrationNetworkTests.swift`
+
+**Interfaces:**
+- Consumes: `PurchaseServerProviding.verify(orderID: String?, transaction:)` and the existing `/coin/recharge/payment/ipa` endpoint.
+- Produces: `ReceiptVerificationRequest(orderNumber: String?, receipt:transactionID:)`, which omits `orderNo` when absent while retaining `payload`, `transactionId`, and `type`.
+
+- [ ] **Step 1: Write the failing production-adapter test**
+
+Construct an `IntegrationAPIClient` with the scripted encrypted transport and a `RemoteSessionStore` containing a valid session. Call `IntegrationPurchaseServer.verify(orderID: nil, transaction:)`, decrypt the captured request, and assert:
+
+```swift
+XCTAssertNil(body["orderNo"])
+XCTAssertEqual(body["payload"] as? String, "signed-transaction")
+XCTAssertEqual(body["transactionId"] as? String, "tx-restore")
+XCTAssertEqual(body["type"] as? String, "1")
+```
+
+- [ ] **Step 2: Verify RED**
+
+Run:
+
+```bash
+swift test --filter IntegrationNetworkTests/testProductionPurchaseServerVerifiesRestoreWithoutOrderID
+```
+
+Expected: FAIL with `PurchaseServerError.invalidOrder` before a request is sent.
+
+- [ ] **Step 3: Implement optional order-number transport**
+
+Change `ReceiptVerificationRequest.orderNumber` and its initializer parameter to `String?`. Build the parameters dictionary with `payload`, `transactionId`, and `type`, adding `orderNo` only when the optional value is non-empty. Remove the nil/empty rejection from `IntegrationPurchaseServer.verify` and pass the optional value into the request.
+
+- [ ] **Step 4: Verify production and regression paths**
+
+Run the new focused test, `swift test --filter IntegrationNetworkTests`, `swift test`, and the simulator build. Existing requests with a non-empty order ID must continue including `orderNo`.
+
+- [ ] **Step 5: Commit Task 3**
+
+```bash
+git add CoastWild/Core/IntegrationDTOs.swift CoastWild/Core/IntegrationPurchaseServer.swift Tests/IntegrationNetworkTests.swift docs/superpowers/plans/2026-09-22-storekit-pending-restore.md
+git commit -m "fix: verify restored purchases without order IDs"
+```
