@@ -144,6 +144,58 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
         XCTAssertNil(stored)
     }
 
+    func testAllLoginModesAreBlockedUntilLogoutRuntimeResetCompletes() async throws {
+        let dependencies = try makeDependencies()
+        let api = LogoutPausingAPI(base: dependencies.api)
+        let coordinator = RemoteSessionCoordinator(api: api,
+            deviceIdentity: dependencies.identity, sessions: dependencies.sessions)
+        let initial = await coordinator.manualLogin(riskInfo: nil)
+        XCTAssertAuthenticated(initial)
+        await dependencies.api.resetCalls()
+
+        let logout = Task { await coordinator.logout() }
+        while !(await api.isResetting()) { await Task.yield() }
+        let automatic = await coordinator.automaticLogin()
+        let background = await coordinator.backgroundLogin(riskInfo: nil)
+        let manual = await coordinator.manualLogin(riskInfo: nil)
+        let calls = await dependencies.api.calls()
+        let storedDuringLogout = await dependencies.sessions.session()
+        XCTAssertEqual(automatic, .loading)
+        XCTAssertEqual(background, .loading)
+        XCTAssertEqual(manual, .loading)
+        XCTAssertTrue(calls.isEmpty)
+        XCTAssertNil(storedDuringLogout)
+
+        // Cancellation still runs cleanup; the gate is released when the awaited reset completes.
+        logout.cancel()
+        await api.finishReset()
+        await logout.value
+        let storedAfterLogout = await dependencies.sessions.session()
+        let afterLogout = await coordinator.state()
+        XCTAssertNil(storedAfterLogout)
+        XCTAssertEqual(afterLogout, .idle)
+        let retried = await coordinator.backgroundLogin(riskInfo: nil)
+        XCTAssertAuthenticated(retried)
+    }
+
+    func testAutomaticLoginStartedBeforeLogoutCannotPublishSuccessDuringReset() async throws {
+        let dependencies = try makeDependencies(configDelayNanoseconds: 100_000_000)
+        try await dependencies.sessions.save(RemoteSession(oauthResponse: oauthResponse(token: "saved", userID: "existing")))
+        let api = LogoutPausingAPI(base: dependencies.api)
+        let coordinator = RemoteSessionCoordinator(api: api,
+            deviceIdentity: dependencies.identity, sessions: dependencies.sessions)
+        let automatic = Task { await coordinator.automaticLogin() }
+        while await dependencies.api.calls().isEmpty { await Task.yield() }
+        let logout = Task { await coordinator.logout() }
+        while !(await api.isResetting()) { await Task.yield() }
+        let staleResult = await automatic.value
+        let duplicate = await coordinator.backgroundLogin(riskInfo: nil)
+        XCTAssertEqual(staleResult, .idle)
+        XCTAssertEqual(duplicate, .loading)
+        await api.finishReset()
+        await logout.value
+    }
+
     private func makeDependencies(
         oauthResponse: JSONValue? = nil,
         strategyError: IntegrationAPIError? = nil,
@@ -231,6 +283,27 @@ private actor RemoteAPIFake: RemoteAuthenticationAPI {
     func calls() -> [String] { callLog }
     func clearStrategyError() { strategyError = nil }
     func resetCalls() { callLog = [] }
+}
+
+private actor LogoutPausingAPI: RemoteAuthenticationAPI {
+    let base: RemoteAPIFake
+    private var resetContinuation: CheckedContinuation<Void, Never>?
+
+    init(base: RemoteAPIFake) { self.base = base }
+    func getConfig(session: RequestSession) async throws -> IntegrationConfigBundle {
+        try await base.getConfig(session: session)
+    }
+    func oauth(_ request: OAuthRequest, session: RequestSession) async throws -> JSONValue {
+        try await base.oauth(request, session: session)
+    }
+    func getStrategy(session: RequestSession) async throws -> JSONValue {
+        try await base.getStrategy(session: session)
+    }
+    func resetRuntime() async {
+        await withCheckedContinuation { resetContinuation = $0 }
+    }
+    func isResetting() -> Bool { resetContinuation != nil }
+    func finishReset() { resetContinuation?.resume(); resetContinuation = nil }
 }
 
 private struct EmptyKeychain: KeychainValueStoring {

@@ -121,6 +121,25 @@ public struct BusinessWebBootstrap: Sendable {
         ])
     }
 
+    /// Both initial entry and background reentry must honor the stored application language.
+    public static func authenticated(
+        environment: IntegrationEnvironment, runtime: IntegrationRuntimeSnapshot,
+        session: RemoteSession, strategy: JSONValue, headers: [String: String],
+        package: BusinessWebPackageInfo, language: String
+    ) throws -> BusinessWebBootstrap {
+        let response = try JSONValue(any: JSONSerialization.jsonObject(with: session.responseData))
+        guard let userInfo = response["userInfo"] else { throw RemoteSessionError.invalidOAuthResponse }
+        return BusinessWebBootstrap(
+            httpHeaders: headers,
+            baseURLs: .init(app: environment.primaryHost.absoluteString, im: environment.imHost.absoluteString,
+                            log: environment.logHost.absoluteString, privacy: runtime.privacyURL.absoluteString,
+                            terms: runtime.termsURL.absoluteString),
+            packageInfo: package, encryptedConfiguration: runtime.encryptedConfiguration,
+            strategy: strategy, userInfo: userInfo, appID: runtime.appID,
+            reportSubheading: environment.reportSubheading, reportDescription: environment.reportDescription
+        ).withLanguage(language)
+    }
+
     public func withLanguage(_ language: String) -> BusinessWebBootstrap {
         let normalized = BridgeLanguage.normalized(language)
         var headers = httpHeaders

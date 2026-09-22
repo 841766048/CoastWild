@@ -344,12 +344,12 @@ final class CoastEnvironment {
         let latestSession = await self.remoteSessions.session()
         guard self.isCurrentBusinessController(controller), latestSession == session else { throw CancellationError() }
         let headers = runtime.headers(base: self.requestContext.headers(session: session.requestSession))
-        let bootstrap = try BusinessWebEntry.bootstrap(
+        let bootstrap = try BusinessWebBootstrap.authenticated(
           environment: self.integration, runtime: runtime, session: session, strategy: strategy,
           headers: headers, package: .init(
             localeIdentifier: self.store.preferences.language,
             appName: Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Coast & Wild",
-            packageName: self.integration.bundleIdentifier)).withLanguage(self.store.preferences.language)
+            packageName: self.integration.bundleIdentifier), language: self.store.preferences.language)
         try self.store.activate(accountID: session.userID)
         self.activeRemoteUserID = session.userID
         Task { await self.startAttribution(userID: session.userID) }

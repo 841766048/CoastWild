@@ -85,6 +85,39 @@ import XCTest
         XCTAssertEqual(refreshed.userInfo, original.userInfo)
     }
 
+    func testRestartAndReentryUsePersistedLanguageForHeadersAndPackageLocale() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = try CoastStore(directory: directory)
+        var preferences = store.preferences
+        preferences.language = "zh-Hans"
+        try store.updatePreferences(preferences)
+        let restartedStore = try CoastStore(directory: directory)
+        let environment = try IntegrationEnvironment(
+            mode: .development, primaryHost: "https://api.example", webHost: "https://web.example",
+            imHost: "https://im.example", logHost: "https://log.example",
+            privacyURL: "https://web.example/privacy", termsURL: "https://web.example/terms",
+            appStoreID: "1", bundleIdentifier: "example.app")
+        let runtime = IntegrationRuntimeSnapshot(environment: environment)
+        for token in ["initial-token", "relogin-token"] {
+            let session = try RemoteSession(oauthResponse: .object([
+                "token": .string(token), "userInfo": .object(["userId": .string("user")]),
+                "isFirstRegister": .number(0),
+            ]))
+            let bootstrap = try BusinessWebBootstrap.authenticated(
+                environment: environment, runtime: runtime, session: session,
+                strategy: .object(["tokenRevision": .string(token)]),
+                headers: ["lang": "en-US", "Authorization": "Bearer \(token)"],
+                package: .init(localeIdentifier: "en-US", appName: "App", packageName: "example.app"),
+                language: restartedStore.preferences.language)
+            let payload = try bootstrap.configurationValue()
+            XCTAssertEqual(payload["http_headers"]?["lang"], .string("zh-Hans"))
+            XCTAssertEqual(payload["appPackageInfo"]?["lanId"], .string("zh-Hans"))
+            XCTAssertEqual(payload["http_headers"]?["Authorization"], .string("Bearer \(token)"))
+            XCTAssertEqual(payload["strategyData"]?["tokenRevision"], .string(token))
+        }
+    }
+
     private final class Effects {
         var events: [String] = []
         var loginState: RemoteLoginState = .idle

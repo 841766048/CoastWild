@@ -27,6 +27,7 @@ public actor RemoteSessionCoordinator {
     private let sessions: RemoteSessionStore
     private var currentState: RemoteLoginState = .idle
     private var loginGeneration = 0
+    private var loggingOut = false
 
     public init(
         api: any RemoteAuthenticationAPI,
@@ -45,16 +46,22 @@ public actor RemoteSessionCoordinator {
     @discardableResult
     public func automaticLogin() async -> RemoteLoginState {
         guard beginLoading() else { return currentState }
-        guard let session = await sessions.session() else {
+        let generation = loginGeneration
+        let storedSession = await sessions.session()
+        guard generation == loginGeneration else { return .idle }
+        guard let session = storedSession else {
             currentState = .idle
             return currentState
         }
 
         do {
             _ = try await api.getConfig(session: session.requestSession)
+            guard generation == loginGeneration else { return .idle }
             let strategy = try await api.getStrategy(session: session.requestSession)
+            guard generation == loginGeneration else { return .idle }
             currentState = .authenticated(session: session, strategy: strategy)
         } catch {
+            guard generation == loginGeneration else { return .idle }
             currentState = .failed(map(error))
         }
         return currentState
@@ -71,9 +78,15 @@ public actor RemoteSessionCoordinator {
     }
 
     public func logout() async {
+        guard !loggingOut else { return }
+        loggingOut = true
+        currentState = .loading
         loginGeneration += 1
+        defer {
+            currentState = .idle
+            loggingOut = false
+        }
         await sessions.clear()
-        currentState = .idle
     }
 
     private func deviceLogin(riskInfo: String?, preserveSessionUntilStrategySucceeds: Bool = false) async -> RemoteLoginState {
@@ -127,6 +140,7 @@ public actor RemoteSessionCoordinator {
     }
 
     private func beginLoading() -> Bool {
+        guard !loggingOut else { return false }
         if case .loading = currentState {
             return false
         }
