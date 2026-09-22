@@ -1,5 +1,11 @@
 import Foundation
 
+public struct PurchaseOrderAttempt: Equatable, Sendable {
+    public let orderID: String
+    public let ownsPendingMapping: Bool
+    fileprivate let productID: String
+}
+
 public struct PurchaseOrderMappingStore {
     private let defaults: UserDefaults
     private let keyPrefix: String
@@ -21,6 +27,31 @@ public struct PurchaseOrderMappingStore {
 
     public func cancelPending(productID: String) {
         defaults.removeObject(forKey: pendingKey(for: productID))
+    }
+
+    public func prepareAttempt(orderID: String, forProductID productID: String) -> PurchaseOrderAttempt {
+        if let pendingOrderID = defaults.string(forKey: pendingKey(for: productID)), !pendingOrderID.isEmpty {
+            return PurchaseOrderAttempt(orderID: pendingOrderID, ownsPendingMapping: false, productID: productID)
+        }
+        stage(orderID: orderID, forProductID: productID)
+        return PurchaseOrderAttempt(orderID: orderID, ownsPendingMapping: true, productID: productID)
+    }
+
+    public func abandonAttempt(_ attempt: PurchaseOrderAttempt) {
+        guard attempt.ownsPendingMapping else { return }
+        clearMatchingPending(attempt)
+    }
+
+    public func completeAttempt(_ attempt: PurchaseOrderAttempt, transactionID: String) {
+        associate(orderID: attempt.orderID, transactionID: transactionID)
+        clearMatchingPending(attempt)
+    }
+
+    private func clearMatchingPending(_ attempt: PurchaseOrderAttempt) {
+        let key = pendingKey(for: attempt.productID)
+        if defaults.string(forKey: key) == attempt.orderID {
+            defaults.removeObject(forKey: key)
+        }
     }
 
     public func associate(orderID: String, transactionID: String) {

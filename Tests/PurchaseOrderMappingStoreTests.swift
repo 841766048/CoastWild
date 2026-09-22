@@ -37,13 +37,74 @@ final class PurchaseOrderMappingStoreTests: XCTestCase {
         XCTAssertNil(mapping.resolveForUpdate(transactionID: "tx-1", productID: "monthly"))
     }
 
-    func testSecondPendingOrderForSameProductIsRejectedWithoutOverwritingFirst() {
+    func testStagingDoesNotOverwritePendingOrderForSameProduct() {
         XCTAssertTrue(mapping.stage(orderID: "order-a", forProductID: "monthly"))
         XCTAssertFalse(mapping.stage(orderID: "order-b", forProductID: "monthly"))
         XCTAssertTrue(mapping.stage(orderID: "order-yearly", forProductID: "yearly"))
 
         XCTAssertEqual(mapping.resolveForUpdate(transactionID: "tx-monthly", productID: "monthly"), "order-a")
         XCTAssertEqual(mapping.resolveForUpdate(transactionID: "tx-yearly", productID: "yearly"), "order-yearly")
+    }
+
+    func testRetryReusesPersistedPendingOrderWithoutOwningIt() {
+        let first = mapping.prepareAttempt(orderID: "order-a", forProductID: "monthly")
+        XCTAssertEqual(first.orderID, "order-a")
+        XCTAssertTrue(first.ownsPendingMapping)
+
+        let reloaded = PurchaseOrderMappingStore(defaults: defaults)
+        let retry = reloaded.prepareAttempt(orderID: "order-b", forProductID: "monthly")
+        XCTAssertEqual(retry.orderID, "order-a")
+        XCTAssertFalse(retry.ownsPendingMapping)
+        // A pending result performs no cleanup. Another retry must still use A.
+        let later = reloaded.prepareAttempt(orderID: "order-c", forProductID: "monthly")
+        XCTAssertEqual(later.orderID, "order-a")
+        XCTAssertFalse(later.ownsPendingMapping)
+    }
+
+    func testCancelledOrThrownRetryPreservesOriginalPendingOrder() {
+        _ = mapping.prepareAttempt(orderID: "order-a", forProductID: "monthly")
+        let cancelledRetry = mapping.prepareAttempt(orderID: "order-b", forProductID: "monthly")
+        mapping.abandonAttempt(cancelledRetry)
+        let thrownRetry = mapping.prepareAttempt(orderID: "order-c", forProductID: "monthly")
+        XCTAssertEqual(thrownRetry.orderID, "order-a")
+        XCTAssertFalse(thrownRetry.ownsPendingMapping)
+        mapping.abandonAttempt(thrownRetry)
+
+        XCTAssertEqual(mapping.resolveForUpdate(transactionID: "tx-delayed", productID: "monthly"), "order-a")
+    }
+
+    func testVerifiedRetryAssociatesOriginalOrderAndAllowsFreshAttempt() {
+        _ = mapping.prepareAttempt(orderID: "order-a", forProductID: "monthly")
+        let retry = mapping.prepareAttempt(orderID: "order-b", forProductID: "monthly")
+        mapping.completeAttempt(retry, transactionID: "tx-retry")
+
+        XCTAssertEqual(mapping.orderID(forTransactionID: "tx-retry"), "order-a")
+        XCTAssertNil(mapping.resolveForUpdate(transactionID: "tx-other", productID: "monthly"))
+        let fresh = mapping.prepareAttempt(orderID: "order-c", forProductID: "monthly")
+        XCTAssertEqual(fresh.orderID, "order-c")
+        XCTAssertTrue(fresh.ownsPendingMapping)
+    }
+
+    func testOwningAttemptCleanupAllowsAnotherFreshAttempt() {
+        let cancelled = mapping.prepareAttempt(orderID: "order-a", forProductID: "monthly")
+        mapping.abandonAttempt(cancelled)
+        let thrown = mapping.prepareAttempt(orderID: "order-b", forProductID: "monthly")
+        XCTAssertEqual(thrown.orderID, "order-b")
+        XCTAssertTrue(thrown.ownsPendingMapping)
+        mapping.abandonAttempt(thrown)
+        XCTAssertNil(mapping.resolveForUpdate(transactionID: "tx-later", productID: "monthly"))
+    }
+
+    func testStaleAttemptCleanupDoesNotClearNewPendingOrder() {
+        let first = mapping.prepareAttempt(orderID: "order-a", forProductID: "monthly")
+        XCTAssertEqual(mapping.resolveForUpdate(transactionID: "tx-first", productID: "monthly"), "order-a")
+        let fresh = mapping.prepareAttempt(orderID: "order-c", forProductID: "monthly")
+        XCTAssertTrue(fresh.ownsPendingMapping)
+
+        mapping.abandonAttempt(first)
+        mapping.completeAttempt(first, transactionID: "tx-first")
+        XCTAssertEqual(mapping.resolveForUpdate(transactionID: "tx-new", productID: "monthly"), "order-c")
+        XCTAssertEqual(mapping.orderID(forTransactionID: "tx-first"), "order-a")
     }
 
     func testExistingTransactionMappingWinsWithoutConsumingPendingOrder() {

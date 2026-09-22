@@ -50,7 +50,7 @@ public actor PurchaseCoordinator {
         case .pending: return .pending
         case .unverified: throw PurchaseError.unverifiedTransaction
         case let .verified(transaction):
-            let entitlement = try await server.verify(orderID: order.orderID, transaction: transaction)
+            let entitlement = try await server.verify(orderID: transaction.orderID ?? order.orderID, transaction: transaction)
             guard entitlement.isActive else { throw PurchaseError.inactiveEntitlement }
             await entitlements.update(entitlement)
             await store.finish(transactionID: transaction.transactionID)

@@ -48,6 +48,20 @@ final class PurchaseTests: XCTestCase {
         }
     }
 
+    func testPurchaseVerifiesRetainedOrderInsteadOfReplacementOrder() async throws {
+        let store = PurchaseStoreFake(products: [], retainedOrderID: "order-original")
+        let server = PurchaseServerFake(scenario: .success, events: EventLog())
+        let coordinator = PurchaseCoordinator(store: store, server: server, entitlements: EntitlementStore())
+
+        let result = try await coordinator.purchase(.init(productID: "monthly", paySource: "profile", invitationID: ""))
+
+        let receivedOrderIDs = await server.receivedOrderIDs()
+        let finished = await store.finishedTransactionIDs()
+        XCTAssertEqual(receivedOrderIDs, ["order-original"])
+        XCTAssertEqual(result, .purchased(.init(productID: "monthly", isActive: true)))
+        XCTAssertEqual(finished, ["tx-1"])
+    }
+
     func testStructuredLogNeverContainsReceipt() {
         let log = PurchaseLog(stage: .verificationFailed, productID: "monthly", transactionID: "tx-1", errorCode: "network")
         let object = log.jsonValue.foundationObject as! [String: Any]
@@ -117,14 +131,16 @@ private actor PurchaseStoreFake: PurchaseStoreProviding {
     let scenario: PurchaseScenario
     let restored: [StoreTransaction]
     let events: EventLog
+    let retainedOrderID: String?
     private var finished: [String] = []
-    init(products: [StoreProduct], scenario: PurchaseScenario = .success, restored: [StoreTransaction] = [], events: EventLog = EventLog()) {
+    init(products: [StoreProduct], scenario: PurchaseScenario = .success, restored: [StoreTransaction] = [], events: EventLog = EventLog(), retainedOrderID: String? = nil) {
         self.products = products; self.scenario = scenario; self.restored = restored; self.events = events
+        self.retainedOrderID = retainedOrderID
     }
     func products(for ids: [String]) async throws -> [StoreProduct] { products.filter { ids.contains($0.id) } }
     func purchase(productID: String, orderID: String) async throws -> StorePurchaseResult {
         await events.add("purchase")
-        switch scenario { case .cancelled: return .cancelled; case .pending: return .pending; case .unverified: return .unverified; default: return .verified(.init(productID: productID, transactionID: "tx-1", signedData: "top-secret-receipt", orderID: orderID)) }
+        switch scenario { case .cancelled: return .cancelled; case .pending: return .pending; case .unverified: return .unverified; default: return .verified(.init(productID: productID, transactionID: "tx-1", signedData: "top-secret-receipt", orderID: retainedOrderID ?? orderID)) }
     }
     func finish(transactionID: String) async { await events.add("finish"); finished.append(transactionID) }
     func restore() async throws -> [StoreTransaction] { restored }

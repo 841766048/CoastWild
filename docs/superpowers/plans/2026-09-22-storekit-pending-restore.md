@@ -104,6 +104,8 @@ Extend the purchase server fake to record received order IDs. Add a test that re
 
 Extract an injectable, testable purchase-operation seam if doing so stays small and localized. Use it to add a regression test that a thrown `product.purchase()` clears the staged pending mapping before rethrowing, while a normal `.pending` result retains that mapping. The existing cancellation path must also clear the staged mapping. If a seam would add disproportionate StoreKit-facing indirection, document focused code-review and simulator-build evidence instead of adding a brittle source-reading test; that review must confirm `product.purchase()` is wrapped in `do`/`catch`, the catch calls `cancelPending(productID:)` before rethrowing, normal `.pending` does not clear the mapping, and cancellation does.
 
+Task 4 refines the cleanup above: its tested attempt-ownership API clears matching pending state only for an owning attempt on cancellation/error. A later retry reuses and preserves the original order; verified completion clears only the matching mapping. These final retry semantics supersede the unconditional cleanup described in this earlier task.
+
 - [ ] **Step 2: Verify RED for mapping-free restoration**
 
 Before adding `restoredTransaction` to the mapping store, run its focused test and confirm it fails because the method is missing. After Task 1 supplies the method, run the new coordinator test to prove that the downstream server contract accepts and finishes a restored transaction whose order ID is `nil`.
@@ -191,12 +193,15 @@ git commit -m "fix: verify restored purchases without order IDs"
 **Files:**
 - Modify: `CoastWild/Core/PurchaseOrderMappingStore.swift`
 - Modify: `Tests/PurchaseOrderMappingStoreTests.swift`
+- Modify: `CoastWild/Core/PurchaseCoordinator.swift`
+- Modify: `Tests/PurchaseTests.swift`
 - Modify: `CoastWild/App/StoreKit2PurchaseStore.swift`
 - Modify: `CoastWild/App/AppDelegate.swift`
 - Modify: `docs/integration-plans/08-IAP内购与权益计划.md`
 
 **Interfaces:**
 - Changes: `PurchaseOrderMappingStore.stage(orderID:forProductID:) -> Bool` returns `false` without mutation when that product already has a pending order.
+- Produces: `PurchaseOrderAttempt` with effective `orderID` and `ownsPendingMapping`, plus `prepareAttempt`, `abandonAttempt`, and `completeAttempt` APIs. Same-SKU retries reuse the retained order and may invoke StoreKit again without deleting or replacing that order on cancellation/error.
 - Produces: StoreKit transaction observation that begins only after remote configuration/login readiness and replays `Transaction.unfinished` before consuming live `Transaction.updates`.
 
 - [x] **Step 1: Write a failing pending-overwrite test**
@@ -207,9 +212,11 @@ Stage `order-a` for `monthly`, attempt to stage `order-b` for the same product, 
 
 Run the focused mapping test and confirm it fails because `stage` has no return value and overwrites the mapping. Change `stage` to return `false` when a non-empty pending mapping already exists; otherwise persist the order and return `true`.
 
-- [x] **Step 3: Reject duplicate StoreKit starts and defer observation**
+- [x] **Step 3: Retry StoreKit purchases with the retained order and defer observation**
 
-In `StoreKit2PurchaseStore.purchase`, require `stage(...) == true` before calling `product.purchase()`; otherwise throw a private `pendingPurchaseExists` error. Existing cancellation and thrown-purchase cleanup applies only to the order successfully staged by that call.
+Add test-first coverage for initial order A owning the pending mapping, proposed order B reusing effective A as a non-owner (including after store recreation), retry pending/cancellation/error preserving A, verified retry associating the transaction to A and clearing matching pending state, and a later fresh C owning a new mapping. Also cover owning-attempt cleanup and stale cleanup preserving a newer pending order.
+
+In `StoreKit2PurchaseStore.purchase`, obtain an attempt using `prepareAttempt` and always proceed to `product.purchase()` when the product/payment checks pass. Both cancellation and thrown-purchase cleanup call `abandonAttempt`, which only clears matching state owned by that attempt. Pending/unverified results retain the mapping. Verified success calls `completeAttempt` and returns the effective order ID. `PurchaseCoordinator` verifies with the transaction's order ID (falling back to the just-created order only when absent); a regression test proves a retained original order is sent instead of the replacement order. This supersedes permanent duplicate rejection, since Ask to Buy denial emits no transaction and staged state can survive a crash.
 
 Remove the unconditional `startPurchaseUpdates()` call from application launch. Call it from `remoteAuthenticated(session:strategy:)` only after the login pipeline has completed configuration and produced the authenticated session. Keep its existing single-task guard.
 

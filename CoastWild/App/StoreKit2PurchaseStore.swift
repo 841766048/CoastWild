@@ -32,28 +32,25 @@ actor StoreKit2PurchaseStore: PurchaseStoreProviding {
       guard let fetched = try await Product.products(for: [productID]).first else { throw StoreKitPurchaseError.productNotFound }
       productsByID[productID] = fetched; product = fetched
     }
-    guard orderMappings.stage(orderID: orderID, forProductID: productID) else {
-      throw StoreKitPurchaseError.pendingPurchaseExists
-    }
+    let attempt = orderMappings.prepareAttempt(orderID: orderID, forProductID: productID)
     let result: Product.PurchaseResult
     do {
       result = try await product.purchase()
     } catch {
-      orderMappings.cancelPending(productID: productID)
+      orderMappings.abandonAttempt(attempt)
       throw error
     }
     switch result {
     case .userCancelled:
-      orderMappings.cancelPending(productID: productID)
+      orderMappings.abandonAttempt(attempt)
       return .cancelled
     case .pending: return .pending
     case let .success(verification):
       guard case let .verified(transaction) = verification else { return .unverified }
       let transactionID = String(transaction.id)
       transactionsByID[transactionID] = transaction
-      orderMappings.associate(orderID: orderID, transactionID: transactionID)
-      orderMappings.cancelPending(productID: productID)
-      return .verified(.init(productID: transaction.productID, transactionID: transactionID, signedData: verification.jwsRepresentation, orderID: orderID))
+      orderMappings.completeAttempt(attempt, transactionID: transactionID)
+      return .verified(.init(productID: transaction.productID, transactionID: transactionID, signedData: verification.jwsRepresentation, orderID: attempt.orderID))
     @unknown default: return .unverified
     }
   }
@@ -115,7 +112,6 @@ actor StoreKit2PurchaseStore: PurchaseStoreProviding {
 private enum StoreKitPurchaseError: Error {
   case paymentsNotAllowed
   case productNotFound
-  case pendingPurchaseExists
 }
 
 private extension Product.SubscriptionPeriod {
