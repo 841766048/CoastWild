@@ -37,3 +37,17 @@
 
 - [x] 先写反斜杠、引号、换行和 Unicode 的回调转义测试。
 - [x] 实现背景登录、IAP 日志、价格、内部页状态回调。
+
+### Task 4: 业务动作接线（2026-09-22）
+
+- [x] `BackgroundLogin` 执行 config → OAuth → strategy；strategy 成功后才提交新 session，失败保留当前 session 并允许重试。
+- [x] 后台登录并发请求去重；退出使正在进行的设备登录失效，防止旧请求恢复登录状态。
+- [x] 使用最新 session、strategy、runtime 构建安全编码的 `backgroundLoginSuccess`，保留当前 controller、WKWebView 和历史记录，并更新后续导航注入脚本。
+- [x] `Logout` 复用现有退出流程；`UpdateCoins` 调用权益恢复，不写入虚构余额。
+- [x] `UpdateLanguage` 归一化并持久化后刷新当前根 H5 与本地键盘文案；`NativeLog` 只消费已脱敏 action。
+- [x] `DidMoveToMainPage`、浏览器/外链、设置、评分、边缘手势与 VIP/充值回调由 WebView 执行既有动作规划。
+- [x] Foundation 单测与 iOS Simulator workspace 构建通过。
+- [ ] 使用真实 H5 与后台服务核验全部 topic、后台登录回调字段、失败重试和语言切换效果。
+- [ ] 在设备核验 Safari、系统设置、评分 UI 及真实 StoreKit 权益同步；`onCreateOrder` 继续注册但不执行。
+
+提交边界：应用入口接线依赖当前工作树已有、尚未提交的 `remoteAuthenticated(session:strategy:)` 与 `BusinessWebEntry` 改动；本任务不代为提交这些既有改动。

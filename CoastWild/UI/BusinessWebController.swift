@@ -5,7 +5,7 @@ import StoreKit
 
 final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, BridgeMessageHandling, UIGestureRecognizerDelegate {
   private let initialURL: URL
-  private let bootstrap: BusinessWebBootstrap
+  private var bootstrap: BusinessWebBootstrap
   private let policy: BusinessWebNavigationPolicy
   private let allowedHosts: Set<String>
   private let appIconDataURL: String
@@ -323,6 +323,29 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
         break
       }
     }
+  }
+
+  func completeBackgroundLogin(with refreshedBootstrap: BusinessWebBootstrap) throws {
+    let callback = try JavaScriptCallbackEncoder.backgroundLoginSuccess(refreshedBootstrap.configurationValue())
+    let guardedCallback = try BusinessWebEntry.restrictScript(callback, to: initialURL)
+    let insets = view.safeAreaInsets
+    let configurationScript = try refreshedBootstrap.javaScript(
+      webLoadTimeMilliseconds: Int64(Date().timeIntervalSince1970 * 1_000),
+      safeAreaInsets: .init(top: Int(insets.top), bottom: Int(insets.bottom), left: Int(insets.left), right: Int(insets.right)),
+      appIconDataURL: appIconDataURL)
+    let guardedConfiguration = try BusinessWebEntry.restrictScript(configurationScript, to: initialURL)
+    bootstrap = refreshedBootstrap
+    // Keep the same WKWebView and its history, including fresh credentials on later navigations.
+    webView?.configuration.userContentController.removeAllUserScripts()
+    webView?.configuration.userContentController.addUserScript(WKUserScript(
+      source: guardedConfiguration, injectionTime: .atDocumentStart, forMainFrameOnly: false))
+    evaluate(guardedConfiguration)
+    evaluate(guardedCallback)
+  }
+
+  func refreshLanguage(_ language: String) {
+    bootstrap = bootstrap.withLanguage(language)
+    rebuildAndLoad()
   }
 
   func sendBackgroundLoginSuccess(_ value: JSONValue) throws { evaluate(try JavaScriptCallbackEncoder.backgroundLoginSuccess(value)) }

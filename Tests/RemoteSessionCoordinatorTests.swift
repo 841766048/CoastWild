@@ -97,6 +97,53 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
         XCTAssertEqual(stored, existing)
     }
 
+    func testBackgroundStrategyFailurePreservesCurrentSessionAndCanRetry() async throws {
+        let dependencies = try makeDependencies(strategyError: .network(.notConnectedToInternet))
+        let existing = try RemoteSession(oauthResponse: oauthResponse(token: "saved", userID: "existing"))
+        try await dependencies.sessions.save(existing)
+        let coordinator = RemoteSessionCoordinator(api: dependencies.api,
+            deviceIdentity: dependencies.identity, sessions: dependencies.sessions)
+
+        let failed = await coordinator.backgroundLogin(riskInfo: nil)
+        let stored = await dependencies.sessions.session()
+        XCTAssertEqual(failed, .failed(.api(.network(.notConnectedToInternet))))
+        XCTAssertEqual(stored, existing)
+
+        await dependencies.api.clearStrategyError()
+        let retried = await coordinator.backgroundLogin(riskInfo: nil)
+        XCTAssertAuthenticated(retried)
+        let refreshed = await dependencies.sessions.session()
+        XCTAssertEqual(refreshed?.token, "remote-token")
+    }
+
+    func testConcurrentBackgroundLoginDoesNotStartDuplicateRequests() async throws {
+        let dependencies = try makeDependencies(configDelayNanoseconds: 100_000_000)
+        let coordinator = RemoteSessionCoordinator(api: dependencies.api,
+            deviceIdentity: dependencies.identity, sessions: dependencies.sessions)
+        let first = Task { await coordinator.backgroundLogin(riskInfo: nil) }
+        while await dependencies.api.calls().isEmpty { await Task.yield() }
+        let duplicate = await coordinator.backgroundLogin(riskInfo: nil)
+        _ = await first.value
+        XCTAssertEqual(duplicate, .loading)
+        let calls = await dependencies.api.calls()
+        XCTAssertEqual(calls, ["config:", "oauth:device-uuid:0:", "strategy:remote-token"])
+    }
+
+    func testLogoutDuringBackgroundLoginCannotRestoreTheSession() async throws {
+        let dependencies = try makeDependencies(configDelayNanoseconds: 100_000_000)
+        let existing = try RemoteSession(oauthResponse: oauthResponse(token: "saved", userID: "existing"))
+        try await dependencies.sessions.save(existing)
+        let coordinator = RemoteSessionCoordinator(api: dependencies.api,
+            deviceIdentity: dependencies.identity, sessions: dependencies.sessions)
+        let login = Task { await coordinator.backgroundLogin(riskInfo: nil) }
+        while await dependencies.api.calls().isEmpty { await Task.yield() }
+        await coordinator.logout()
+        let result = await login.value
+        let stored = await dependencies.sessions.session()
+        XCTAssertEqual(result, .idle)
+        XCTAssertNil(stored)
+    }
+
     private func makeDependencies(
         oauthResponse: JSONValue? = nil,
         strategyError: IntegrationAPIError? = nil,
@@ -153,7 +200,7 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
 private actor RemoteAPIFake: RemoteAuthenticationAPI {
     private var callLog: [String] = []
     private let response: JSONValue
-    private let strategyError: IntegrationAPIError?
+    private var strategyError: IntegrationAPIError?
     private let configDelayNanoseconds: UInt64
 
     init(oauthResponse: JSONValue, strategyError: IntegrationAPIError?, configDelayNanoseconds: UInt64) {
@@ -182,6 +229,7 @@ private actor RemoteAPIFake: RemoteAuthenticationAPI {
     }
 
     func calls() -> [String] { callLog }
+    func clearStrategyError() { strategyError = nil }
     func resetCalls() { callLog = [] }
 }
 

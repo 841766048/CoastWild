@@ -26,6 +26,7 @@ public actor RemoteSessionCoordinator {
     private let deviceIdentity: DeviceIdentityStore
     private let sessions: RemoteSessionStore
     private var currentState: RemoteLoginState = .idle
+    private var loginGeneration = 0
 
     public init(
         api: any RemoteAuthenticationAPI,
@@ -66,25 +67,30 @@ public actor RemoteSessionCoordinator {
 
     @discardableResult
     public func backgroundLogin(riskInfo: String?) async -> RemoteLoginState {
-        await deviceLogin(riskInfo: riskInfo)
+        await deviceLogin(riskInfo: riskInfo, preserveSessionUntilStrategySucceeds: true)
     }
 
     public func logout() async {
+        loginGeneration += 1
         await sessions.clear()
         currentState = .idle
     }
 
-    private func deviceLogin(riskInfo: String?) async -> RemoteLoginState {
+    private func deviceLogin(riskInfo: String?, preserveSessionUntilStrategySucceeds: Bool = false) async -> RemoteLoginState {
         guard beginLoading() else { return currentState }
+        let generation = loginGeneration
 
         do {
             _ = try await api.getConfig(session: .anonymous)
+            guard generation == loginGeneration else { return .idle }
             let deviceID = try deviceIdentity.resolve()
             let relogin = await sessions.hasLoggedInBefore()
+            guard generation == loginGeneration else { return .idle }
             let response = try await api.oauth(
                 OAuthRequest(token: deviceID, relogin: relogin, riskInfo: riskInfo),
                 session: .anonymous
             )
+            guard generation == loginGeneration else { return .idle }
             let session: RemoteSession
             do {
                 session = try RemoteSession(oauthResponse: response)
@@ -92,16 +98,29 @@ public actor RemoteSessionCoordinator {
                 currentState = .failed(.invalidOAuthResponse)
                 return currentState
             }
+            let backgroundStrategy = preserveSessionUntilStrategySucceeds
+                ? try await api.getStrategy(session: session.requestSession) : nil
+            guard generation == loginGeneration else { return .idle }
             do {
                 try await sessions.save(session)
             } catch {
+                guard generation == loginGeneration else { return .idle }
                 currentState = .failed(.persistence)
                 return currentState
             }
+            guard generation == loginGeneration else { return .idle }
             await sessions.markLoginSucceeded()
-            let strategy = try await api.getStrategy(session: session.requestSession)
+            guard generation == loginGeneration else { return .idle }
+            let strategy: JSONValue
+            if let backgroundStrategy {
+                strategy = backgroundStrategy
+            } else {
+                strategy = try await api.getStrategy(session: session.requestSession)
+            }
+            guard generation == loginGeneration else { return .idle }
             currentState = .authenticated(session: session, strategy: strategy)
         } catch {
+            guard generation == loginGeneration else { return .idle }
             currentState = .failed(map(error))
         }
         return currentState

@@ -81,7 +81,22 @@ public struct BusinessWebBootstrap: Sendable {
         safeAreaInsets: BusinessWebSafeAreaInsets,
         appIconDataURL: String
     ) throws -> String {
-        let options: [String: Any] = [
+        let options = try configurationValue().foundationObject
+        let insets: [String: Any] = [
+            "top": safeAreaInsets.top, "bottom": safeAreaInsets.bottom,
+            "left": safeAreaInsets.left, "right": safeAreaInsets.right,
+        ]
+        return [
+            "window.appConfigOptions=\(try json(options));",
+            "window.webLoadTime=\(webLoadTimeMilliseconds);",
+            "window.safeAreaInsets=\(try json(insets));",
+            "window.appIconBase64=\(try json(appIconDataURL));",
+        ].joined(separator: "\n")
+    }
+
+    /// The same payload is used for initial injection and a refreshed background-login callback.
+    public func configurationValue() throws -> JSONValue {
+        try JSONValue(any: [
             "http_headers": httpHeaders,
             "appBaseUrl": [
                 "app": baseURLs.app, "im": baseURLs.im, "log": baseURLs.log,
@@ -103,17 +118,19 @@ public struct BusinessWebBootstrap: Sendable {
             "takeOverFilePreviewWeb": "1",
             "takeOverBannerWeb": "0",
             "supportGetLocalPrice": "1",
-        ]
-        let insets: [String: Any] = [
-            "top": safeAreaInsets.top, "bottom": safeAreaInsets.bottom,
-            "left": safeAreaInsets.left, "right": safeAreaInsets.right,
-        ]
-        return [
-            "window.appConfigOptions=\(try json(options));",
-            "window.webLoadTime=\(webLoadTimeMilliseconds);",
-            "window.safeAreaInsets=\(try json(insets));",
-            "window.appIconBase64=\(try json(appIconDataURL));",
-        ].joined(separator: "\n")
+        ])
+    }
+
+    public func withLanguage(_ language: String) -> BusinessWebBootstrap {
+        let normalized = BridgeLanguage.normalized(language)
+        var headers = httpHeaders
+        headers["lang"] = normalized
+        return BusinessWebBootstrap(
+            httpHeaders: headers, baseURLs: baseURLs,
+            packageInfo: .init(localeIdentifier: normalized, appName: packageInfo.appName,
+                               packageName: packageInfo.packageName),
+            encryptedConfiguration: encryptedConfiguration, strategy: strategy, userInfo: userInfo,
+            appID: appID, reportSubheading: reportSubheading, reportDescription: reportDescription)
     }
 
     private func json(_ object: Any) throws -> String {

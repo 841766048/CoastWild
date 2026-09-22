@@ -328,6 +328,70 @@ final class CoastEnvironment {
     startPurchaseUpdates()
     Task { await startAttribution(userID: userID) }
   }
+  @MainActor private func isCurrentBusinessController(_ controller: BusinessWebController?) -> Bool {
+    guard let controller, let navigation = window?.rootViewController as? UINavigationController else { return false }
+    return navigation.viewControllers.first === controller
+  }
+
+  @MainActor private func applicationBridgeHandler(for controller: BusinessWebController?) -> BusinessBridgeApplicationHandler {
+    BusinessBridgeApplicationHandler(
+      backgroundLogin: { [remoteSessionCoordinator] in
+        await remoteSessionCoordinator.backgroundLogin(riskInfo: nil)
+      },
+      makeBootstrap: { [weak self, weak controller] session, strategy in
+        guard let self else { throw CancellationError() }
+        let runtime = await self.integrationRuntime.snapshot()
+        let latestSession = await self.remoteSessions.session()
+        guard self.isCurrentBusinessController(controller), latestSession == session else { throw CancellationError() }
+        let headers = runtime.headers(base: self.requestContext.headers(session: session.requestSession))
+        let bootstrap = try BusinessWebEntry.bootstrap(
+          environment: self.integration, runtime: runtime, session: session, strategy: strategy,
+          headers: headers, package: .init(
+            localeIdentifier: self.store.preferences.language,
+            appName: Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Coast & Wild",
+            packageName: self.integration.bundleIdentifier)).withLanguage(self.store.preferences.language)
+        try self.store.activate(accountID: session.userID)
+        self.activeRemoteUserID = session.userID
+        Task { await self.startAttribution(userID: session.userID) }
+        return bootstrap
+      },
+      sendBackgroundLoginSuccess: { [weak self, weak controller] bootstrap in
+        guard let self, self.isCurrentBusinessController(controller) else { return }
+        try controller?.completeBackgroundLogin(with: bootstrap)
+      },
+      logout: { [weak self] in
+        guard let self else { return }
+        do { try await self.logout() }
+        catch { self.showRoot() }
+      },
+      refreshEntitlements: { [weak self] in _ = try await self?.restorePurchases() },
+      persistLanguage: { [weak self] language in
+        guard let self else { return }
+        var preferences = self.store.preferences
+        preferences.language = language
+        try self.store.updatePreferences(preferences)
+      },
+      refreshInterface: { [weak self, weak controller] in
+        guard let self, self.isCurrentBusinessController(controller) else { return }
+        IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
+          IQBarButtonItemConfiguration(title: self.t("Done", "完成"))
+        controller?.refreshLanguage(self.store.preferences.language)
+      },
+      nativeLog: { event, length, summary in
+        NSLog("%@ length=%ld %@", event, length, summary)
+      },
+      showRecoverableFailure: { [weak self, weak controller] in
+        guard let self, let controller, self.isCurrentBusinessController(controller) else { return }
+        guard controller.presentedViewController == nil else { return }
+        let alert = UIAlertController(
+          title: self.t("Please try again", "请重试"),
+          message: self.t("The request could not be completed. Your current page is kept; please try again.",
+                         "请求暂时未能完成。当前页面已保留，请重试。"), preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: self.t("OK", "好"), style: .default))
+        controller.present(alert, animated: true)
+      })
+  }
+
   @MainActor func authenticated() throws {
     guard let accountID = vault.current?.id else { return }
     try store.activate(accountID: accountID)

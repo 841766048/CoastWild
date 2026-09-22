@@ -70,6 +70,49 @@ public enum BridgeLanguage {
     }
 }
 
+/// Executes application effects independently of UIKit; the controller only supplies a weak sink.
+@MainActor struct BusinessBridgeApplicationHandler {
+    var backgroundLogin: () async -> RemoteLoginState
+    var makeBootstrap: (RemoteSession, JSONValue) async throws -> BusinessWebBootstrap
+    var sendBackgroundLoginSuccess: (BusinessWebBootstrap) throws -> Void
+    var logout: () async throws -> Void
+    var refreshEntitlements: () async throws -> Void
+    var persistLanguage: (String) throws -> Void
+    var refreshInterface: () -> Void
+    var nativeLog: (String, Int, String) -> Void
+    var showRecoverableFailure: () -> Void
+
+    func handle(_ action: BusinessBridgeAction) async {
+        do {
+            switch action {
+            case .backgroundLogin:
+                switch await backgroundLogin() {
+                case let .authenticated(session, strategy):
+                    let bootstrap = try await makeBootstrap(session, strategy)
+                    try sendBackgroundLoginSuccess(bootstrap)
+                case let .failed(error):
+                    throw error
+                case .idle, .loading:
+                    break
+                }
+            case .logout:
+                try await logout()
+            case .refreshEntitlements:
+                try await refreshEntitlements()
+            case let .setLanguage(language):
+                try persistLanguage(BridgeLanguage.normalized(language))
+                refreshInterface()
+            case let .nativeLog(event, length, summary):
+                nativeLog(event, length, summary)
+            default:
+                break
+            }
+        } catch {
+            showRecoverableFailure()
+        }
+    }
+}
+
 public enum BridgeNativeLog {
     public static func sanitizedSummary(_ message: String) -> String {
         if let redactedJSON = redactedJSONSummary(from: message) {
