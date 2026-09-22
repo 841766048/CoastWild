@@ -88,13 +88,52 @@ final class BusinessBridgeActionTests: XCTestCase {
     }
 
     func testNativeLogSummaryRedactsShortJWSLikeTokens() {
-        XCTAssertEqual(BridgeNativeLog.sanitizedSummary("token eyJ9.e30.sig"), "token [REDACTED]")
+        XCTAssertEqual(BridgeNativeLog.sanitizedSummary("token eyJhbGciOiJub25lIn0.e30.sig"), "token [REDACTED]")
     }
 
     func testNativeLogSummaryStripsOpaqueURLQueriesAndFragments() {
         XCTAssertEqual(
             BridgeNativeLog.sanitizedSummary("url=https://example.com/path?opaque-query#fragment"),
             "url=https://example.com/path"
+        )
+    }
+
+    func testNativeLogSummaryRecursivelyRedactsSensitiveJSONKeys() {
+        let message = #"{"token":"secret","receipt":"receipt-data","userInfo":{"userId":"user-7","name":"Ada"}}"#
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            #"{"receipt":"[REDACTED]","token":"[REDACTED]","userInfo":"[REDACTED]"}"#
+        )
+    }
+
+    func testNativeLogSummaryRedactsNormalizedSensitiveFieldNames() {
+        let message = "device_id=device-1 orderNo: order-2 payload=payload-3 accessToken: access-4 refreshToken=refresh-5"
+
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary(message),
+            "device_id=[REDACTED] orderNo: [REDACTED] payload=[REDACTED] accessToken: [REDACTED] refreshToken=[REDACTED]"
+        )
+    }
+
+    func testNativeLogSummaryStripsURLUserInfo() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary("url=https://user:password@example.com/path"),
+            "url=https://example.com/path"
+        )
+    }
+
+    func testNativeLogSummaryRedactsDetachedJWSWithAnAlgorithmHeader() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary("proof eyJhbGciOiJub25lIn0..signature"),
+            "proof [REDACTED]"
+        )
+    }
+
+    func testNativeLogSummaryKeepsOrdinaryVersionsAndHostnames() {
+        XCTAssertEqual(
+            BridgeNativeLog.sanitizedSummary("version 1.2.3 host api.example.com"),
+            "version 1.2.3 host api.example.com"
         )
     }
 }

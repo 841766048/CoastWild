@@ -75,9 +75,17 @@ public enum BridgeNativeLog {
         let withoutControls = String(String.UnicodeScalarView(
             message.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }
         ))
+        if let redactedJSON = redactedJSONSummary(from: withoutControls) {
+            return String(redactedJSON.prefix(160))
+        }
+        let urlUserInfoStripped = replacing(
+            #"([A-Za-z][A-Za-z0-9+.-]*://)[^\s/@]+@"#,
+            in: withoutControls,
+            with: "$1"
+        )
         let urlParametersStripped = replacing(
             #"([A-Za-z][A-Za-z0-9+.-]*://[^\s?#]+)[?#][^\s]*"#,
-            in: withoutControls,
+            in: urlUserInfoStripped,
             with: "$1"
         )
         let authorizationRedacted = replacing(
@@ -90,17 +98,88 @@ public enum BridgeNativeLog {
             in: authorizationRedacted,
             with: "[REDACTED]"
         )
-        let namedValuesRedacted = replacing(
-            #"(?i)(\b(?:token|deviceId|orderId|receipt|userInfo)\s*[:=]\s*)(?:\"[^\"]*\"|'[^']*'|[^\s,;}&]+)"#,
-            in: schemeRedacted,
-            with: "$1[REDACTED]"
-        )
-        let jwsRedacted = replacing(
-            #"\b[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b"#,
-            in: namedValuesRedacted,
-            with: "[REDACTED]"
-        )
-        return String(jwsRedacted.prefix(160))
+        let namedValuesRedacted = redactingSensitiveFields(in: schemeRedacted)
+        return String(redactingJWS(in: namedValuesRedacted).prefix(160))
+    }
+
+    private static func redactedJSONSummary(from value: String) -> String? {
+        guard let data = value.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data),
+              object is [String: Any] || object is [Any] else { return nil }
+        let redacted = redactingJSON(object)
+        guard JSONSerialization.isValidJSONObject(redacted),
+              let summary = try? JSONSerialization.data(withJSONObject: redacted, options: [.sortedKeys]) else { return nil }
+        return String(data: summary, encoding: .utf8)
+    }
+
+    private static func redactingJSON(_ value: Any) -> Any {
+        if let dictionary = value as? [String: Any] {
+            return dictionary.reduce(into: [String: Any]()) { result, entry in
+                result[entry.key] = isSensitiveKey(entry.key) ? "[REDACTED]" : redactingJSON(entry.value)
+            }
+        }
+        if let array = value as? [Any] {
+            return array.map(redactingJSON)
+        }
+        return value
+    }
+
+    private static func redactingSensitiveFields(in value: String) -> String {
+        let pattern = #"(?i)(\b([A-Za-z][A-Za-z0-9_-]*)\s*[:=]\s*)(?:\"[^\"]*\"|'[^']*'|[^\s,;}&]+)"#
+        guard let expression = try? NSRegularExpression(pattern: pattern) else { return value }
+        let matches = expression.matches(in: value, range: NSRange(value.startIndex..., in: value))
+        var result = value
+
+        for match in matches.reversed() {
+            guard let keyRange = Range(match.range(at: 2), in: value),
+                  let prefixRange = Range(match.range(at: 1), in: value),
+                  let fullRange = Range(match.range, in: value),
+                  isSensitiveKey(String(value[keyRange])) else { continue }
+            let prefix = String(value[prefixRange])
+            result.replaceSubrange(fullRange, with: prefix + "[REDACTED]")
+        }
+        return result
+    }
+
+    private static func redactingJWS(in value: String) -> String {
+        let pattern = #"\b([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]*)\.([A-Za-z0-9_-]+)\b"#
+        guard let expression = try? NSRegularExpression(pattern: pattern) else { return value }
+        let matches = expression.matches(in: value, range: NSRange(value.startIndex..., in: value))
+        var result = ""
+        var cursor = value.startIndex
+
+        for match in matches {
+            guard let fullRange = Range(match.range, in: value),
+                  let headerRange = Range(match.range(at: 1), in: value) else { continue }
+            result += value[cursor..<fullRange.lowerBound]
+            if isJWSHeader(String(value[headerRange])) {
+                result += "[REDACTED]"
+            } else {
+                result += value[fullRange]
+            }
+            cursor = fullRange.upperBound
+        }
+        result += value[cursor...]
+        return result
+    }
+
+    private static func isJWSHeader(_ value: String) -> Bool {
+        let padding = String(repeating: "=", count: (4 - value.count % 4) % 4)
+        let base64 = value.replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/") + padding
+        guard let data = Data(base64Encoded: base64),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return false }
+        return object["alg"] != nil
+    }
+
+    private static func isSensitiveKey(_ key: String) -> Bool {
+        let normalized = key.replacingOccurrences(of: "_", with: "")
+            .replacingOccurrences(of: "-", with: "")
+            .lowercased()
+        return [
+            "authorization", "token", "accesstoken", "refreshtoken", "device", "deviceid",
+            "order", "orderid", "orderno", "receipt", "payload", "jws", "user", "userid", "userinfo",
+        ].contains(normalized)
     }
 
     private static func replacing(_ pattern: String, in value: String, with replacement: String) -> String {
