@@ -395,6 +395,20 @@ public final class CoastStore {
         try commit(CoastLedger(reminders: ledger.reminders))
     }
 
+    public func deleteCurrentAccountData() throws {
+        guard let accountID else { throw CoastStoreError("account.required") }
+        let url = ledgerURL(for: accountID)
+        do {
+            if fileManager.fileExists(atPath: url.path) {
+                try fileManager.removeItem(at: url)
+            }
+        } catch {
+            throw CoastStoreError("storage.delete", underlyingError: error)
+        }
+        self.accountID = nil
+        ledger = CoastLedger()
+    }
+
     public func exportData() throws -> Data {
         try requireAccount()
         return try encode(ledger)

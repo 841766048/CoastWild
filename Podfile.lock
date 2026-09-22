@@ -1,4 +1,9 @@
 PODS:
+  - Adjust (5.8.0):
+    - Adjust/Adjust (= 5.8.0)
+  - Adjust/Adjust (5.8.0):
+    - AdjustSignature (= 5.0.0)
+  - AdjustSignature (5.0.0)
   - BRPickerView/Core (3.0.0)
   - BRPickerView/DatePicker (3.0.0):
     - BRPickerView/Core
@@ -45,12 +50,15 @@ PODS:
   - SkeletonView (1.30.4)
 
 DEPENDENCIES:
+  - Adjust (= 5.8.0)
   - BRPickerView/DatePicker (~> 3.0)
   - IQKeyboardManagerSwift (~> 8.0)
   - SkeletonView (~> 1.30.4)
 
 SPEC REPOS:
   trunk:
+    - Adjust
+    - AdjustSignature
     - BRPickerView
     - IQKeyboardCore
     - IQKeyboardManagerSwift
@@ -63,6 +71,8 @@ SPEC REPOS:
     - SkeletonView
 
 SPEC CHECKSUMS:
+  Adjust: 688831c353a5ecb137d7e9b20dcfebebb3469780
+  AdjustSignature: 2185aff42830b87214d84bee45da09c65129c12c
   BRPickerView: cd2e0e3aa87af062bc7a1b6f78d3dfd5f04f04bb
   IQKeyboardCore: 250a88dfc713b2ecbe1dce250811d054fc016959
   IQKeyboardManagerSwift: 7f6a9a1e2285732d3ff5f485ff921215253ea77e
@@ -74,6 +84,6 @@ SPEC CHECKSUMS:
   IQTextView: ae13b4922f22e6f027f62c557d9f4f236b19d5c7
   SkeletonView: 5a050f6411e697abd4cda0a8d767013399dccd69
 
-PODFILE CHECKSUM: b340152d611f41a93f73a86404963b2ec0944433
+PODFILE CHECKSUM: 06e25b08e053e402ffdb5bb5c9315c650798e673
 
 COCOAPODS: 1.16.2

@@ -20,20 +20,19 @@
 
 **Files:** Create `Integration/Web/BusinessWebBootstrap.swift`; Test `Tests/BusinessWebTests.swift`.
 
-- [ ] 先写 `appConfigOptions`、`webLoadTime`、`safeAreaInsets`、`appIconBase64` 的序列化和 JS 转义测试。
-- [ ] 实现纯函数生成器，不拼接未转义的用户数据。
+- [x] 先写 `appConfigOptions`、`webLoadTime`、`safeAreaInsets`、`appIconBase64` 的序列化和 JS 转义测试。
+- [x] 实现纯函数生成器，不拼接未转义的用户数据。
 
 ### Task 2: 主容器
 
 **Files:** Create `BusinessWebController.swift`, `BusinessWebNavigationPolicy.swift`; Test `BusinessWebTests.swift`.
 
-- [ ] 先写 HTTPS 白名单、外部 scheme 和拒绝未知 scheme 的策略测试。
-- [ ] 实现 WebView 配置、加载进度、失败重试和内容进程恢复。
+- [x] 先写 HTTPS 白名单、外部 scheme 和拒绝未知 scheme 的策略测试。
+- [x] 实现 WebView 配置、加载进度、失败重试和内容进程恢复。
 
 ### Task 3: 二级容器
 
 **Files:** Create `InternalWebController.swift`; Test `BusinessWebTests.swift`.
 
-- [ ] 验证独立 process pool、只注册关闭消息、显隐状态回调。
-- [ ] 实现导航栏显隐、标题和系统返回手势协调。
-
+- [x] 验证独立 WebView 配置、只注册关闭消息、显隐状态回调；最低 iOS 17 中 `WKProcessPool` 已弃用且多实例不再有效，因此不调用该无效 API。
+- [x] 实现导航栏显隐、标题和系统返回手势协调。

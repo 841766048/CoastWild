@@ -3,6 +3,11 @@ import IQKeyboardManagerSwift
 import IQKeyboardToolbarManager
 import IQKeyboardToolbar
 
+private enum SimulatedAccountDeletionError: LocalizedError {
+  case rejected
+  var errorDescription: String? { "account.deletion.simulated" }
+}
+
 @main final class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
   var coast: CoastEnvironment?
@@ -22,6 +27,12 @@ import IQKeyboardToolbar
       coast = environment
       environment.window = window
       environment.showRoot()
+      if ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web-navigation") {
+        environment.showBusinessWebNavigationFixture()
+      }
+      if ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web-coast-navigation") {
+        environment.showBusinessWebCoastNavigationFixture()
+      }
     } catch {
       let vc = UIViewController()
       vc.view.backgroundColor = .systemBackground
@@ -36,24 +47,128 @@ import IQKeyboardToolbar
     window.makeKeyAndVisible()
     return true
   }
+  func applicationDidBecomeActive(_ application: UIApplication) {
+    Task { await coast?.retryAttributionIfAuthenticated() }
+  }
 }
 final class CoastEnvironment {
+  let integration: IntegrationEnvironment
+  let integrationRuntime: IntegrationRuntimeConfiguration
+  let deviceIdentity: DeviceIdentityStore
+  let remoteSessions: RemoteSessionStore
+  let integrationAPI: any RemoteAuthenticationAPI
+  let requestContext: RequestContextProvider
+  let remoteSessionCoordinator: RemoteSessionCoordinator
+  let attributionCoordinator: AttributionCoordinator?
+  let attributionSubmissionCoordinator: AttributionSubmissionCoordinator?
+  let purchaseCoordinator: PurchaseCoordinator?
+  let iapBridgeHandler: IAPBridgeHandler?
+  let privacyConsent: PrivacyConsentStore
   let store: CoastStore
   let vault: AccountVault
   let catalog: Catalog
   let learning: LearningRepository
-  let privacyConsent: PrivacyConsentStore
   let directory: URL
   let reminders = CoastReminders()
   private var rescheduleTask: Task<Void, Never>?
   weak var window: UIWindow?
+  private var purchaseUpdatesTask: Task<Void, Never>?
+  private var activeRemoteUserID: String?
   var chinese: Bool { store.preferences.language != "en" }
   init() throws {
+    guard let integrationURL = Bundle.main.url(
+      forResource: "IntegrationConfig",
+      withExtension: "plist"
+    ) else {
+      throw IntegrationEnvironmentLoader.LoadError.invalidPropertyList
+    }
+    integration = try IntegrationEnvironmentLoader.load(
+      propertyListData: Data(contentsOf: integrationURL),
+      bundleIdentifier: Bundle.main.bundleIdentifier ?? ""
+    )
+    integrationRuntime = IntegrationRuntimeConfiguration(environment: integration)
     let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing")
+    let defaults = testing
+      ? UserDefaults(suiteName: "com.coastwild.integration.ui-tests")!
+      : UserDefaults.standard
+    if testing && ProcessInfo.processInfo.arguments.contains("--reset-test-data") {
+      defaults.removePersistentDomain(forName: "com.coastwild.integration.ui-tests")
+    }
+    deviceIdentity = DeviceIdentityStore(
+      bundleIdentifier: integration.bundleIdentifier,
+      defaults: defaults
+    )
+    let deviceID = try deviceIdentity.resolve()
+    remoteSessions = RemoteSessionStore(defaults: defaults)
+    requestContext = RequestContextProvider(values: RequestContextValues(
+      deviceID: deviceID,
+      model: UIDevice.current.model,
+      language: Locale.preferredLanguages.first ?? "en",
+      appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
+      bundleIdentifier: integration.bundleIdentifier,
+      timeZone: TimeZone.current.identifier,
+      country: Locale.current.region?.identifier ?? "",
+      platformVersion: UIDevice.current.systemVersion,
+      localeIdentifier: Locale.current.identifier,
+      attributionSDK: "AJ",
+      adjustSDKVersion: "5.8.0" // Matches the pinned Adjust dependency in Podfile.lock.
+    ))
+    if testing {
+      integrationAPI = UITestRemoteAuthenticationAPI()
+      attributionCoordinator = nil
+      attributionSubmissionCoordinator = nil
+      purchaseCoordinator = nil
+      iapBridgeHandler = nil
+    } else {
+      let client = IntegrationAPIClient(
+        primaryHost: integration.primaryHost,
+        contextProvider: requestContext,
+        keyStore: IntegrationKeyStore(),
+        runtimeConfiguration: integrationRuntime
+      )
+      integrationAPI = client
+      let attributionAdapter = AdjustAttributionAdapter(isProduction: integration.mode == .release)
+      let attribution = AttributionCoordinator(
+        authorization: SystemTrackingAuthorizationAdapter(),
+        sdk: attributionAdapter
+      )
+      attributionCoordinator = attribution
+      attributionSubmissionCoordinator = AttributionSubmissionCoordinator(
+        provider: attributionAdapter,
+        store: AttributionSnapshotStore(defaults: defaults),
+        reporter: IntegrationAttributionReporter(
+          client: client,
+          sessions: remoteSessions,
+          package: integration.bundleIdentifier,
+          version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
+          deviceID: deviceID
+        )
+      )
+      let purchaseStore = StoreKit2PurchaseStore(defaults: defaults)
+      let coordinator = PurchaseCoordinator(
+        store: purchaseStore,
+        server: IntegrationPurchaseServer(client: client, sessions: remoteSessions),
+        entitlements: EntitlementStore()
+      )
+      purchaseCoordinator = coordinator
+      iapBridgeHandler = IAPBridgeHandler(
+        catalog: ProductCatalog(store: purchaseStore),
+        coordinator: coordinator,
+        trackPurchase: { payload in
+          await attribution.trackPurchase(amount: payload.amount, currency: payload.currency)
+        }
+      )
+    }
+    remoteSessionCoordinator = RemoteSessionCoordinator(
+      api: integrationAPI,
+      deviceIdentity: deviceIdentity,
+      sessions: remoteSessions
+    )
     privacyConsent = PrivacyConsentStore(
-      defaults: .standard,
-      key: testing ? "com.coastwild.native.test.privacy-consent" : "com.coastwild.native.privacy-consent",
-      currentVersion: 1)
+      defaults: defaults,
+      key: "com.coastwild.integration.privacy-consent",
+      currentVersion: 2
+    )
     directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(testing ? "CoastWildTests" : "CoastWild")
     vault = try AccountVault(testing: testing)
@@ -101,7 +216,7 @@ final class CoastEnvironment {
       lessons: catalog.lessons,
       delayNanoseconds: learningDelay,
       shouldFail: { forcedFailure })
-    try store.activate(accountID: vault.current?.id)
+    try store.activate(accountID: nil)
     // 提醒排的是当前账本里的出游。出游、装备、语言或登录状态一变就整体重排，
     // 这样删掉的出游不会再弹提醒，装备数量和文案语言也不会过期。
     store.onChange = { [weak self] in self?.scheduleReminders() }
@@ -164,10 +279,76 @@ final class CoastEnvironment {
   @MainActor func showRoot() {
     IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
       IQBarButtonItemConfiguration(title: t("Done", "完成"))
-    if !privacyConsent.isAccepted {
+    if privacyConsent.isAccepted {
+      window?.rootViewController = navigation(RemoteLoginController(self))
+    } else {
       window?.rootViewController = PrivacyConsentController(self)
-    } else if vault.current != nil && store.accountID != nil {
-      let tabs = CoastTabBarController()
+    }
+  }
+  @MainActor func showBusinessWebNavigationFixture() {
+    let bootstrap = BusinessWebBootstrap(
+      httpHeaders: [:],
+      baseURLs: .init(
+        app: integration.webHost.absoluteString,
+        im: integration.imHost.absoluteString,
+        log: integration.logHost.absoluteString,
+        privacy: integration.privacyURL.absoluteString,
+        terms: integration.termsURL.absoluteString),
+      packageInfo: .init(
+        localeIdentifier: Locale.current.identifier,
+        appName: "Coast & Wild",
+        packageName: integration.bundleIdentifier),
+      encryptedConfiguration: .object([:]),
+      strategy: .object([:]),
+      userInfo: .object([:]),
+      appID: integration.appStoreID,
+      reportSubheading: integration.reportSubheading,
+      reportDescription: integration.reportDescription)
+    let controller = BusinessWebController(
+      url: integration.webHost,
+      bootstrap: bootstrap,
+      allowedHosts: Set([integration.webHost.host!]),
+      appIconDataURL: "",
+      onBridgeMessage: { _ in })
+    let nav = UINavigationController(rootViewController: controller)
+    nav.setNavigationBarHidden(false, animated: false)
+    window?.rootViewController = nav
+  }
+  @MainActor func showBusinessWebCoastNavigationFixture() {
+    let bootstrap = BusinessWebBootstrap(
+      httpHeaders: [:],
+      baseURLs: .init(
+        app: integration.webHost.absoluteString,
+        im: integration.imHost.absoluteString,
+        log: integration.logHost.absoluteString,
+        privacy: integration.privacyURL.absoluteString,
+        terms: integration.termsURL.absoluteString),
+      packageInfo: .init(
+        localeIdentifier: Locale.current.identifier,
+        appName: "Coast & Wild",
+        packageName: integration.bundleIdentifier),
+      encryptedConfiguration: .object([:]),
+      strategy: .object([:]),
+      userInfo: .object([:]),
+      appID: integration.appStoreID,
+      reportSubheading: integration.reportSubheading,
+      reportDescription: integration.reportDescription)
+    let controller = BusinessWebController(
+      url: integration.webHost,
+      bootstrap: bootstrap,
+      allowedHosts: Set([integration.webHost.host!]),
+      appIconDataURL: "",
+      onBridgeMessage: { _ in })
+    let nav = navigation(controller)
+    nav.setNavigationBarHidden(false, animated: false)
+    window?.rootViewController = nav
+  }
+  @MainActor func acceptPrivacy() {
+    privacyConsent.accept()
+    showRoot()
+  }
+  @MainActor func showMainInterface() {
+    let tabs = CoastTabBarController()
       let controllers: [(UIViewController, String, String)] = [
         (ExploreController(self), t("Explore", "探索"), "search"),
         (LearnController(self), t("Learn", "学习"), "learn"),
@@ -196,16 +377,7 @@ final class CoastEnvironment {
       }
       tabs.tabBar.standardAppearance = appearance
       tabs.tabBar.scrollEdgeAppearance = appearance
-      window?.rootViewController = tabs
-    } else {
-      window?.rootViewController = navigation(
-        store.preferences.onboardingDone
-          ? AuthController(self, mode: .login) : WelcomeController(self))
-    }
-  }
-  @MainActor func acceptPrivacy() {
-    privacyConsent.accept()
-    showRoot()
+    window?.rootViewController = tabs
   }
   func navigation(_ vc: UIViewController) -> UINavigationController {
     let nav = CoastNavigationController(rootViewController: vc)
@@ -220,17 +392,178 @@ final class CoastEnvironment {
     nav.navigationBar.prefersLargeTitles = false
     return nav
   }
-  @MainActor func authenticated() throws {
-    try store.activate(accountID: vault.current?.id)
+  @MainActor func remoteAuthenticated(session: RemoteSession, strategy: JSONValue) async throws {
+    let userID = session.userID
+    let runtime = await integrationRuntime.snapshot()
+    let headers = runtime.headers(base: requestContext.headers(session: session.requestSession))
+    let bootstrap = try BusinessWebBootstrap.authenticated(
+      environment: integration, runtime: runtime, session: session, strategy: strategy,
+      headers: headers, package: .init(
+        localeIdentifier: store.preferences.language,
+        appName: Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Coast & Wild",
+        packageName: integration.bundleIdentifier), language: store.preferences.language)
+    let url = try BusinessWebEntry.url(
+      bundled: integration.webHost, configured: runtime.webIndexURL, strategy: strategy,
+      timestamp: Int64(Date().timeIntervalSince1970))
+    try store.activate(accountID: userID)
     var prefs = store.preferences
     prefs.onboardingDone = true
     try store.updatePreferences(prefs)
-    showRoot()
+    activeRemoteUserID = userID
+    if ProcessInfo.processInfo.arguments.contains("--ui-testing") &&
+       !ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web") {
+      // The existing native UI suite uses a fake authentication API and no remote H5.
+      showMainInterface()
+    } else {
+      let icon = UIImage(named: integration.smallIconName)?.jpegData(compressionQuality: 0.2)
+      weak var bridgeController: BusinessWebController?
+      let controller = BusinessWebController(
+        url: url, bootstrap: bootstrap, allowedHosts: Set([integration.webHost.host!]),
+        appIconDataURL: icon.map { "data:image/jpeg;base64," + $0.base64EncodedString() } ?? "",
+        iapBridgeHandler: iapBridgeHandler,
+        onApplicationAction: { [weak self] action in
+          Task { @MainActor [weak self, weak bridgeController] in
+            guard let self, self.isCurrentBusinessController(bridgeController) else { return }
+            await self.applicationBridgeHandler(for: bridgeController).handle(action)
+          }
+        },
+        onBridgeMessage: { _ in })
+      bridgeController = controller
+      let nav = navigation(controller)
+      nav.setNavigationBarHidden(true, animated: false)
+      window?.rootViewController = nav
+    }
+    startPurchaseUpdates()
+    Task { await startAttribution(userID: userID) }
   }
-  @MainActor func logout() throws {
-    try vault.logout()
+  @MainActor private func isCurrentBusinessController(_ controller: BusinessWebController?) -> Bool {
+    guard let controller, let navigation = window?.rootViewController as? UINavigationController else { return false }
+    return navigation.viewControllers.first === controller
+  }
+
+  @MainActor private func applicationBridgeHandler(for controller: BusinessWebController?) -> BusinessBridgeApplicationHandler {
+    BusinessBridgeApplicationHandler(
+      backgroundLogin: { [remoteSessionCoordinator] in
+        await remoteSessionCoordinator.backgroundLogin(riskInfo: nil)
+      },
+      makeBootstrap: { [weak self, weak controller] session, strategy in
+        guard let self else { throw CancellationError() }
+        let runtime = await self.integrationRuntime.snapshot()
+        let latestSession = await self.remoteSessions.session()
+        guard self.isCurrentBusinessController(controller), latestSession == session else { throw CancellationError() }
+        let headers = runtime.headers(base: self.requestContext.headers(session: session.requestSession))
+        let bootstrap = try BusinessWebBootstrap.authenticated(
+          environment: self.integration, runtime: runtime, session: session, strategy: strategy,
+          headers: headers, package: .init(
+            localeIdentifier: self.store.preferences.language,
+            appName: Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Coast & Wild",
+            packageName: self.integration.bundleIdentifier), language: self.store.preferences.language)
+        try self.store.activate(accountID: session.userID)
+        self.activeRemoteUserID = session.userID
+        Task { await self.startAttribution(userID: session.userID) }
+        return bootstrap
+      },
+      sendBackgroundLoginSuccess: { [weak self, weak controller] bootstrap in
+        guard let self, self.isCurrentBusinessController(controller) else { return }
+        try controller?.completeBackgroundLogin(with: bootstrap)
+      },
+      logout: { [weak self] in
+        guard let self else { return }
+        do { try await self.logout() }
+        catch { self.showRoot() }
+      },
+      refreshEntitlements: { [weak self] in _ = try await self?.restorePurchases() },
+      persistLanguage: { [weak self] language in
+        guard let self else { return }
+        var preferences = self.store.preferences
+        preferences.language = language
+        try self.store.updatePreferences(preferences)
+      },
+      refreshInterface: { [weak self, weak controller] in
+        guard let self, self.isCurrentBusinessController(controller) else { return }
+        IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
+          IQBarButtonItemConfiguration(title: self.t("Done", "完成"))
+        controller?.refreshLanguage(self.store.preferences.language)
+      },
+      nativeLog: { event, length, summary in
+        NSLog("%@ length=%ld %@", event, length, summary)
+      },
+      showRecoverableFailure: { [weak self, weak controller] in
+        guard let self, let controller, self.isCurrentBusinessController(controller) else { return }
+        guard controller.presentedViewController == nil else { return }
+        let alert = UIAlertController(
+          title: self.t("Please try again", "请重试"),
+          message: self.t("The request could not be completed. Your current page is kept; please try again.",
+                         "请求暂时未能完成。当前页面已保留，请重试。"), preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: self.t("OK", "好"), style: .default))
+        controller.present(alert, animated: true)
+      })
+  }
+
+  @MainActor func authenticated() throws {
+    guard let accountID = vault.current?.id else { return }
+    try store.activate(accountID: accountID)
+    showMainInterface()
+  }
+  @MainActor func logout() async throws {
+    stopPurchaseUpdates()
+    await remoteSessionCoordinator.logout()
+    activeRemoteUserID = nil
     try store.activate(accountID: nil)
     showRoot()
+  }
+  @MainActor func deleteAccount() async throws {
+    let shouldFail = ProcessInfo.processInfo.arguments.contains("--account-deletion-fails")
+    let photoFolder = photoURL("unused").deletingLastPathComponent()
+    let service = AccountDeletionService(
+      remoteDelete: {
+        try await Task.sleep(nanoseconds: 350_000_000)
+        if shouldFail { throw SimulatedAccountDeletionError.rejected }
+      },
+      localDelete: { [store] in
+        try await MainActor.run {
+          if FileManager.default.fileExists(atPath: photoFolder.path) {
+            try FileManager.default.removeItem(at: photoFolder)
+          }
+          try store.deleteCurrentAccountData()
+        }
+      },
+      sessionDelete: { [remoteSessionCoordinator] in
+        await remoteSessionCoordinator.logout()
+      }
+    )
+    try await service.deleteAccount()
+    stopPurchaseUpdates()
+    showRoot()
+  }
+  func restorePurchases() async throws -> [EntitlementSnapshot] {
+    guard let purchaseCoordinator else { return [] }
+    return try await purchaseCoordinator.restorePurchases()
+  }
+  func startPurchaseUpdates() {
+    guard purchaseUpdatesTask == nil, let purchaseCoordinator else { return }
+    purchaseUpdatesTask = Task { await purchaseCoordinator.observeTransactionUpdates() }
+  }
+  func stopPurchaseUpdates() {
+    purchaseUpdatesTask?.cancel()
+    purchaseUpdatesTask = nil
+  }
+  func startAttribution(userID: String) async {
+    guard let attributionCoordinator, privacyConsent.isAccepted else { return }
+    let configuration = await integrationRuntime.snapshot()
+    await attributionCoordinator.start(
+      privacyConsentGranted: true,
+      appToken: configuration.adjustToken,
+      purchaseToken: configuration.adjustPurchaseToken
+    )
+    let session = await remoteSessions.session()
+    if session?.userID == userID, session?.isFirstRegistration == true {
+      try? await attributionSubmissionCoordinator?.submitOnce(userID: userID)
+    }
+  }
+  func retryAttributionIfAuthenticated() async {
+    guard let activeRemoteUserID else { return }
+    await startAttribution(userID: activeRemoteUserID)
   }
   func photoURL(_ filename: String) -> URL {
     directory.appendingPathComponent("Photos").appendingPathComponent(store.accountID ?? "none")
@@ -256,6 +589,7 @@ final class CoastEnvironment {
         "Check your email, name and password (at least 10 characters).", "请检查邮箱、昵称与密码（至少 10 个字符）。"
       ), "auth.duplicate": ("This email already has a local account.", "该邮箱已注册本地账号。"),
       "auth.expired": ("Recovery code expired. Request a new code.", "验证码已过期或尝试过多，请重新获取。"),
+      "account.deletion.simulated": ("The simulated request failed. Nothing was deleted. Try again.", "模拟请求失败，未删除任何数据，请重试。"),
       "auth.code": ("Incorrect recovery code.", "验证码不正确。"),
       "auth.storage": ("Could not save credentials. Try again.", "账号未能保存，请重试。"),
     ]
@@ -362,6 +696,7 @@ final class CoastNavigationController: UINavigationController,
   private var interactiveTransition: UIPercentDrivenInteractiveTransition?
   private lazy var edgePanGesture = UIPanGestureRecognizer(
     target: self, action: #selector(handleEdgePan(_:)))
+  var coastInteractivePopGestureRecognizer: UIGestureRecognizer { edgePanGesture }
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -447,7 +782,7 @@ final class CoastNavigationController: UINavigationController,
     let root =
       viewController is ExploreController || viewController is LearnController
       || viewController is TripsController || viewController is JournalController
-      || viewController is WelcomeController
+      || viewController is WelcomeController || viewController is BusinessWebController
     setNavigationBarHidden(
       root, animated: animated && !UIAccessibility.isReduceMotionEnabled)
   }

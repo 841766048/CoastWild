@@ -316,6 +316,23 @@ final class CoastWildCoreTests: XCTestCase {
         XCTAssertEqual(reloaded.ledger.trips.map(\.name), ["Second"])
     }
 
+    func testDeleteCurrentAccountDataRemovesOnlyActiveLedger() throws {
+        let store = try CoastStore(directory: directory)
+        try store.activate(accountID: "first")
+        try store.saveTrip(CoastTrip(name: "First"))
+        try store.activate(accountID: "second")
+        try store.saveTrip(CoastTrip(name: "Second"))
+
+        try store.deleteCurrentAccountData()
+
+        XCTAssertNil(store.accountID)
+        XCTAssertTrue(store.ledger.trips.isEmpty)
+        try store.activate(accountID: "first")
+        XCTAssertEqual(store.ledger.trips.map(\.name), ["First"])
+        try store.activate(accountID: "second")
+        XCTAssertTrue(store.ledger.trips.isEmpty)
+    }
+
     func testInvalidAccountIdentifiersCannotTraverse() throws {
         let store = try CoastStore(directory: directory)
         try store.activate(accountID: "../../outside/😈")
@@ -422,9 +439,14 @@ final class CoastWildCoreTests: XCTestCase {
 
     func testFinalEntryGetsLocalizedUntitledName() throws {
         let store = try activeStore()
-        let entry = CoastEntry(title: "  ", body: "Memory", date: "2026-01-01", isDraft: false)
-        try store.saveEntry(entry)
+        try store.saveEntry(CoastEntry(title: "  ", body: "Memory", date: "2026-01-01", isDraft: false))
         XCTAssertEqual(store.ledger.entries[0].title, "Untitled entry")
+
+        var preferences = store.preferences
+        preferences.language = "zh-Hans"
+        try store.updatePreferences(preferences)
+        try store.saveEntry(CoastEntry(title: "  ", body: "记忆", date: "2026-01-02", isDraft: false))
+        XCTAssertEqual(store.ledger.entries[1].title, "未命名手记")
     }
 
     func testEntryCannotReferenceMissingTrip() throws {
