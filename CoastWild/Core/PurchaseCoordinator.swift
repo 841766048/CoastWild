@@ -49,6 +49,7 @@ public actor PurchaseCoordinator {
     private var processing: [String: Task<EntitlementSnapshot, Error>] = [:]
     private var purchasingProducts: Set<String> = []
     private var approvalProducts: Set<String> = []
+    private var productAliases: [String: String] = [:]
     public init(store: any PurchaseStoreProviding, server: any PurchaseServerProviding, entitlements: EntitlementStore, fulfillment: (any PurchaseTransactionFulfilling)? = nil) {
         self.store = store; self.server = server; self.entitlements = entitlements
         self.fulfillment = fulfillment
@@ -65,14 +66,26 @@ public actor PurchaseCoordinator {
         return recovered.sorted { $0.productID < $1.productID }
     }
     public func purchase(_ request: PurchaseRequest) async throws -> PurchaseResult {
-        guard !purchasingProducts.contains(request.productID), !approvalProducts.contains(request.productID),
-              !pending.values.contains(where: { $0.productID == request.productID }) else { return .pending }
+        let knownSKU = productAliases[request.productID] ?? request.productID
+        guard !purchasingProducts.contains(request.productID), !purchasingProducts.contains(knownSKU),
+              !hasUnresolvedPurchase(productID: knownSKU) else { return .pending }
         purchasingProducts.insert(request.productID)
-        defer { purchasingProducts.remove(request.productID) }
+        var claimedSKU: String?
+        defer {
+            purchasingProducts.remove(request.productID)
+            if let claimedSKU { purchasingProducts.remove(claimedSKU) }
+        }
         let order = try await server.createOrder(request)
+        productAliases[request.productID] = order.productID
+        guard !hasUnresolvedPurchase(productID: order.productID) else { return .pending }
+        if order.productID != request.productID {
+            guard !purchasingProducts.contains(order.productID) else { return .pending }
+            purchasingProducts.insert(order.productID)
+            claimedSKU = order.productID
+        }
         switch try await store.purchase(productID: order.productID, orderID: order.orderID) {
         case .cancelled: return .cancelled
-        case .pending: approvalProducts.insert(request.productID); return .pending
+        case .pending: approvalProducts.insert(order.productID); return .pending
         case .unverified: throw PurchaseError.unverifiedTransaction
         case let .verified(transaction):
             let retained = StoreTransaction(productID: transaction.productID, transactionID: transaction.transactionID,
@@ -80,6 +93,9 @@ public actor PurchaseCoordinator {
             let entitlement = try await complete(retained)
             return .purchased(entitlement)
         }
+    }
+    private func hasUnresolvedPurchase(productID: String) -> Bool {
+        approvalProducts.contains(productID) || pending.values.contains { $0.productID == productID }
     }
     public func restorePurchases() async throws -> [EntitlementSnapshot] {
         let transactions = try await store.restore()
@@ -115,7 +131,13 @@ public actor PurchaseCoordinator {
         }
         processing[id] = task
         defer { processing[id] = nil }
-        let snapshot = try await task.value
+        let snapshot: EntitlementSnapshot
+        do { snapshot = try await task.value }
+        catch PurchaseError.inactiveEntitlement {
+            pending[id] = nil
+            approvalProducts.remove(transaction.productID)
+            throw PurchaseError.inactiveEntitlement
+        }
         pending[id] = nil
         approvalProducts.remove(transaction.productID)
         return snapshot

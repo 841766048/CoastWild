@@ -26,7 +26,14 @@ public actor LocalCoinWallet: PurchaseTransactionFulfilling {
         var entries: [CoinWalletEntry] = []
     }
     private let fileURL: URL
-    public init(fileURL: URL) { self.fileURL = fileURL }
+    private let writer: @Sendable (Data, URL) throws -> Void
+    public init(fileURL: URL) {
+        self.fileURL = fileURL
+        self.writer = { data, url in try data.write(to: url, options: .atomic) }
+    }
+    init(fileURL: URL, writer: @escaping @Sendable (Data, URL) throws -> Void) {
+        self.fileURL = fileURL; self.writer = writer
+    }
     public func snapshot() throws -> CoinWalletSnapshot {
         let state = try load()
         return .init(balance: state.balance, unlockedGuideIDs: state.unlockedGuideIDs, entries: state.entries)
@@ -76,6 +83,6 @@ public actor LocalCoinWallet: PurchaseTransactionFulfilling {
     private func persist(_ state: State) throws {
         let data = try JSONEncoder().encode(state)
         try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try data.write(to: fileURL, options: .atomic)
+        try writer(data, fileURL)
     }
 }

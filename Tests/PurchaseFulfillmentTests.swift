@@ -3,6 +3,44 @@ import XCTest
 
 final class PurchaseFulfillmentTests: XCTestCase {
     let request = PurchaseRequest(productID: "1coins_19", paySource: "native", invitationID: "")
+    func testMappedGoodsCodePendingBlocksNewOrderAndApprovalClearsBySKU() async throws {
+        let store = FulfillmentStore(), server = FulfillmentServer()
+        await server.setSKU("1coins_19"); await store.setPending(true)
+        let coordinator = PurchaseCoordinator(store: store, server: server, entitlements: EntitlementStore())
+        let goods = PurchaseRequest(productID: "goods-coins", paySource: "bridge", invitationID: "")
+        _ = try await coordinator.purchase(goods)
+        await store.setPending(false)
+        await coordinator.observeTransactionUpdates()
+        let pending = await coordinator.pendingPurchases()
+        XCTAssertTrue(pending.isEmpty)
+        let result = try await coordinator.purchase(goods)
+        XCTAssertEqual(result, .purchased(.init(productID: "1coins_19", isActive: true)))
+    }
+    func testMappedGoodsCodeVerificationFailureBlocksNewOrder() async throws {
+        let store = FulfillmentStore(), server = FulfillmentServer()
+        await server.setSKU("1coins_19"); await server.setFail(true)
+        let coordinator = PurchaseCoordinator(store: store, server: server, entitlements: EntitlementStore())
+        let goods = PurchaseRequest(productID: "goods-coins", paySource: "bridge", invitationID: "")
+        do { _ = try await coordinator.purchase(goods); XCTFail("expected failure") } catch {}
+        do {
+            let result = try await coordinator.purchase(goods)
+            XCTAssertEqual(result, .pending)
+        } catch { XCTFail("should block before verification: \(error)") }
+        let orders = await server.orders, purchases = await store.calls
+        XCTAssertEqual(orders, 1); XCTAssertEqual(purchases, 1)
+    }
+    func testInactiveRestoreDoesNotBlockFuturePurchase() async throws {
+        let store = FulfillmentStore(), server = FulfillmentServer()
+        await server.setActive(false)
+        let coordinator = PurchaseCoordinator(store: store, server: server, entitlements: EntitlementStore())
+        let restored = try await coordinator.restorePurchases()
+        XCTAssertTrue(restored.isEmpty)
+        let pending = await coordinator.pendingPurchases()
+        XCTAssertTrue(pending.isEmpty)
+        await server.setActive(true)
+        let result = try await coordinator.purchase(request)
+        XCTAssertEqual(result, .purchased(.init(productID: "1coins_19", isActive: true)))
+    }
     func testAllPathsVerifyFulfillBeforeFinish() async throws {
         for path in ["purchase", "restore", "update"] {
             let log = FulfillmentLog(), store = FulfillmentStore(), server = FulfillmentServer()
@@ -88,20 +126,25 @@ private actor FulfillmentLog: PurchaseTransactionFulfilling {
 }
 private actor FulfillmentServer: PurchaseServerProviding {
     var log: FulfillmentLog?; var fail = false
+    var sku: String?; var active = true; var orders = 0
+    func setSKU(_ value: String) { sku = value }
+    func setActive(_ value: Bool) { active = value }
     func setLog(_ value: FulfillmentLog) { log = value }
     func setFail(_ value: Bool) { fail = value }
-    func createOrder(_ request: PurchaseRequest) async throws -> PurchaseOrder { .init(orderID: "order", productID: request.productID) }
+    func createOrder(_ request: PurchaseRequest) async throws -> PurchaseOrder { orders += 1; return .init(orderID: "order", productID: sku ?? request.productID) }
     func verify(orderID: String?, transaction: StoreTransaction) async throws -> EntitlementSnapshot {
         await log?.add("verify"); if fail { throw FulfillmentFailure.failed }
-        return .init(productID: transaction.productID, isActive: true)
+        return .init(productID: transaction.productID, isActive: active)
     }
 }
 private actor FulfillmentStore: PurchaseStoreProviding {
     var calls = 0; var log: FulfillmentLog?
+    var pending = false
+    func setPending(_ value: Bool) { pending = value }
     let tx = StoreTransaction(productID: "1coins_19", transactionID: "tx", signedData: "signed", orderID: "order")
     func setLog(_ value: FulfillmentLog) { log = value }
     func products(for ids: [String]) async throws -> [StoreProduct] { [] }
-    func purchase(productID: String, orderID: String) async throws -> StorePurchaseResult { calls += 1; return .verified(tx) }
+    func purchase(productID: String, orderID: String) async throws -> StorePurchaseResult { calls += 1; return pending ? .pending : .verified(tx) }
     func finish(transactionID: String) async { await log?.add("finish") }
     func restore() async throws -> [StoreTransaction] { [tx] }
     func transactionUpdates() async -> AsyncStream<StoreTransaction> { AsyncStream { $0.yield(tx); $0.finish() } }

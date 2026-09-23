@@ -35,13 +35,21 @@ final class LocalCoinWalletTests: XCTestCase {
     }
     func testWriteFailureLeavesMemoryUnchanged() async throws {
         let url = location()
-        let blocked = LocalCoinWallet(fileURL: url)
-        _ = try await blocked.snapshot()
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        do { try await blocked.fulfill(transaction()); XCTFail("expected write failure") } catch {}
-        try FileManager.default.removeItem(at: url)
-        let value = try await blocked.snapshot()
-        XCTAssertEqual(value.balance, 0)
+        let seed = LocalCoinWallet(fileURL: url)
+        try await seed.fulfill(transaction("seed"))
+        let original = try Data(contentsOf: url)
+        let blocked = LocalCoinWallet(fileURL: url, writer: { _, _ in throw WalletWriteFailure.injected })
+        let before = try await blocked.snapshot()
+        do { try await blocked.fulfill(transaction("next")); XCTFail("expected write failure") }
+        catch { XCTAssertEqual(error as? WalletWriteFailure, .injected) }
+        do { try await blocked.unlock(guideID: "coastal-camping"); XCTFail("expected write failure") }
+        catch { XCTAssertEqual(error as? WalletWriteFailure, .injected) }
+        let after = try await blocked.snapshot()
+        XCTAssertEqual(after, before)
+        XCTAssertEqual(try Data(contentsOf: url), original)
+        try await seed.fulfill(transaction("next"))
+        let recovered = try await seed.snapshot()
+        XCTAssertEqual(recovered.balance, 200)
     }
     func testCorruptionNeverResetsOrOverwrites() async throws {
         let url = location(), bad = Data("corrupt".utf8)
@@ -72,3 +80,4 @@ final class LocalCoinWalletTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: url), bad)
     }
 }
+private enum WalletWriteFailure: Error { case injected }
