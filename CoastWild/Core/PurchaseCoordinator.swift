@@ -50,6 +50,8 @@ public actor PurchaseCoordinator {
     private var purchasingProducts: Set<String> = []
     private var approvalProducts: Set<String> = []
     private var productAliases: [String: String] = [:]
+    private var completed: [String: EntitlementSnapshot] = [:]
+    private var rejected: Set<String> = []
     public init(store: any PurchaseStoreProviding, server: any PurchaseServerProviding, entitlements: EntitlementStore, fulfillment: (any PurchaseTransactionFulfilling)? = nil) {
         self.store = store; self.server = server; self.entitlements = entitlements
         self.fulfillment = fulfillment
@@ -59,6 +61,15 @@ public actor PurchaseCoordinator {
         let approvals = approvalProducts.filter { product in !transactions.contains { $0.productID == product } }
             .map { PendingPurchase(productID: $0, transactionID: "") }
         return (transactions + approvals).sorted { ($0.productID, $0.transactionID) < ($1.productID, $1.transactionID) }
+    }
+    @discardableResult
+    public func synchronizePendingPurchases() async -> [PendingPurchase] {
+        for transaction in await store.unfinishedTransactions() {
+            let id = transaction.transactionID
+            guard completed[id] == nil, !rejected.contains(id), pending[id] == nil else { continue }
+            pending[id] = transaction
+        }
+        return pendingPurchases()
     }
     public func retryPendingPurchases() async throws -> [EntitlementSnapshot] {
         var recovered: [EntitlementSnapshot] = []
@@ -75,6 +86,8 @@ public actor PurchaseCoordinator {
             purchasingProducts.remove(request.productID)
             if let claimedSKU { purchasingProducts.remove(claimedSKU) }
         }
+        await synchronizePendingPurchases()
+        guard !hasUnresolvedPurchase(productID: knownSKU) else { return .pending }
         let order = try await server.createOrder(request)
         productAliases[request.productID] = order.productID
         guard !hasUnresolvedPurchase(productID: order.productID) else { return .pending }
@@ -99,7 +112,9 @@ public actor PurchaseCoordinator {
     }
     public func restorePurchases() async throws -> [EntitlementSnapshot] {
         let transactions = try await store.restore()
-        for transaction in transactions { pending[transaction.transactionID] = transaction }
+        for transaction in transactions where completed[transaction.transactionID] == nil {
+            pending[transaction.transactionID] = transaction
+        }
         var restored: [EntitlementSnapshot] = []
         for transaction in transactions {
             do { restored.append(try await complete(transaction)) }
@@ -119,6 +134,7 @@ public actor PurchaseCoordinator {
     }
     private func complete(_ transaction: StoreTransaction) async throws -> EntitlementSnapshot {
         let id = transaction.transactionID
+        if let snapshot = completed[id] { return snapshot }
         if let task = processing[id] { return try await task.value }
         pending[id] = transaction
         let task = Task { [server, fulfillment, entitlements, store] in
@@ -134,11 +150,14 @@ public actor PurchaseCoordinator {
         let snapshot: EntitlementSnapshot
         do { snapshot = try await task.value }
         catch PurchaseError.inactiveEntitlement {
+            rejected.insert(id)
             pending[id] = nil
             approvalProducts.remove(transaction.productID)
             throw PurchaseError.inactiveEntitlement
         }
         pending[id] = nil
+        completed[id] = snapshot
+        rejected.remove(id)
         approvalProducts.remove(transaction.productID)
         return snapshot
     }

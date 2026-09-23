@@ -94,18 +94,30 @@ actor StoreKit2PurchaseStore: PurchaseStoreProviding {
     }
   }
 
+  func unfinishedTransactions() async -> [StoreTransaction] {
+    var transactions: [StoreTransaction] = []
+    for await verification in Transaction.unfinished {
+      if let transaction = mappedTransaction(verification) { transactions.append(transaction) }
+    }
+    return transactions
+  }
+
   private func yieldMappedTransaction(
     _ verification: VerificationResult<Transaction>,
     to continuation: AsyncStream<StoreTransaction>.Continuation
   ) {
-    guard case let .verified(transaction) = verification else { return }
+    if let transaction = mappedTransaction(verification) { continuation.yield(transaction) }
+  }
+
+  private func mappedTransaction(_ verification: VerificationResult<Transaction>) -> StoreTransaction? {
+    guard case let .verified(transaction) = verification else { return nil }
     let transactionID = String(transaction.id)
-    guard let orderID = orderMappings.resolveForUpdate(
+    let orderID = orderMappings.resolveForUpdate(
       transactionID: transactionID,
       productID: transaction.productID
-    ) else { return }
+    )
     transactionsByID[transactionID] = transaction
-    continuation.yield(.init(productID: transaction.productID, transactionID: transactionID, signedData: verification.jwsRepresentation, orderID: orderID))
+    return .init(productID: transaction.productID, transactionID: transactionID, signedData: verification.jwsRepresentation, orderID: orderID)
   }
 }
 

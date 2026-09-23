@@ -39,3 +39,13 @@ All purchase, restore and transaction update paths run server verification → a
 - RED: 3 new coordinator regressions produced 7 assertion failures (mapped approval never cleared, mapped pending re-created order, inactive restore blocked future purchase). GREEN: all 8 fulfillment tests pass.
 - RED: revised write-failure test with an inert writer seam produced 5 assertion failures (writes succeeded, wallet changed, bytes changed). GREEN: wired writer at persistence boundary; final full `swift test` passes **281 tests, 0 failures**.
 - Remaining integration caveat: the existing transaction update stream does not signal when initial unfinished enumeration is complete. Starting the observer early reduces but does not formally close the relaunch race before pending transactions are delivered. A store readiness/unfinished enumeration API or durable pending journal would be needed to gate purchase against that interval.
+
+## Relaunch reconciliation follow-up (supersedes the caveat above)
+
+- Added `PurchaseStoreProviding.unfinishedTransactions() async -> [StoreTransaction]`, with empty default for backward-compatible fake/other providers. StoreKit adapter implements complete `Transaction.unfinished` enumeration.
+- Added `PurchaseCoordinator.synchronizePendingPurchases() async -> [PendingPurchase]` for UI load reconciliation. Purchase itself awaits reconciliation before creating an order. Known product IDs/aliases block at that point; newly mapped goods codes block after order resolution and before StoreKit payment.
+- Completed transaction results are retained within the coordinator session so stale enumeration or duplicate observer events cannot re-stage or re-finish completed transactions. Explicit inactive rejections are excluded from reconciliation blockers while preserving future explicit verification behavior.
+- StoreKit verified transactions with absent local order mappings are now delivered with `orderID: nil`, matching restore/server support, rather than silently discarded.
+- RED: relaunch without observer and stale enumeration regression tests produced 5 expected assertion failures: payment/order happened instead of pending; initial synchronization was empty; duplicate observer event finished twice.
+- GREEN: full `swift test` passed **283 tests, 0 failures**. Focused 10-test fulfillment suite also passes with a nil-order unfinished transaction and asserts nil was forwarded during retry. Wallet receives exactly 100 once and transaction finishes once.
+- Adapter compilation/StoreKit runtime validation is delegated to the ongoing root simulator build; Swift package excludes App sources.

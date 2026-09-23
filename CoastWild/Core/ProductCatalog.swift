@@ -35,6 +35,10 @@ public protocol PurchaseStoreProviding: Sendable {
     func finish(transactionID: String) async
     func restore() async throws -> [StoreTransaction]
     func transactionUpdates() async -> AsyncStream<StoreTransaction>
+    func unfinishedTransactions() async -> [StoreTransaction]
+}
+public extension PurchaseStoreProviding {
+    func unfinishedTransactions() async -> [StoreTransaction] { [] }
 }
 
 public struct ProductCatalog: Sendable {
