@@ -30,9 +30,9 @@ Files: delete App/StoreKit2PurchaseStore.swift; Core/IAPBridgeHandler.swift, Int
 
 ## Task 2: Verify V1 and preserve V2 merge behavior (root)
 
-- [ ] Run baseline and final core suite, Release simulator build, and profile/free-learning UI regression.
-- [ ] Review Task 1 diff with a fresh reviewer; resolve actionable findings and commit only version-1 changes on codex/native-uikit.
-- [ ] Use an isolated version-2 preparation worktree from 1e52224. Merge the removal commit with --no-commit; retain existing V2 versions for removal-affected paths. Keep release plan/history docs; omit V1-only boundary tests from V2. Prove original V2 production and test tree content is unchanged using git diff 1e52224.
-- [ ] Commit the prepared V2 merge; fast-forward original feature checkout only after checking unrelated staged asset will be unaffected. Do not stash/drop/commit that user asset.
-- [ ] Preflight git merge-tree main feature: require no conflicts and compare resulting production tree with V2. Run V2 core tests; record exact refs and checks in a release handoff document.
-- [ ] Leave main and V2 separate; report local checkout paths, commits and future merge instructions.
+- [x] Run baseline and final core suite, Release simulator build, and profile/free-learning UI regression.
+- [x] Review Task 1 diff with a fresh reviewer; resolve actionable findings and commit only version-1 changes on codex/native-uikit.
+- [x] Use an isolated version-2 preparation worktree from 1e52224. Merge the removal commit with --no-commit; retain existing V2 versions for removal-affected paths. Keep release plan/history docs; omit V1-only boundary tests from V2. Prove original V2 production and test tree content is unchanged using git diff 1e52224.
+- [x] Commit the prepared V2 merge; fast-forward original feature checkout only after checking unrelated staged asset will be unaffected. Do not stash/drop/commit that user asset.
+- [x] Preflight git merge-tree main feature: require no conflicts and compare resulting production tree with V2. Run V2 core tests; record exact refs and checks in a release handoff document.
+- [x] Leave main and V2 separate; report local checkout paths, commits and future merge instructions.

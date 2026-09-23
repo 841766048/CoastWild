@@ -31,6 +31,24 @@ git merge codex/native-coin-learning
 3. 使用 `git merge-tree --write-tree codex/native-uikit codex/native-coin-learning` 预演普通合并；要求无冲突，结果树的内购代码与第二版一致。
 4. 原有本地钱包限制不变，真实 Apple 沙盒支付是否成功仍需独立端到端验证。
 
-## 范围说明
+## 本次分支验证记录（2026-09-23）
+
+- 第一版删除提交：`131ea8b`（主分支 `codex/native-uikit`）。
+- 第二版保护合并：`1397350`，父提交为原第二版 `1e52224` 和第一版 `131ea8b`。
+- 核心测试：第一版240项通过；第二版283项通过。
+- 第一版 Release 模拟器构建通过；账号页、免费学习、自动登录 UI 分别通过。测试环境问题及修复详见 `docs/superpowers/plans/v1-removal-report.md`，不声称所有首次运行均通过。
+- `git diff 1e52224 1397350 -- CoastWild Tests UITests ':!CoastWild/App/UITestRemoteAuthenticationAPI.swift'` 无差异，内购及金币业务代码原样保留。
+- `git merge-base --is-ancestor codex/native-uikit codex/native-coin-learning` 成功；首次 `merge-tree` 预演结果与第二版树均为 `b1bb2d2d8dd17f8b9ca35086e35ec1ca5b8403d6`。预演不移动主分支。
+- 原工作目录隐私图片配置的暂存区和工作区哈希始终为 `158ab104efbf52c545f7984f8b1d7e05601e0aa1`，未纳入提交。
+- 第二版最终 Release 模拟器构建通过（`/tmp/coast-v2-release-preserved.log`）；购买100金币→确认消费30→完整阅读→重启保留的 UI 回归通过（`build/v2-merge-preservation.xcresult`）。该测试使用受控支付返回，不代表真实 Apple 沙盒付款验证。
+- 最终独立复审无待修复问题，已复核分支祖先关系、普通合并树一致性和未提交资源保留情况。
+
+## 当前工作目录
+
+- 第一版主分支工程：`ios/.worktrees/v1-no-iap/CoastWild.xcworkspace`。
+- 第二版工程：原始 `ios/CoastWild.xcworkspace`，仍在 `codex/native-coin-learning`。
+- 两个工程 bundle id 相同，在同一模拟器安装会相互覆盖，请先确认打开的目录。没有推送远端或发布。
+
+## 第三方与服务端边界
 
 历史文档和 Git 历史保留，不代表被编入第一版应用。Adjust SDK 自带 ADJAppStorePurchase 等通用购买/验证类型；本次移除项目自身的购买接线及事件调用，不修改第三方源码，也不擅自删除普通归因功能，因此不声称包内连第三方 SDK 的购买相关符号都不存在。远程 H5 若独立展示支付内容，需要对应服务端页面同步关闭；本地不再注册或执行购买消息。
