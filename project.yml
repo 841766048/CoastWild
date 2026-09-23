@@ -17,6 +17,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.huankecontact.test
+        DEVELOPMENT_TEAM: 2FXAU7VW4X
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Coast & Wild
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen

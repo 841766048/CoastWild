@@ -69,7 +69,6 @@ final class IntegrationEnvironmentTests: XCTestCase {
                 "CoastTermsURL": "https://www.example.com/terms",
                 "CoastAppStoreID": "1234567890",
                 "CoastAdjustToken": "adjust-token",
-                "CoastAdjustPurchaseToken": "purchase-token",
                 "CoastReportSubheading": " - Coast & Wild",
                 "CoastReportDescription": "Outdoor learning and trip planning",
                 "CoastSmallIconName": "AppSmallIcon",
@@ -82,7 +81,6 @@ final class IntegrationEnvironmentTests: XCTestCase {
         XCTAssertEqual(environment.primaryHost.absoluteString, "https://api.example.com")
         XCTAssertEqual(environment.bundleIdentifier, "com.example.coast")
         XCTAssertEqual(environment.adjustToken, "adjust-token")
-        XCTAssertEqual(environment.adjustPurchaseToken, "purchase-token")
         XCTAssertEqual(environment.reportSubheading, " - Coast & Wild")
         XCTAssertEqual(environment.smallIconName, "AppSmallIcon")
     }
@@ -112,7 +110,6 @@ final class IntegrationEnvironmentTests: XCTestCase {
             "CoastTermsURL": "https://www.example.com/terms",
             "CoastAppStoreID": "1234567890",
             "CoastAdjustToken": "adjust-token",
-            "CoastAdjustPurchaseToken": "purchase-token",
             "CoastReportSubheading": " - Coast & Wild",
             "CoastReportDescription": "Outdoor learning and trip planning",
             "CoastSmallIconName": "AppSmallIcon",
@@ -162,8 +159,6 @@ final class IntegrationEnvironmentTests: XCTestCase {
         XCTAssertEqual(IntegrationEndpointPaths.default.getConfig, "/config/getAppConfigPostV2")
         XCTAssertEqual(IntegrationEndpointPaths.default.getStrategy, "/config/getStrategyPostV2")
         XCTAssertEqual(IntegrationEndpointPaths.default.oauth, "/security/oauth")
-        XCTAssertEqual(IntegrationEndpointPaths.default.createRecharge, "/coin/recharge/create")
-        XCTAssertEqual(IntegrationEndpointPaths.default.paymentRecharge, "/coin/recharge/payment/ipa")
         XCTAssertEqual(IntegrationEndpointPaths.default.ascribeRecord, "/hit/ascribeRecordReqs")
     }
 
@@ -182,7 +177,6 @@ final class IntegrationEnvironmentTests: XCTestCase {
             appStoreID: "1234567890",
             bundleIdentifier: "com.example.coast",
             adjustToken: "adjust-token",
-            adjustPurchaseToken: "purchase-token",
             reportSubheading: " - Coast & Wild",
             reportDescription: "Outdoor learning and trip planning",
             smallIconName: "AppSmallIcon",

@@ -298,13 +298,10 @@ final class CoastWildUITests: XCTestCase {
     app.buttons["profile.account"].tap()
     XCTAssertTrue(app.buttons["account.logout"].exists)
     XCTAssertTrue(app.buttons["account.delete"].exists)
-    XCTAssertTrue(app.buttons["account.restore-purchases"].exists)
-    app.buttons["account.restore-purchases"].tap()
-    XCTAssertTrue(app.staticTexts["Restore complete"].waitForExistence(timeout: 5))
-    app.buttons["OK"].tap()
+    XCTAssertFalse(app.buttons["account.restore-purchases"].exists)
     app.buttons["account.delete"].tap()
     XCTAssertTrue(app.staticTexts["Delete account permanently?"].waitForExistence(timeout: 5))
-    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Apple subscription")).firstMatch.exists)
+    XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Apple subscription")).firstMatch.exists)
     app.buttons["Confirm"].tap()
     XCTAssertTrue(app.staticTexts["Account deletion failed"].waitForExistence(timeout: 5))
     app.buttons["OK"].tap()
@@ -358,7 +355,14 @@ final class CoastWildUITests: XCTestCase {
     XCTAssertFalse(app.alerts["无法生成图片"].exists)
     capture(name, app: app)
     // 关掉面板，后面的返回操作才能点到导航栏。
-    sheet.buttons["header.closeButton"].tap()
+    if sheet.buttons["header.closeButton"].exists {
+      sheet.buttons["header.closeButton"].tap()
+    } else {
+      // iOS 26 presents this as an anchored popover, without the old close button.
+      let dismissRegion = app.otherElements["PopoverDismissRegion"]
+      XCTAssertTrue(dismissRegion.exists)
+      dismissRegion.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)).tap()
+    }
     XCTAssertTrue(sheet.waitForNonExistence(timeout: 10))
   }
 

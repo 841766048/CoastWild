@@ -45,7 +45,6 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
                     "test.duckegg.ios:terms": "https://remote.example/terms",
                     "test.duckegg.ios:app_id": "99887766",
                     "test.duckegg.ios:aj_token": "remote-adjust",
-                    "test.duckegg.ios:aj_purchase_token": "remote-purchase",
                     "other.bundle:app_id": "must-not-apply",
                 ],
             ]],
@@ -58,7 +57,6 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
         XCTAssertEqual(snapshot.termsURL.absoluteString, "https://remote.example/terms")
         XCTAssertEqual(snapshot.appID, "99887766")
         XCTAssertEqual(snapshot.adjustToken, "remote-adjust")
-        XCTAssertEqual(snapshot.adjustPurchaseToken, "remote-purchase")
     }
 
     func testInvalidAndEmptyValuesFallBackIndependently() async throws {
@@ -71,7 +69,6 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
                     "test.duckegg.ios:terms": "not-a-url",
                     "test.duckegg.ios:app_id": "  ",
                     "test.duckegg.ios:aj_token": "valid-token",
-                    "test.duckegg.ios:aj_purchase_token": NSNull(),
                 ],
             ]],
         ])
@@ -83,7 +80,6 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
         XCTAssertEqual(snapshot.termsURL.absoluteString, "https://bundled.example/terms")
         XCTAssertEqual(snapshot.appID, "123456")
         XCTAssertEqual(snapshot.adjustToken, "valid-token")
-        XCTAssertEqual(snapshot.adjustPurchaseToken, "bundled-purchase")
     }
 
     func testMalformedPayloadLeavesBundledDefaults() async throws {
@@ -127,8 +123,7 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
             termsURL: "https://bundled.example/terms",
             appStoreID: "123456",
             bundleIdentifier: "test.duckegg.ios",
-            adjustToken: "bundled-adjust",
-            adjustPurchaseToken: "bundled-purchase"
+            adjustToken: "bundled-adjust"
         )
     }
 }

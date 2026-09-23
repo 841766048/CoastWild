@@ -36,14 +36,6 @@ final class AdjustAttributionAdapter: NSObject, AttributionSDKProviding, Attribu
     }
   }
 
-  func trackPurchase(eventToken: String, amount: Double, currency: String) async {
-    await MainActor.run {
-      guard let event = ADJEvent(eventToken: eventToken) else { return }
-      event.setRevenue(amount, currency: currency)
-      Adjust.trackEvent(event)
-    }
-  }
-
   func nextAttribution() async -> AttributionSnapshot? {
     for await snapshot in stream { return snapshot }
     return nil

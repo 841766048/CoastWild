@@ -23,26 +23,13 @@ final class BusinessBridgeActionTests: XCTestCase {
             (.enableEdgePan(edgePan), .setEdgePan(edgePan)),
             (.logout, .logout),
             (.updateLanguage("zh-TW"), .setLanguage("zh-Hans")),
-            (.updateCoins, .refreshEntitlements),
             (.nativeLog("loaded"), .nativeLog(event: "NativeLog", messageLength: 6, summary: "loaded")),
             (.newTppClose, .callback(.closeInternalWeb)),
-            (.openVipService, .callback(.openVIPService)),
-            (.recharge, .callback(.recharge)),
         ]
 
         for (message, expectedAction) in mappings {
             XCTAssertEqual(BusinessBridgeActionPlanner.action(for: message), expectedAction)
         }
-    }
-
-    func testPlannerLeavesIAPAndCreateOrderMessagesForTheirExistingOwner() {
-        let purchase = AppPurchasePayload(goodsCode: "vip.monthly", paySource: "home", invitationID: "invite")
-        let log = PurchaseLogPayload(amount: 9.99, currency: "USD")
-
-        XCTAssertNil(BusinessBridgeActionPlanner.action(for: .openAppPurchase(purchase)))
-        XCTAssertNil(BusinessBridgeActionPlanner.action(for: .logPurchase(log)))
-        XCTAssertNil(BusinessBridgeActionPlanner.action(for: .getProductPrice(["vip.monthly"])))
-        XCTAssertNil(BusinessBridgeActionPlanner.action(for: .onCreateOrder))
     }
 
     func testLanguageNormalizationUsesSimplifiedChineseForChineseLocalesAndEnglishOtherwise() {

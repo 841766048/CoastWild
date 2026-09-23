@@ -5,7 +5,6 @@ public struct IntegrationRuntimeSnapshot: Equatable, Sendable {
     public let termsURL: URL
     public let appID: String
     public let adjustToken: String
-    public let adjustPurchaseToken: String
     public internal(set) var riskAreaCode: String?
     public internal(set) var attributionSDK: String = "AJ"
     public internal(set) var facebookAppID: String?
@@ -29,21 +28,18 @@ public struct IntegrationRuntimeSnapshot: Equatable, Sendable {
         termsURL = environment.termsURL
         appID = environment.appStoreID
         adjustToken = environment.adjustToken
-        adjustPurchaseToken = environment.adjustPurchaseToken
     }
 
     init(
         privacyURL: URL,
         termsURL: URL,
         appID: String,
-        adjustToken: String,
-        adjustPurchaseToken: String
+        adjustToken: String
     ) {
         self.privacyURL = privacyURL
         self.termsURL = termsURL
         self.appID = appID
         self.adjustToken = adjustToken
-        self.adjustPurchaseToken = adjustPurchaseToken
     }
 }
 
@@ -75,9 +71,7 @@ public actor IntegrationRuntimeConfiguration {
             privacyURL: httpsURL(externalData[prefix + "privacy"]) ?? defaults.privacyURL,
             termsURL: httpsURL(externalData[prefix + "terms"]) ?? defaults.termsURL,
             appID: nonemptyString(externalData[prefix + "app_id"]) ?? defaults.appID,
-            adjustToken: nonemptyString(externalData[prefix + "aj_token"]) ?? defaults.adjustToken,
-            adjustPurchaseToken: nonemptyString(externalData[prefix + "aj_purchase_token"])
-                ?? defaults.adjustPurchaseToken
+            adjustToken: nonemptyString(externalData[prefix + "aj_token"]) ?? defaults.adjustToken
         )
         current.configuration = configuration
         current.encryptedConfiguration = encryptedConfiguration

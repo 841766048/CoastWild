@@ -120,7 +120,6 @@ final class IntegrationNetworkTests: XCTestCase {
                         "test.duckegg.ios:terms": "https://remote.example/terms",
                         "test.duckegg.ios:app_id": "99887766",
                         "test.duckegg.ios:aj_token": "remote-adjust",
-                        "test.duckegg.ios:aj_purchase_token": "remote-purchase",
                     ],
                 ]],
             ],
@@ -159,7 +158,6 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertEqual(snapshot.termsURL.absoluteString, "https://remote.example/terms")
         XCTAssertEqual(snapshot.appID, "99887766")
         XCTAssertEqual(snapshot.adjustToken, "remote-adjust")
-        XCTAssertEqual(snapshot.adjustPurchaseToken, "remote-purchase")
     }
 
     func testGetConfigDoesNotApplyOverridesWhenK4CannotDecrypt() async throws {
@@ -194,7 +192,7 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertEqual(snapshot, IntegrationRuntimeSnapshot(environment: environment))
     }
 
-    func testFiveSecretEndpointsUseDerivedKeyAndExpectedParameters() async throws {
+    func testThreeSecretEndpointsUseDerivedKeyAndExpectedParameters() async throws {
         let host = URL(string: "https://test-app.bigegg.work")!
         let key = "1234567890abcdeffedcba9876543210"
         let response = try encryptedResponse(
@@ -202,7 +200,7 @@ final class IntegrationNetworkTests: XCTestCase {
             key: key,
             url: host
         )
-        let transport = ScriptedTransport(results: Array(repeating: .success(response), count: 5))
+        let transport = ScriptedTransport(results: Array(repeating: .success(response), count: 3))
         let client = makeClient(
             host: host,
             transport: transport,
@@ -213,18 +211,6 @@ final class IntegrationNetworkTests: XCTestCase {
         _ = try await client.getStrategy(session: session)
         _ = try await client.oauth(
             OAuthRequest(token: "device-123", relogin: true, riskInfo: "risk"),
-            session: session
-        )
-        _ = try await client.createRecharge(
-            RechargeRequest(goodsCode: "sku.1", paySource: "profile", invitationID: "invite"),
-            session: session
-        )
-        _ = try await client.verifyReceipt(
-            ReceiptVerificationRequest(
-                orderNumber: "order-1",
-                receipt: "receipt-data",
-                transactionID: "transaction-1"
-            ),
             session: session
         )
         _ = try await client.submitAttribution(
@@ -247,8 +233,6 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertEqual(requests.map { $0.url?.path }, [
             IntegrationEndpointPaths.default.getStrategy,
             IntegrationEndpointPaths.default.oauth,
-            IntegrationEndpointPaths.default.createRecharge,
-            IntegrationEndpointPaths.default.paymentRecharge,
             IntegrationEndpointPaths.default.ascribeRecord,
         ])
         let bodies = try requests.map { request in
@@ -260,62 +244,8 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertEqual(bodies[1]["oauthType"] as? String, "4")
         XCTAssertEqual(bodies[1]["relogin"] as? String, "1")
         XCTAssertEqual(bodies[1]["info"] as? String, "risk")
-        XCTAssertEqual(bodies[2]["goodsCode"] as? String, "sku.1")
-        XCTAssertEqual(bodies[2]["entry"] as? String, "profile")
-        XCTAssertEqual(bodies[2]["source"] as? String, "invite")
-        XCTAssertEqual(bodies[2]["payChannel"] as? String, "IAP")
-        XCTAssertEqual(bodies[3]["orderNo"] as? String, "order-1")
-        XCTAssertEqual(bodies[3]["payload"] as? String, "receipt-data")
-        XCTAssertEqual(bodies[3]["transactionId"] as? String, "transaction-1")
-        XCTAssertEqual(bodies[3]["type"] as? String, "1")
-        XCTAssertEqual(bodies[4]["attributionSdk"] as? String, "AJ")
+        XCTAssertEqual(bodies[2]["attributionSdk"] as? String, "AJ")
         XCTAssertTrue(bodies.allSatisfy { $0["http_headers"] != nil })
-    }
-
-    func testProductionPurchaseServerVerifiesRestoreWithoutOrderID() async throws {
-        let host = URL(string: "https://test-app.bigegg.work")!
-        let key = "1234567890abcdeffedcba9876543210"
-        let response = try encryptedResponse(
-            ["code": 0, "msg": "", "data": [:]],
-            key: key,
-            url: host
-        )
-        let transport = ScriptedTransport(results: [.success(response)])
-        let client = makeClient(
-            host: host,
-            transport: transport,
-            keyStore: IntegrationKeyStore(initialKey: key)
-        )
-        let suiteName = "IntegrationNetworkTests.\(#function).\(UUID().uuidString)"
-        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        let sessions = RemoteSessionStore(defaults: defaults)
-        try await sessions.save(RemoteSession(oauthResponse: try JSONValue(any: [
-            "token": "session-token",
-            "userInfo": ["userId": "user-42"],
-            "isFirstRegister": 0,
-        ])))
-        let server = IntegrationPurchaseServer(client: client, sessions: sessions)
-
-        _ = try await server.verify(
-            orderID: nil,
-            transaction: StoreTransaction(
-                productID: "monthly",
-                transactionID: "tx-restore",
-                signedData: "signed-transaction"
-            )
-        )
-
-        let requests = await transport.requests()
-        let request = try XCTUnwrap(requests.first)
-        let body = try IntegrationCipher.decryptJSONObject(
-            String(decoding: try XCTUnwrap(request.httpBody), as: UTF8.self),
-            key: key
-        )
-        XCTAssertNil(body["orderNo"])
-        XCTAssertEqual(body["payload"] as? String, "signed-transaction")
-        XCTAssertEqual(body["transactionId"] as? String, "tx-restore")
-        XCTAssertEqual(body["type"] as? String, "1")
     }
 
     func testRequestRetriesTwiceThenReturnsThirdSuccess() async throws {
@@ -597,8 +527,7 @@ final class IntegrationNetworkTests: XCTestCase {
             termsURL: "https://bundled.example/terms",
             appStoreID: "123456",
             bundleIdentifier: "test.duckegg.ios",
-            adjustToken: "bundled-adjust",
-            adjustPurchaseToken: "bundled-purchase"
+            adjustToken: "bundled-adjust"
         )
     }
 

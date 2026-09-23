@@ -14,7 +14,6 @@ public final class BridgeRouter {
         guard let topic = BridgeTopic(rawValue: name) else { throw BridgeError.unknownTopic(name) }
         guard isMainFrame else { throw BridgeError.untrustedFrame }
         guard sourceURL?.scheme?.lowercased() == "https", let host = sourceURL?.host?.lowercased(), allowedHosts.contains(host) else { throw BridgeError.untrustedSource }
-        if topic == .onCreateOrder { throw BridgeError.unsupported(topic) }
         handler?.handle(try BridgeMessage.decode(topic: topic, body: body))
     }
 }

@@ -47,7 +47,6 @@ final class ProfileController: CoastController {
 }
 final class AccountController: CoastController {
   private var deleteButton: UIButton!
-  private var restoreButton: UIButton!
   override func viewDidLoad() {
     super.viewDidLoad(); title = nil; contentTop.constant = 31; stack.spacing = 28
     add(accountPortrait(env, size: 32))
@@ -62,11 +61,6 @@ final class AccountController: CoastController {
     }
     logout.accessibilityIdentifier = "account.logout"
     add(logout)
-    restoreButton = coastButton(env.t("Restore purchases", "恢复购买"), secondary: true) { [weak self] in
-      self?.restorePurchases()
-    }
-    restoreButton.accessibilityIdentifier = "account.restore-purchases"
-    add(restoreButton)
     deleteButton = coastButton(env.t("Delete account", "注销账号"), secondary: true) { [weak self] in
       self?.confirmDeletion()
     }
@@ -79,8 +73,8 @@ final class AccountController: CoastController {
     confirm(
       env.t("Delete account permanently?", "永久注销账号？"),
       env.t(
-        "This permanently removes this account's trips, journals, saved content and progress from this device. The current network request is simulated. Deleting the account does not cancel an Apple subscription; cancel it separately in Apple subscription settings.",
-        "这会永久删除此账号在本设备上的出游、手记、收藏和学习进度。当前网络注销请求为模拟流程。注销账号不会取消 Apple 订阅，请前往 Apple 订阅设置单独取消。"
+        "This permanently removes this account's trips, journals, saved content and progress from this device. The current network request is simulated.",
+        "这会永久删除此账号在本设备上的出游、手记、收藏和学习进度。当前网络注销请求为模拟流程。"
       )
     ) { [weak self] in self?.performDeletion() }
   }
@@ -103,24 +97,6 @@ final class AccountController: CoastController {
     }
   }
 
-  private func restorePurchases() {
-    restoreButton.isEnabled = false
-    restoreButton.configuration?.showsActivityIndicator = true
-    Task { [weak self] in
-      guard let self else { return }
-      do {
-        let restored = try await env.restorePurchases()
-        restoreButton.isEnabled = true; restoreButton.configuration?.showsActivityIndicator = false
-        message(
-          env.t("Restore complete", "恢复完成"),
-          env.t("Restored \(restored.count) purchase(s).", "已恢复 \(restored.count) 笔购买。")
-        )
-      } catch {
-        restoreButton.isEnabled = true; restoreButton.configuration?.showsActivityIndicator = false
-        message(env.t("Restore failed", "恢复失败"), env.t("Please try again later.", "请稍后重试。"))
-      }
-    }
-  }
 }
 final class PreferencesController: CoastController {
   override func viewDidLoad() {

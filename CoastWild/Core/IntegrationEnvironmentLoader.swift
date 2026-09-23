@@ -44,7 +44,6 @@ public enum IntegrationEnvironmentLoader {
             appStoreID: string("CoastAppStoreID", in: info),
             bundleIdentifier: bundleIdentifier,
             adjustToken: string("CoastAdjustToken", in: info),
-            adjustPurchaseToken: string("CoastAdjustPurchaseToken", in: info),
             reportSubheading: string("CoastReportSubheading", in: info),
             reportDescription: string("CoastReportDescription", in: info),
             smallIconName: string("CoastSmallIconName", in: info),

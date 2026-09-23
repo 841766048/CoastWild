@@ -2,11 +2,7 @@ import Foundation
 
 public enum JavaScriptCallbackEncoder {
     public static func backgroundLoginSuccess(_ value: JSONValue) throws -> String { try jsonCallback("backgroundLoginSuccess", value) }
-    public static func iapLog(_ value: JSONValue) throws -> String { try jsonCallback("iapLog", value) }
-    public static func productPriceResult(_ value: JSONValue) throws -> String { try jsonCallback("getProductPriceResult", value) }
     public static func closeInternalWeb() -> String { "newTppClose();" }
-    public static func openVIPService() -> String { "openVipService();" }
-    public static func recharge() -> String { "recharge();" }
     public static func innerWebShow(isVisible: Bool) -> String { "innerWebShow(\"\(isVisible ? "1" : "0")\");" }
 
     private static func jsonCallback(_ function: String, _ value: JSONValue) throws -> String {

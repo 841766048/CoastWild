@@ -2,13 +2,12 @@ import XCTest
 @testable import CoastWildCore
 
 final class BridgeTests: XCTestCase {
-    func testAllNineteenTopicsAreDeclared() {
+    func testAllNonPaymentTopicsAreDeclared() {
         XCTAssertEqual(Set(BridgeTopic.allCases.map(\.rawValue)), Set([
-            "OpenAppPurchase", "LogPurchase", "onCreateOrder", "GetProductPrice",
             "Logout", "BackgroundLogin", "DidMoveToMainPage",
             "OpenAppBrowser", "OpenLink", "OpenInternalWeb", "OpenAppSettings",
-            "OpenAppStoreReview", "EnableEdgePan", "newTppClose", "openVipService",
-            "recharge", "UpdateCoins", "UpdateLanguage", "NativeLog",
+            "OpenAppStoreReview", "EnableEdgePan", "newTppClose",
+            "UpdateLanguage", "NativeLog",
         ]))
     }
 
@@ -16,10 +15,7 @@ final class BridgeTests: XCTestCase {
         XCTAssertEqual(try BridgeMessage.decode(topic: .openAppBrowser, body: "https://example.com/help"), .openAppBrowser(URL(string: "https://example.com/help")!))
         XCTAssertEqual(try BridgeMessage.decode(topic: .openLink, body: "https://example.com"), .openLink(URL(string: "https://example.com")!))
         XCTAssertEqual(try BridgeMessage.decode(topic: .openInternalWeb, body: ["url": "https://example.com/inside", "show": "0", "title": "Inside"]), .openInternalWeb(.init(url: URL(string: "https://example.com/inside")!, showsNavigationBar: false, title: "Inside")))
-        XCTAssertEqual(try BridgeMessage.decode(topic: .logPurchase, body: ["paidAmount": 9.99, "paidCurrency": "USD"]), .logPurchase(.init(amount: 9.99, currency: "USD")))
         XCTAssertEqual(try BridgeMessage.decode(topic: .enableEdgePan, body: ["enable": "1", "left": "0"]), .enableEdgePan(.init(isEnabled: true, isLeftEdge: false)))
-        XCTAssertEqual(try BridgeMessage.decode(topic: .openAppPurchase, body: ["goodsCode": "sku.monthly", "paySource": "home", "invitationId": "invite"]), .openAppPurchase(.init(goodsCode: "sku.monthly", paySource: "home", invitationID: "invite")))
-        XCTAssertEqual(try BridgeMessage.decode(topic: .getProductPrice, body: ["productIds": "sku.one,sku.two"]), .getProductPrice(["sku.one", "sku.two"]))
         XCTAssertEqual(try BridgeMessage.decode(topic: .updateLanguage, body: "en"), .updateLanguage("en"))
         XCTAssertEqual(try BridgeMessage.decode(topic: .nativeLog, body: "loaded"), .nativeLog("loaded"))
         for topic in BridgeTopic.allCases.filter({ $0.acceptsEmptyBody }) {
@@ -27,24 +23,19 @@ final class BridgeTests: XCTestCase {
         }
     }
 
-    func testPayloadDecoderRejectsInvalidURLsMoneyCurrencyFlagsAndSKUs() {
+    func testPayloadDecoderRejectsInvalidURLsAndFlags() {
         assertInvalid(.openAppBrowser, "http://example.com", field: "url")
         assertInvalid(.openInternalWeb, ["url": "https://example.com", "show": "yes"], field: "show")
-        assertInvalid(.logPurchase, ["paidAmount": -1, "paidCurrency": "usd"], field: "paidAmount")
-        assertInvalid(.logPurchase, ["paidAmount": 1, "paidCurrency": "US"], field: "paidCurrency")
         assertInvalid(.enableEdgePan, ["enable": "2", "left": "1"], field: "enable")
-        assertInvalid(.openAppPurchase, ["goodsCode": "bad sku", "paySource": "home", "invitationId": ""], field: "goodsCode")
-        assertInvalid(.getProductPrice, ["productIds": "sku.one,,bad sku"], field: "productIds")
         assertInvalid(.updateLanguage, "", field: "language")
     }
 
-    func testRouterRejectsUnknownUntrustedSubframeAndUnsupportedTopic() {
+    func testRouterRejectsUnknownUntrustedAndSubframeTopics() {
         let handler = BridgeHandlerSpy()
         let router = BridgeRouter(allowedHosts: ["h5.example.com"], handler: handler)
         XCTAssertThrowsError(try router.route(name: "Unknown", body: nil, sourceURL: URL(string: "https://h5.example.com"), isMainFrame: true)) { XCTAssertEqual($0 as? BridgeError, .unknownTopic("Unknown")) }
         XCTAssertThrowsError(try router.route(name: "Logout", body: nil, sourceURL: URL(string: "https://evil.example"), isMainFrame: true)) { XCTAssertEqual($0 as? BridgeError, .untrustedSource) }
         XCTAssertThrowsError(try router.route(name: "Logout", body: nil, sourceURL: URL(string: "https://h5.example.com"), isMainFrame: false)) { XCTAssertEqual($0 as? BridgeError, .untrustedFrame) }
-        XCTAssertThrowsError(try router.route(name: "onCreateOrder", body: nil, sourceURL: URL(string: "https://h5.example.com"), isMainFrame: true)) { XCTAssertEqual($0 as? BridgeError, .unsupported(.onCreateOrder)) }
         XCTAssertTrue(handler.messages.isEmpty)
     }
 

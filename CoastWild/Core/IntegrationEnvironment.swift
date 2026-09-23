@@ -23,7 +23,6 @@ public struct IntegrationEnvironment: Equatable, Sendable {
     public let appStoreID: String
     public let bundleIdentifier: String
     public let adjustToken: String
-    public let adjustPurchaseToken: String
     public let reportSubheading: String
     public let reportDescription: String
     public let smallIconName: String
@@ -40,7 +39,6 @@ public struct IntegrationEnvironment: Equatable, Sendable {
         appStoreID: String,
         bundleIdentifier: String,
         adjustToken: String = "",
-        adjustPurchaseToken: String = "",
         reportSubheading: String = "",
         reportDescription: String = "",
         smallIconName: String = "",
@@ -56,7 +54,6 @@ public struct IntegrationEnvironment: Equatable, Sendable {
         self.appStoreID = appStoreID.trimmingCharacters(in: .whitespacesAndNewlines)
         self.bundleIdentifier = bundleIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)
         self.adjustToken = adjustToken.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.adjustPurchaseToken = adjustPurchaseToken.trimmingCharacters(in: .whitespacesAndNewlines)
         self.reportSubheading = reportSubheading
         self.reportDescription = reportDescription
         self.smallIconName = smallIconName.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -61,8 +61,6 @@ final class CoastEnvironment {
   let remoteSessionCoordinator: RemoteSessionCoordinator
   let attributionCoordinator: AttributionCoordinator?
   let attributionSubmissionCoordinator: AttributionSubmissionCoordinator?
-  let purchaseCoordinator: PurchaseCoordinator?
-  let iapBridgeHandler: IAPBridgeHandler?
   let privacyConsent: PrivacyConsentStore
   let store: CoastStore
   let vault: AccountVault
@@ -72,7 +70,6 @@ final class CoastEnvironment {
   let reminders = CoastReminders()
   private var rescheduleTask: Task<Void, Never>?
   weak var window: UIWindow?
-  private var purchaseUpdatesTask: Task<Void, Never>?
   private var activeRemoteUserID: String?
   var chinese: Bool { store.preferences.language != "en" }
   init() throws {
@@ -117,8 +114,6 @@ final class CoastEnvironment {
       integrationAPI = UITestRemoteAuthenticationAPI()
       attributionCoordinator = nil
       attributionSubmissionCoordinator = nil
-      purchaseCoordinator = nil
-      iapBridgeHandler = nil
     } else {
       let client = IntegrationAPIClient(
         primaryHost: integration.primaryHost,
@@ -143,20 +138,6 @@ final class CoastEnvironment {
           version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
           deviceID: deviceID
         )
-      )
-      let purchaseStore = StoreKit2PurchaseStore(defaults: defaults)
-      let coordinator = PurchaseCoordinator(
-        store: purchaseStore,
-        server: IntegrationPurchaseServer(client: client, sessions: remoteSessions),
-        entitlements: EntitlementStore()
-      )
-      purchaseCoordinator = coordinator
-      iapBridgeHandler = IAPBridgeHandler(
-        catalog: ProductCatalog(store: purchaseStore),
-        coordinator: coordinator,
-        trackPurchase: { payload in
-          await attribution.trackPurchase(amount: payload.amount, currency: payload.currency)
-        }
       )
     }
     remoteSessionCoordinator = RemoteSessionCoordinator(
@@ -420,7 +401,6 @@ final class CoastEnvironment {
       let controller = BusinessWebController(
         url: url, bootstrap: bootstrap, allowedHosts: Set([integration.webHost.host!]),
         appIconDataURL: icon.map { "data:image/jpeg;base64," + $0.base64EncodedString() } ?? "",
-        iapBridgeHandler: iapBridgeHandler,
         onApplicationAction: { [weak self] action in
           Task { @MainActor [weak self, weak bridgeController] in
             guard let self, self.isCurrentBusinessController(bridgeController) else { return }
@@ -433,7 +413,6 @@ final class CoastEnvironment {
       nav.setNavigationBarHidden(true, animated: false)
       window?.rootViewController = nav
     }
-    startPurchaseUpdates()
     Task { await startAttribution(userID: userID) }
   }
   @MainActor private func isCurrentBusinessController(_ controller: BusinessWebController?) -> Bool {
@@ -472,7 +451,6 @@ final class CoastEnvironment {
         do { try await self.logout() }
         catch { self.showRoot() }
       },
-      refreshEntitlements: { [weak self] in _ = try await self?.restorePurchases() },
       persistLanguage: { [weak self] language in
         guard let self else { return }
         var preferences = self.store.preferences
@@ -506,7 +484,6 @@ final class CoastEnvironment {
     showMainInterface()
   }
   @MainActor func logout() async throws {
-    stopPurchaseUpdates()
     await remoteSessionCoordinator.logout()
     activeRemoteUserID = nil
     try store.activate(accountID: nil)
@@ -533,28 +510,14 @@ final class CoastEnvironment {
       }
     )
     try await service.deleteAccount()
-    stopPurchaseUpdates()
     showRoot()
-  }
-  func restorePurchases() async throws -> [EntitlementSnapshot] {
-    guard let purchaseCoordinator else { return [] }
-    return try await purchaseCoordinator.restorePurchases()
-  }
-  func startPurchaseUpdates() {
-    guard purchaseUpdatesTask == nil, let purchaseCoordinator else { return }
-    purchaseUpdatesTask = Task { await purchaseCoordinator.observeTransactionUpdates() }
-  }
-  func stopPurchaseUpdates() {
-    purchaseUpdatesTask?.cancel()
-    purchaseUpdatesTask = nil
   }
   func startAttribution(userID: String) async {
     guard let attributionCoordinator, privacyConsent.isAccepted else { return }
     let configuration = await integrationRuntime.snapshot()
     await attributionCoordinator.start(
       privacyConsentGranted: true,
-      appToken: configuration.adjustToken,
-      purchaseToken: configuration.adjustPurchaseToken
+      appToken: configuration.adjustToken
     )
     let session = await remoteSessions.session()
     if session?.userID == userID, session?.isFirstRegistration == true {

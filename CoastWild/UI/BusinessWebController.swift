@@ -1,7 +1,6 @@
 import UIKit
 import WebKit
 import SafariServices
-import StoreKit
 
 final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, BridgeMessageHandling, UIGestureRecognizerDelegate {
   private let initialURL: URL
@@ -9,7 +8,6 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   private let policy: BusinessWebNavigationPolicy
   private let allowedHosts: Set<String>
   private let appIconDataURL: String
-  private let iapBridgeHandler: (any IAPBridgeHandling)?
   private let onApplicationAction: ((BusinessBridgeAction) -> Void)?
   private let onBridgeMessage: (BridgeMessage) -> Void
   private var webView: WKWebView?
@@ -31,7 +29,6 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   )
 
   init(url: URL, bootstrap: BusinessWebBootstrap, allowedHosts: Set<String>, appIconDataURL: String,
-       iapBridgeHandler: (any IAPBridgeHandling)? = nil,
        onApplicationAction: ((BusinessBridgeAction) -> Void)? = nil,
        onBridgeMessage: @escaping (BridgeMessage) -> Void) {
     initialURL = url
@@ -39,7 +36,6 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
     self.allowedHosts = allowedHosts
     policy = BusinessWebNavigationPolicy(allowedHosts: allowedHosts)
     self.appIconDataURL = appIconDataURL
-    self.iapBridgeHandler = iapBridgeHandler
     self.onApplicationAction = onApplicationAction
     self.onBridgeMessage = onBridgeMessage
     super.init(nibName: nil, bundle: nil)
@@ -272,15 +268,6 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
         allowedHosts: allowedHosts, onVisibilityChange: { [weak self] in self?.evaluate($0) })
       navigationController?.pushViewController(controller, animated: true)
     case .newTppClose: evaluate(JavaScriptCallbackEncoder.closeInternalWeb())
-    case .openAppPurchase, .logPurchase, .onCreateOrder, .getProductPrice:
-      guard let iapBridgeHandler else { onBridgeMessage(message); return }
-      Task { [weak self] in
-        guard let self, let commands = try? await iapBridgeHandler.handle(message) else { return }
-        for command in commands {
-          guard let script = try? command.javaScript() else { continue }
-          evaluate(script)
-        }
-      }
     default:
       guard let action = BusinessBridgeActionPlanner.action(for: message) else { return }
       execute(action, originalMessage: message)
@@ -301,19 +288,18 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
       guard let url = URL(string: UIApplication.openSettingsURLString), UIApplication.shared.canOpenURL(url) else { return }
       UIApplication.shared.open(url)
     case .requestReview:
-      guard let scene = view.window?.windowScene else { return }
-      SKStoreReviewController.requestReview(in: scene)
+      guard bootstrap.appID.allSatisfy({ $0.isNumber }), !bootstrap.appID.isEmpty,
+            let url = URL(string: "https://apps.apple.com/app/id\(bootstrap.appID)?action=write-review") else { return }
+      UIApplication.shared.open(url)
     case let .setEdgePan(payload):
       applyEdgePan(payload)
     case let .callback(callback):
       switch callback {
       case .closeInternalWeb: evaluate(JavaScriptCallbackEncoder.closeInternalWeb())
-      case .openVIPService: evaluate(JavaScriptCallbackEncoder.openVIPService())
-      case .recharge: evaluate(JavaScriptCallbackEncoder.recharge())
       }
     case .openInternalWeb:
       break
-    case .backgroundLogin, .logout, .setLanguage, .refreshEntitlements, .nativeLog:
+    case .backgroundLogin, .logout, .setLanguage, .nativeLog:
       switch BusinessBridgeApplicationDeliveryPolicy.delivery(
         action: action,
         originalMessage: originalMessage,
@@ -352,10 +338,6 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   }
 
   func sendBackgroundLoginSuccess(_ value: JSONValue) throws { evaluate(try JavaScriptCallbackEncoder.backgroundLoginSuccess(value)) }
-  func sendIAPLog(_ value: JSONValue) throws { evaluate(try JavaScriptCallbackEncoder.iapLog(value)) }
-  func sendProductPrices(_ value: JSONValue) throws { evaluate(try JavaScriptCallbackEncoder.productPriceResult(value)) }
-  func sendOpenVIPService() { evaluate(JavaScriptCallbackEncoder.openVIPService()) }
-  func sendRecharge() { evaluate(JavaScriptCallbackEncoder.recharge()) }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     progress.setProgress(1, animated: true); percent.text = "100%"

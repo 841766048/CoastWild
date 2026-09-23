@@ -164,28 +164,6 @@ public final class IntegrationAPIClient: @unchecked Sendable {
         return await runtimeConfiguration?.snapshot().headers(base: base) ?? base
     }
 
-    public func createRecharge(
-        _ request: RechargeRequest,
-        session: RequestSession
-    ) async throws -> JSONValue {
-        try await postWithDerivedKey(
-            path: paths.createRecharge,
-            parameters: request.parameters,
-            session: session
-        )
-    }
-
-    public func verifyReceipt(
-        _ request: ReceiptVerificationRequest,
-        session: RequestSession
-    ) async throws -> JSONValue {
-        try await postWithDerivedKey(
-            path: paths.paymentRecharge,
-            parameters: request.parameters,
-            session: session
-        )
-    }
-
     public func submitAttribution(
         _ request: AttributionRequest,
         session: RequestSession

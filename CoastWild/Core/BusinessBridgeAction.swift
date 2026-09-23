@@ -2,8 +2,6 @@ import Foundation
 
 public enum BusinessBridgeCallback: Equatable, Sendable {
     case closeInternalWeb
-    case openVIPService
-    case recharge
 }
 
 public enum BusinessBridgeAction: Equatable, Sendable {
@@ -17,7 +15,6 @@ public enum BusinessBridgeAction: Equatable, Sendable {
     case setEdgePan(EdgePanPayload)
     case logout
     case setLanguage(String)
-    case refreshEntitlements
     case nativeLog(event: String, messageLength: Int, summary: String)
     case callback(BusinessBridgeCallback)
 }
@@ -25,8 +22,6 @@ public enum BusinessBridgeAction: Equatable, Sendable {
 public enum BusinessBridgeActionPlanner {
     public static func action(for message: BridgeMessage) -> BusinessBridgeAction? {
         switch message {
-        case .openAppPurchase, .logPurchase, .getProductPrice, .onCreateOrder:
-            nil
         case .backgroundLogin:
             .backgroundLogin
         case .didMoveToMainPage:
@@ -45,12 +40,6 @@ public enum BusinessBridgeActionPlanner {
             .setEdgePan(payload)
         case .newTppClose:
             .callback(.closeInternalWeb)
-        case .openVipService:
-            .callback(.openVIPService)
-        case .recharge:
-            .callback(.recharge)
-        case .updateCoins:
-            .refreshEntitlements
         case let .updateLanguage(language):
             .setLanguage(BridgeLanguage.normalized(language))
         case let .nativeLog(message):
@@ -76,7 +65,6 @@ public enum BridgeLanguage {
     var makeBootstrap: (RemoteSession, JSONValue) async throws -> BusinessWebBootstrap
     var sendBackgroundLoginSuccess: (BusinessWebBootstrap) throws -> Void
     var logout: () async throws -> Void
-    var refreshEntitlements: () async throws -> Void
     var persistLanguage: (String) throws -> Void
     var refreshInterface: () -> Void
     var nativeLog: (String, Int, String) -> Void
@@ -97,8 +85,6 @@ public enum BridgeLanguage {
                 }
             case .logout:
                 try await logout()
-            case .refreshEntitlements:
-                try await refreshEntitlements()
             case let .setLanguage(language):
                 try persistLanguage(BridgeLanguage.normalized(language))
                 refreshInterface()

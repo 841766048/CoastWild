@@ -77,51 +77,6 @@ public struct OAuthRequest: Equatable, Sendable {
     }
 }
 
-public struct RechargeRequest: Equatable, Sendable {
-    public let goodsCode: String
-    public let paySource: String
-    public let invitationID: String
-
-    public init(goodsCode: String, paySource: String, invitationID: String) {
-        self.goodsCode = goodsCode
-        self.paySource = paySource
-        self.invitationID = invitationID
-    }
-
-    var parameters: [String: Any] {
-        [
-            "goodsCode": goodsCode,
-            "entry": paySource,
-            "source": invitationID,
-            "payChannel": "IAP",
-        ]
-    }
-}
-
-public struct ReceiptVerificationRequest: Equatable, Sendable {
-    public let orderNumber: String?
-    public let receipt: String
-    public let transactionID: String
-
-    public init(orderNumber: String?, receipt: String, transactionID: String) {
-        self.orderNumber = orderNumber
-        self.receipt = receipt
-        self.transactionID = transactionID
-    }
-
-    var parameters: [String: Any] {
-        var value: [String: Any] = [
-            "payload": receipt,
-            "transactionId": transactionID,
-            "type": "1",
-        ]
-        if let orderNumber, !orderNumber.isEmpty {
-            value["orderNo"] = orderNumber
-        }
-        return value
-    }
-}
-
 public struct AttributionRequest: Equatable, Sendable {
     public let package: String
     public let version: String

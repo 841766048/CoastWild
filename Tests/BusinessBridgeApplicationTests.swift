@@ -67,12 +67,11 @@ import XCTest
         XCTAssertEqual(effects.events, ["language:en", "failure"])
     }
 
-    func testLogoutAndCoinsCallExistingServices() async {
+    func testLogoutCallsExistingService() async {
         let effects = Effects()
         let handler = effects.handler()
         await handler.handle(.logout)
-        await handler.handle(.refreshEntitlements)
-        XCTAssertEqual(effects.events, ["logout", "restore"])
+        XCTAssertEqual(effects.events, ["logout"])
     }
 
     func testNativeLogConsumesOnlyPlannedSanitizedAction() async throws {
@@ -158,7 +157,6 @@ import XCTest
                 },
                 sendBackgroundLoginSuccess: { self.events.append("success"); self.callback = $0 },
                 logout: { self.events.append("logout") },
-                refreshEntitlements: { self.events.append("restore") },
                 persistLanguage: { language in
                     self.events.append("language:\(language)")
                     if self.failPersistence { throw CocoaError(.fileWriteNoPermission) }

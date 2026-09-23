@@ -103,7 +103,7 @@ final class IntegrationRuntimeEpochTests: XCTestCase {
             imHost: "https://im.example.com", logHost: "https://log.example.com",
             privacyURL: "https://bundled.example/privacy", termsURL: "https://bundled.example/terms",
             appStoreID: "123456", bundleIdentifier: "test.duckegg.ios",
-            adjustToken: "bundled-adjust", adjustPurchaseToken: "bundled-purchase"
+            adjustToken: "bundled-adjust"
         )
         var steps: [EpochPausingTransport.Step] = []
         if !directStrategy {
