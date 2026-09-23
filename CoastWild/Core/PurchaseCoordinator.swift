@@ -35,58 +35,89 @@ public enum PurchaseError: Error, Equatable, Sendable {
   case inactiveEntitlement
   case unverifiedTransaction
 }
+public struct PendingPurchase: Equatable, Sendable {
+    public let productID: String
+    public let transactionID: String
+}
 
 public actor PurchaseCoordinator {
     private let store: any PurchaseStoreProviding
     private let server: any PurchaseServerProviding
     private let entitlements: EntitlementStore
-    public init(store: any PurchaseStoreProviding, server: any PurchaseServerProviding, entitlements: EntitlementStore) {
+    private let fulfillment: (any PurchaseTransactionFulfilling)?
+    private var pending: [String: StoreTransaction] = [:]
+    private var processing: [String: Task<EntitlementSnapshot, Error>] = [:]
+    private var purchasingProducts: Set<String> = []
+    private var approvalProducts: Set<String> = []
+    public init(store: any PurchaseStoreProviding, server: any PurchaseServerProviding, entitlements: EntitlementStore, fulfillment: (any PurchaseTransactionFulfilling)? = nil) {
         self.store = store; self.server = server; self.entitlements = entitlements
+        self.fulfillment = fulfillment
+    }
+    public func pendingPurchases() -> [PendingPurchase] {
+        let transactions = pending.values.map { PendingPurchase(productID: $0.productID, transactionID: $0.transactionID) }
+        let approvals = approvalProducts.filter { product in !transactions.contains { $0.productID == product } }
+            .map { PendingPurchase(productID: $0, transactionID: "") }
+        return (transactions + approvals).sorted { ($0.productID, $0.transactionID) < ($1.productID, $1.transactionID) }
+    }
+    public func retryPendingPurchases() async throws -> [EntitlementSnapshot] {
+        var recovered: [EntitlementSnapshot] = []
+        for transaction in Array(pending.values) { recovered.append(try await complete(transaction)) }
+        return recovered.sorted { $0.productID < $1.productID }
     }
     public func purchase(_ request: PurchaseRequest) async throws -> PurchaseResult {
+        guard !purchasingProducts.contains(request.productID), !approvalProducts.contains(request.productID),
+              !pending.values.contains(where: { $0.productID == request.productID }) else { return .pending }
+        purchasingProducts.insert(request.productID)
+        defer { purchasingProducts.remove(request.productID) }
         let order = try await server.createOrder(request)
         switch try await store.purchase(productID: order.productID, orderID: order.orderID) {
         case .cancelled: return .cancelled
-        case .pending: return .pending
+        case .pending: approvalProducts.insert(request.productID); return .pending
         case .unverified: throw PurchaseError.unverifiedTransaction
         case let .verified(transaction):
-            let entitlement = try await server.verify(orderID: transaction.orderID ?? order.orderID, transaction: transaction)
-            guard entitlement.isActive else { throw PurchaseError.inactiveEntitlement }
-            await entitlements.update(entitlement)
-            await store.finish(transactionID: transaction.transactionID)
+            let retained = StoreTransaction(productID: transaction.productID, transactionID: transaction.transactionID,
+                                            signedData: transaction.signedData, orderID: transaction.orderID ?? order.orderID)
+            let entitlement = try await complete(retained)
             return .purchased(entitlement)
         }
     }
     public func restorePurchases() async throws -> [EntitlementSnapshot] {
         let transactions = try await store.restore()
-        return try await withThrowingTaskGroup(of: (EntitlementSnapshot, String).self) { group in
-            for transaction in transactions {
-                group.addTask { [server] in
-                    (try await server.verify(orderID: transaction.orderID, transaction: transaction), transaction.transactionID)
-                }
-            }
-            var restored: [EntitlementSnapshot] = []
-            for try await (snapshot, transactionID) in group {
-                if snapshot.isActive {
-                    await entitlements.update(snapshot)
-                    await store.finish(transactionID: transactionID)
-                    restored.append(snapshot)
-                }
-            }
-            return restored.sorted { $0.productID < $1.productID }
+        for transaction in transactions { pending[transaction.transactionID] = transaction }
+        var restored: [EntitlementSnapshot] = []
+        for transaction in transactions {
+            do { restored.append(try await complete(transaction)) }
+            catch PurchaseError.inactiveEntitlement { continue }
         }
+        return restored.sorted { $0.productID < $1.productID }
     }
     public func observeTransactionUpdates() async {
         let updates = await store.transactionUpdates()
         for await transaction in updates {
             do {
-                let snapshot = try await server.verify(orderID: transaction.orderID, transaction: transaction)
-                guard snapshot.isActive else { continue }
-                await entitlements.update(snapshot)
-                await store.finish(transactionID: transaction.transactionID)
+                _ = try await complete(transaction)
             } catch {
                 // Leave the StoreKit transaction unfinished so a later launch can retry verification.
             }
         }
+    }
+    private func complete(_ transaction: StoreTransaction) async throws -> EntitlementSnapshot {
+        let id = transaction.transactionID
+        if let task = processing[id] { return try await task.value }
+        pending[id] = transaction
+        let task = Task { [server, fulfillment, entitlements, store] in
+            let snapshot = try await server.verify(orderID: transaction.orderID, transaction: transaction)
+            guard snapshot.isActive else { throw PurchaseError.inactiveEntitlement }
+            try await fulfillment?.fulfill(transaction)
+            await entitlements.update(snapshot)
+            await store.finish(transactionID: id)
+            return snapshot
+        }
+        processing[id] = task
+        defer { processing[id] = nil }
+        let snapshot = try await task.value
+        pending[id] = nil
+        approvalProducts.remove(transaction.productID)
+        return snapshot
     }
 }
