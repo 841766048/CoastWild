@@ -1,8 +1,104 @@
 import UIKit
 
+/// Restores the stored session before a login form is ever presented.
+final class StartupController: UIViewController {
+  private let env: CoastEnvironment
+  private let activity = UIActivityIndicatorView(style: .large)
+  private let status = UILabel()
+  private let retry = UIButton(type: .system)
+  private var recoveryTask: Task<Void, Never>?
+  private var started = false
+
+  init(_ env: CoastEnvironment) {
+    self.env = env
+    super.init(nibName: nil, bundle: nil)
+  }
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    view.backgroundColor = UIColor(hex: 0xF6F0E3)
+    let mark = UIImageView(image: UIImage(named: "LaunchMark")?.withRenderingMode(.alwaysTemplate))
+    mark.tintColor = CoastStyle.brand
+    mark.contentMode = .scaleAspectFit
+    mark.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(mark)
+    NSLayoutConstraint.activate([
+      mark.widthAnchor.constraint(equalToConstant: 200),
+      mark.heightAnchor.constraint(equalToConstant: 200),
+      mark.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      mark.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+    ])
+    view.accessibilityIdentifier = "startup.recovery"
+    status.textAlignment = .center
+    status.numberOfLines = 0
+    status.font = .systemFont(ofSize: 15)
+    retry.setTitle(env.t("Try again", "重试"), for: .normal)
+    retry.accessibilityIdentifier = "startup.retry"
+    retry.addAction(UIAction { [weak self] _ in self?.recover() }, for: .touchUpInside)
+    let stack = UIStackView(arrangedSubviews: [activity, status, retry])
+    stack.axis = .vertical; stack.spacing = 20; stack.alignment = .center
+    stack.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(stack)
+    NSLayoutConstraint.activate([
+      stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -36),
+      stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
+      stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32)
+    ])
+  }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    guard !started else { return }
+    started = true
+    recover()
+  }
+
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+    recoveryTask?.cancel()
+  }
+
+  private func recover() {
+    guard recoveryTask == nil else { return }
+    activity.startAnimating(); retry.isHidden = true
+    status.text = env.t("Loading…", "加载中…")
+    recoveryTask = Task { [weak self] in
+      guard let self else { return }
+      defer { recoveryTask = nil }
+      let args = ProcessInfo.processInfo.arguments
+      let state: RemoteLoginState
+      if args.contains("--ui-testing") && args.contains("--ui-testing-manual-login") {
+        state = .idle
+      } else if args.contains("--ui-testing") && args.contains("--seed-account") {
+        state = await env.remoteSessionCoordinator.manualLogin(riskInfo: nil)
+      } else {
+        state = await env.remoteSessionCoordinator.automaticLogin()
+      }
+      guard !Task.isCancelled, env.window?.rootViewController === self else { return }
+      switch StartupRoute(state: state) {
+      case .login:
+        env.window?.rootViewController = env.navigation(RemoteLoginController(env))
+      case .business:
+        guard case let .authenticated(session, strategy) = state else { return }
+        do { try await env.remoteAuthenticated(session: session, strategy: strategy) }
+        catch { showFailure() }
+      case .retry, .loading:
+        showFailure()
+      }
+    }
+  }
+
+  private func showFailure() {
+    activity.stopAnimating()
+    status.text = env.t("Unable to connect. Please check your network and try again.", "暂时无法连接，请检查网络后重试。")
+    retry.isHidden = false
+  }
+}
+
 final class RemoteLoginController: CoastController {
   private let connectivity = ConnectivityMonitor()
-  private var attemptedAutomaticLogin = false
   private var submit: UIButton!
   private let status = coastLabel("", size: 14, color: CoastStyle.red)
   private let activity = UIActivityIndicatorView(style: .medium)
@@ -18,19 +114,6 @@ final class RemoteLoginController: CoastController {
   }
 
   deinit { connectivity.cancel() }
-
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-    guard !attemptedAutomaticLogin else { return }
-    attemptedAutomaticLogin = true
-    if ProcessInfo.processInfo.arguments.contains("--ui-testing-manual-login") { return }
-    if ProcessInfo.processInfo.arguments.contains("--ui-testing") &&
-       ProcessInfo.processInfo.arguments.contains("--seed-account") {
-      performLogin(automatic: false)
-      return
-    }
-    performLogin(automatic: true)
-  }
 
   private func build() {
     contentTop.constant = 28

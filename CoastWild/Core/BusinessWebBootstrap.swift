@@ -140,6 +140,15 @@ public struct BusinessWebBootstrap: Sendable {
         ).withLanguage(language)
     }
 
+    public mutating func updateLanguageIfNeeded(_ language: String) -> Bool {
+        // H5 also sends its language during startup; an unchanged value must not restart it.
+        guard BridgeLanguage.normalized(packageInfo.localeIdentifier) != BridgeLanguage.normalized(language) else {
+            return false
+        }
+        self = withLanguage(language)
+        return true
+    }
+
     public func withLanguage(_ language: String) -> BusinessWebBootstrap {
         let normalized = BridgeLanguage.normalized(language)
         var headers = httpHeaders

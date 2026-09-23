@@ -270,8 +270,10 @@ final class CoastWildUITests: XCTestCase {
     tap(app.buttons["auth.remote.submit"], in: app)
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
     app.terminate()
-    app.launchArguments = ["--ui-testing"]
+    app.launchArguments = ["--ui-testing", "--ui-testing-slow-recovery"]
     app.launch()
+    XCTAssertTrue(app.otherElements["startup.recovery"].waitForExistence(timeout: 5))
+    XCTAssertFalse(app.buttons["auth.remote.submit"].exists)
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
     XCTAssertFalse(app.buttons["auth.remote.submit"].exists)
     XCTAssertFalse(app.buttons["privacy.continue"].exists)

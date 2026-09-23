@@ -347,7 +347,7 @@ final class BusinessWebController: UIViewController, WKNavigationDelegate, WKUID
   }
 
   func refreshLanguage(_ language: String) {
-    bootstrap = bootstrap.withLanguage(language)
+    guard bootstrap.updateLanguageIfNeeded(language) else { return }
     rebuildAndLoad()
   }
 

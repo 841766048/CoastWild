@@ -1,5 +1,19 @@
 import Foundation
 
+public enum StartupRoute: Equatable, Sendable {
+    case loading, login, business, retry
+
+    public init(state: RemoteLoginState) {
+        switch state {
+        case .idle: self = .login
+        case .loading: self = .loading
+        case .authenticated: self = .business
+        case .failed(.api(.httpStatus(401))): self = .login
+        case .failed: self = .retry
+        }
+    }
+}
+
 public enum RemoteLoginPresentation: Equatable, Sendable {
     case ready
     case loading

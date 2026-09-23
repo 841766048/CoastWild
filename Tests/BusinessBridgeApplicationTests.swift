@@ -2,6 +2,27 @@ import XCTest
 @testable import CoastWildCore
 
 @MainActor final class BusinessBridgeApplicationTests: XCTestCase {
+    func testRepeatedLanguageNotificationDoesNotRestartWebLoading() {
+        var value = bootstrap(token: "session", strategy: .object([:])).withLanguage("en")
+        for language in ["en", "en-US", " EN_us ", "en"] {
+            XCTAssertFalse(value.updateLanguageIfNeeded(language))
+        }
+        XCTAssertEqual(value.httpHeaders["Authorization"], "Bearer session")
+    }
+
+    func testActualLanguageChangeRefreshesOnceAndPreservesBootstrap() {
+        var value = bootstrap(token: "session", strategy: .object(["revision": .number(2)])).withLanguage("en")
+        XCTAssertTrue(value.updateLanguageIfNeeded("zh-CN"))
+        XCTAssertFalse(value.updateLanguageIfNeeded("zh-Hans"))
+        XCTAssertFalse(value.updateLanguageIfNeeded("zh_CN"))
+        XCTAssertEqual(value.httpHeaders["lang"], "zh-Hans")
+        XCTAssertEqual(value.packageInfo.localeIdentifier, "zh-Hans")
+        XCTAssertEqual(value.httpHeaders["Authorization"], "Bearer session")
+        XCTAssertEqual(value.strategy, .object(["revision": .number(2)]))
+        XCTAssertTrue(value.updateLanguageIfNeeded("en-US"))
+        XCTAssertFalse(value.updateLanguageIfNeeded("en"))
+    }
+
     func testBackgroundLoginBuildsCallbackFromReturnedSessionAndStrategy() async throws {
         let session = try RemoteSession(oauthResponse: .object([
             "token": .string("fresh-token"), "userInfo": .object(["userId": .string("fresh-user")]),

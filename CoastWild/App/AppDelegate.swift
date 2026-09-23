@@ -280,7 +280,7 @@ final class CoastEnvironment {
     IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
       IQBarButtonItemConfiguration(title: t("Done", "完成"))
     if privacyConsent.isAccepted {
-      window?.rootViewController = navigation(RemoteLoginController(self))
+      window?.rootViewController = StartupController(self)
     } else {
       window?.rootViewController = PrivacyConsentController(self)
     }

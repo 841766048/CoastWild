@@ -16,15 +16,17 @@ targets:
     sources: [CoastWild]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: test.duckegg.ios
+        PRODUCT_BUNDLE_IDENTIFIER: com.huankecontact.test
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Coast & Wild
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: NO
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UIUserInterfaceStyle: Light
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Save the journal photos you choose to your photo library.
+        INFOPLIST_KEY_NSCameraUsageDescription: Allow camera access to capture photos and video and participate in video calls.
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Allow microphone access to record audio and participate in voice and video calls.
         INFOPLIST_KEY_LEGAL_PRIVACY_URL_EN: $(LEGAL_PRIVACY_URL_EN)
         INFOPLIST_KEY_LEGAL_PRIVACY_URL_ZH_HANS: $(LEGAL_PRIVACY_URL_ZH_HANS)
         INFOPLIST_KEY_LEGAL_TERMS_URL_EN: $(LEGAL_TERMS_URL_EN)
