@@ -13,7 +13,7 @@ private func learnLabel(_ text: String, size: CGFloat, weight: UIFont.Weight = .
   return label
 }
 
-final class LearnController: CoastController {
+final class FreeLearnController: CoastController {
   var category = ""
   private var loadTask: Task<Void, Never>?
   private var requestedCategory = ""

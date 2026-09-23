@@ -101,6 +101,7 @@ final class CoastWildUITests: XCTestCase {
     app.launch()
     XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15))
     app.tabBars.buttons["学习"].tap()
+    app.buttons["coins.free-library"].tap()
     XCTAssertTrue(app.descendants(matching: .any)["learn.loading"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["learn.loading.hero"].exists)
     XCTAssertTrue(app.descendants(matching: .any)["learn.loading.card"].exists)
@@ -358,7 +359,14 @@ final class CoastWildUITests: XCTestCase {
     XCTAssertFalse(app.alerts["无法生成图片"].exists)
     capture(name, app: app)
     // 关掉面板，后面的返回操作才能点到导航栏。
-    sheet.buttons["header.closeButton"].tap()
+    if sheet.buttons["header.closeButton"].exists {
+      sheet.buttons["header.closeButton"].tap()
+    } else {
+      // iOS 26 presents this as an anchored popover, without the old close button.
+      let dismissRegion = app.otherElements["PopoverDismissRegion"]
+      XCTAssertTrue(dismissRegion.exists)
+      dismissRegion.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)).tap()
+    }
     XCTAssertTrue(sheet.waitForNonExistence(timeout: 10))
   }
 

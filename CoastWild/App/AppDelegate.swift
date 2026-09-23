@@ -62,6 +62,9 @@ final class CoastEnvironment {
   let attributionCoordinator: AttributionCoordinator?
   let attributionSubmissionCoordinator: AttributionSubmissionCoordinator?
   let purchaseCoordinator: PurchaseCoordinator?
+  let coinWallet: LocalCoinWallet
+  let coinProductCatalog: ProductCatalog?
+  @MainActor lazy var nativeCoins = NativeCoinPurchaseModel(environment: self)
   let iapBridgeHandler: IAPBridgeHandler?
   let privacyConsent: PrivacyConsentStore
   let store: CoastStore
@@ -91,6 +94,13 @@ final class CoastEnvironment {
     let defaults = testing
       ? UserDefaults(suiteName: "com.coastwild.integration.ui-tests")!
       : UserDefaults.standard
+    let coinDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent(testing ? "CoastWildCoinTests" : "CoastWildCoins")
+    if testing && ProcessInfo.processInfo.arguments.contains("--reset-test-data"),
+       FileManager.default.fileExists(atPath: coinDirectory.path) {
+      try FileManager.default.removeItem(at: coinDirectory)
+    }
+    coinWallet = LocalCoinWallet(fileURL: coinDirectory.appendingPathComponent("wallet.json"))
     if testing && ProcessInfo.processInfo.arguments.contains("--reset-test-data") {
       defaults.removePersistentDomain(forName: "com.coastwild.integration.ui-tests")
     }
@@ -117,7 +127,20 @@ final class CoastEnvironment {
       integrationAPI = UITestRemoteAuthenticationAPI()
       attributionCoordinator = nil
       attributionSubmissionCoordinator = nil
+      #if DEBUG
+      if ProcessInfo.processInfo.arguments.contains("--native-coins-test") {
+        let testStore = NativeCoinTestStore()
+        coinProductCatalog = ProductCatalog(store: testStore)
+        purchaseCoordinator = PurchaseCoordinator(store: testStore, server: NativeCoinTestServer(),
+          entitlements: EntitlementStore(), fulfillment: coinWallet)
+      } else {
+        purchaseCoordinator = nil
+        coinProductCatalog = nil
+      }
+      #else
       purchaseCoordinator = nil
+      coinProductCatalog = nil
+      #endif
       iapBridgeHandler = nil
     } else {
       let client = IntegrationAPIClient(
@@ -145,10 +168,12 @@ final class CoastEnvironment {
         )
       )
       let purchaseStore = StoreKit2PurchaseStore(defaults: defaults)
+      coinProductCatalog = ProductCatalog(store: purchaseStore)
       let coordinator = PurchaseCoordinator(
         store: purchaseStore,
         server: IntegrationPurchaseServer(client: client, sessions: remoteSessions),
-        entitlements: EntitlementStore()
+        entitlements: EntitlementStore(),
+        fulfillment: coinWallet
       )
       purchaseCoordinator = coordinator
       iapBridgeHandler = IAPBridgeHandler(
