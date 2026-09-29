@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.huankecontact.test</string>
+	<string>com.huankecontact.coastwild</string>
 	<key>PROJECT_ID</key>
 	<string>coast-wild-20260915</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:396075139301:ios:f093bffac619acebcdd40c</string>
+	<string>1:396075139301:ios:33e5decb0b119794cdd40c</string>
 </dict>
 </plist>

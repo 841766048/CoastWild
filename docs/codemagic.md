@@ -15,7 +15,7 @@
 
 工程 Debug/Release、`project.yml`、`IntegrationConfig.plist`、Codemagic 签名匹配及 CI 校验统一使用 `com.huankecontact.coastwild`。按用户要求，旧 Team ID 和本地开发描述文件配置暂时不变；本次不代表新账号签名迁移完成。
 
-现有 `GoogleService-Info.plist` 仍属于旧 Bundle ID，不能直接修改它的 `BUNDLE_ID` 来伪造新 Firebase 应用。需要在现有 Firebase 项目注册正式 Bundle ID 对应的 iOS 应用，下载并替换完整配置文件；在此之前 CI 前置检查会以 `Firebase bundle ID mismatch` 阻止打包。
+已在原 Firebase 项目 `coast-wild-20260915` 注册正式 Bundle ID 对应的 iOS 应用，并从 Firebase CLI 获取完整 `GoogleService-Info.plist`。新 Firebase App ID 为 `1:396075139301:ios:33e5decb0b119794cdd40c`，与旧应用不同；项目、数据库和存储桶保持不变。Firebase 包名不匹配这一 CI 阻塞已解除，但不代表签名或云端首次打包已验证。
 
 测试后端请求中的 `pkg=test.duckegg.ios` 保持不变。这是原有测试协议约定，不是安装包的 Bundle ID。第二版分支仅同步工程及集成配置的 Bundle ID，不引入第一版专用 Codemagic 流程；本次不上传证书、不触发构建或发布。
 
