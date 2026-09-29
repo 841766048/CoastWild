@@ -4,6 +4,32 @@ final class CoastWildUITests: XCTestCase {
   override func setUpWithError() throws {
     continueAfterFailure = false
   }
+  func testRegionControlsAreRemovedAndUnitsRemainAvailable() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing", "--reset-test-data", "--accept-privacy", "--seed-account"]
+    app.launch()
+    XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15))
+    func assertNoRegion() {
+      for title in ["Mainland China", "United States", "Region", "Explore region"] {
+        XCTAssertFalse(app.buttons[title].exists)
+        XCTAssertFalse(app.staticTexts[title].exists)
+      }
+    }
+    assertNoRegion()
+    app.buttons["Your space"].tap()
+    tap(app.buttons["Preferences"], in: app)
+    XCTAssertTrue(app.staticTexts["Choose your preferred distance and temperature units."].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["Units"].exists)
+    assertNoRegion()
+    app.navigationBars.buttons.firstMatch.tap()
+    app.navigationBars.buttons.firstMatch.tap()
+    app.tabBars.buttons["Trips"].tap()
+    tap(app.buttons["Create trip"].firstMatch, in: app)
+    XCTAssertTrue(app.textFields["trip.name"].waitForExistence(timeout: 5))
+    assertNoRegion()
+    XCTAssertTrue(app.buttons["trip.start"].exists)
+    XCTAssertTrue(app.buttons["trip.end"].exists)
+  }
   func testPublicContentFailureRetryAndSuccessfulEmptyState() {
     let app = XCUIApplication()
     app.launchArguments = ["--ui-testing", "--reset-test-data", "--accept-privacy", "--seed-account", "--ui-testing-content-retry"]
