@@ -5,7 +5,7 @@
     <key>CoastIntegrationMode</key>
     <string>development</string>
     <key>CoastExpectedBundleIdentifier</key>
-    <string>com.huankecontact.test</string>
+    <string>com.huankecontact.coastwild</string>
     <key>CoastPrimaryHost</key>
     <string>https://test-app.bigegg.work</string>
     <key>CoastPrivacyURL</key>

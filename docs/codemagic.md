@@ -9,7 +9,15 @@
 | `dev-checks` | `codex/native-uikit` | Git push，或手动启动 | 测试日志、未签名模拟器 App |
 | `main-ipa` | `main` | 仅手动启动 | App Store 签名 IPA、dSYM、构建日志 |
 
-**当前 IPA 明确连接测试后端，不代表正式上线准备完成。** 当前配置保持 `development`、`https://test-app.bigegg.work`、Bundle ID `com.huankecontact.test`。不自动上传 TestFlight、不提交审核、不发布 App Store。
+**当前 IPA 明确连接测试后端，不代表正式上线准备完成。** 当前配置保持 `development`、`https://test-app.bigegg.work`，正式 Bundle ID 已改为 `com.huankecontact.coastwild`。不自动上传 TestFlight、不提交审核、不发布 App Store。
+
+## 正式 Bundle ID 迁移状态
+
+工程 Debug/Release、`project.yml`、`IntegrationConfig.plist`、Codemagic 签名匹配及 CI 校验统一使用 `com.huankecontact.coastwild`。按用户要求，旧 Team ID 和本地开发描述文件配置暂时不变；本次不代表新账号签名迁移完成。
+
+现有 `GoogleService-Info.plist` 仍属于旧 Bundle ID，不能直接修改它的 `BUNDLE_ID` 来伪造新 Firebase 应用。需要在现有 Firebase 项目注册正式 Bundle ID 对应的 iOS 应用，下载并替换完整配置文件；在此之前 CI 前置检查会以 `Firebase bundle ID mismatch` 阻止打包。
+
+测试后端请求中的 `pkg=test.duckegg.ios` 保持不变。这是原有测试协议约定，不是安装包的 Bundle ID。第二版分支仅同步工程及集成配置的 Bundle ID，不引入第一版专用 Codemagic 流程；本次不上传证书、不触发构建或发布。
 
 `main-ipa` 使用 App Store 类型签名，该 IPA 不能像 Ad Hoc 包一样直接安装到普通设备。当前阶段先验证归档和导出；后续若需要直接安装测试，需明确选择 Ad Hoc 并配置测试设备，不能只改文件后缀。
 
@@ -19,7 +27,7 @@
 
 1. **iOS certificates**：添加有效的 Apple Distribution 证书（`.p12`，包含私钥），填写导出密码。
 2. **iOS provisioning profiles**：添加在 Apple Developer 中手动创建的 **App Store** 类型 `.mobileprovision` 文件。本流程不使用 Xcode-managed 自动管理的描述文件。
-3. 两者必须匹配，并属于团队 **`8S59A5XCJ9`**、Bundle ID **`com.huankecontact.test`**。
+3. 两者必须匹配，并对应 Bundle ID **`com.huankecontact.coastwild`**。当前 CI 仍按用户要求保留团队 **`8S59A5XCJ9`** 的校验；新团队 ID 确认后需要单独迁移。
 4. 确认 Codemagic 显示该描述文件具有匹配的证书。工作流按 Bundle ID 和 `app_store` 类型自动选择，不需要在 YAML 填证书文件名。
 
 也可以先在 Codemagic 配置 Apple Developer Portal / App Store Connect API 集成，再使用平台的获取/生成入口；选择获取手动创建的 App Store 描述文件，不选 Xcode-managed 文件。这里的自动匹配签名资源不等同于 Xcode 自动签名。已有外部证书仍需要对应私钥，不能只上传 `.cer`。本次没有创建、吊销或替换 Apple 证书，也没有写入任何 `.p8`、密码、API token。

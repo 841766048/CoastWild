@@ -6,7 +6,7 @@ import plistlib
 import sys
 from urllib.parse import urlparse
 
-BUNDLE_ID = "com.huankecontact.test"
+BUNDLE_ID = "com.huankecontact.coastwild"
 TEAM_ID = "8S59A5XCJ9"
 
 
@@ -22,7 +22,7 @@ def validate_context(workflow, env, config, firebase):
     require(env.get("CM_PULL_REQUEST", "false") != "true", "These workflows do not accept pull-request builds")
     require(config.get("CoastIntegrationMode") == "development", "This workflow is for the test backend only; configure a separate reviewed production workflow")
     require(config.get("CoastExpectedBundleIdentifier") == BUNDLE_ID, "Integration bundle ID mismatch")
-    require(firebase.get("BUNDLE_ID") == BUNDLE_ID, "Firebase bundle ID mismatch")
+    require(firebase.get("BUNDLE_ID") == BUNDLE_ID, "Firebase bundle ID mismatch: download GoogleService-Info.plist for " + BUNDLE_ID + "; do not edit the old Firebase plist")
     for key in ("CoastPrimaryHost", "CoastPrivacyURL", "CoastTermsURL"):
         value = config.get(key)
         require(isinstance(value, str) and bool(value.strip()), "Missing URL: " + key)

@@ -647,7 +647,7 @@
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = "$(inherited) -ObjC";
-				PRODUCT_BUNDLE_IDENTIFIER = com.huankecontact.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.huankecontact.coastwild;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = huankeProfileDev;
 				SDKROOT = iphoneos;
@@ -738,7 +738,7 @@
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = "$(inherited) -ObjC";
-				PRODUCT_BUNDLE_IDENTIFIER = com.huankecontact.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.huankecontact.coastwild;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = huankeProfileDev;
 				SDKROOT = iphoneos;

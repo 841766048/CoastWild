@@ -46,7 +46,7 @@ targets:
           - ${PODS_ROOT}/Target Support Files/Pods-CoastWild/Pods-CoastWild-resources-${CONFIGURATION}-output-files.xcfilelist
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.huankecontact.test
+        PRODUCT_BUNDLE_IDENTIFIER: com.huankecontact.coastwild
         OTHER_LDFLAGS: "$(inherited) -ObjC"
         CODE_SIGN_STYLE: Manual
         DEVELOPMENT_TEAM: ''
