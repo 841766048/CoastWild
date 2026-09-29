@@ -1,0 +1,38 @@
+workflows:
+  v2-ipa:
+    name: V2 - App Store Connect upload (test backend, manual)
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    integrations:
+      app_store_connect: CoastWild-NewAccount
+    # No triggering section: start manually on codex/native-coin-learning after configuring signing.
+    environment:
+      xcode: "26.1.1"
+      cocoapods: "1.16.2"
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.huankecontact.coastwild
+    cache:
+      cache_paths:
+        - $HOME/Library/Caches/CocoaPods
+        - $HOME/.cocoapods
+    scripts:
+      - name: Require manual V2 build and calculate build number
+        script: python3 scripts/ci/ci_support.py preflight v2-ipa
+      - name: Install locked dependencies
+        script: bash scripts/ci/run.sh dependencies
+      - name: Run configuration and core tests
+        script: bash scripts/ci/run.sh checks
+      - name: Apply cloud signing and export IPA
+        script: bash scripts/ci/run.sh archive
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/xcarchive/*.xcarchive/dSYMs/*.dSYM
+      - build/codemagic/*.log
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        # Upload only: no automatic beta review, App Store review, or release.
+        submit_to_testflight: false
+        submit_to_app_store: false
