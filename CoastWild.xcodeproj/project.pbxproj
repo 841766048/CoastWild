@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		00A6CFC0053A5966DF834D9F /* Pods_CoastWild.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F0F4C9401785B19226EC052A /* Pods_CoastWild.framework */; };
 		02849C5717B959140ECAA486 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 46561D5578A3BCA89A621AAD /* FirebaseFirestore */; };
 		0905CCC1CF46B6A08BB52E4E /* IntegrationAPIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4AB2D6457B1E1CD563DB5C8 /* IntegrationAPIError.swift */; };
 		0A362DD9763E0827A68745C6 /* IntegrationEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBC119B15928D45D56E2615 /* IntegrationEnvironment.swift */; };
@@ -178,7 +177,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				00A6CFC0053A5966DF834D9F /* Pods_CoastWild.framework in Frameworks */,
 				F7ED47903444980E8F4824F9 /* FirebaseCore in Frameworks */,
 				D1E52B6711643DDFC18F018E /* FirebaseAuth in Frameworks */,
 				02849C5717B959140ECAA486 /* FirebaseFirestore in Frameworks */,

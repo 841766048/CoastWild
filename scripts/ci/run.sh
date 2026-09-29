@@ -9,6 +9,8 @@ case "${1:-}" in
     # Use the committed project: regeneration could replace local signing settings.
     [[ "$(pod --version)" == "1.16.2" ]] || { echo "CocoaPods 1.16.2 is required" >&2; exit 1; }
     pod install --deployment
+    # Fail early if dependency integration reintroduces a duplicate static framework.
+    python3 scripts/ci/tests/test_pods_linking.py
     xcodebuild -resolvePackageDependencies -workspace CoastWild.xcworkspace \
       -scheme CoastWild -clonedSourcePackagesDirPath .ci-cache/SourcePackages \
       -onlyUsePackageVersionsFromResolvedFile
