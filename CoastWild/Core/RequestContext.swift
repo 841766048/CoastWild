@@ -23,8 +23,6 @@ public struct RequestContextValues: Equatable, Sendable {
     public let platformVersion: String
     public let localeIdentifier: String
     public let riskAreaCode: String?
-    public let attributionSDK: String
-    public let adjustSDKVersion: String
 
     public init(
         deviceID: String,
@@ -36,9 +34,7 @@ public struct RequestContextValues: Equatable, Sendable {
         country: String,
         platformVersion: String,
         localeIdentifier: String,
-        riskAreaCode: String? = nil,
-        attributionSDK: String,
-        adjustSDKVersion: String
+        riskAreaCode: String? = nil
     ) {
         self.deviceID = deviceID
         self.model = model
@@ -50,8 +46,6 @@ public struct RequestContextValues: Equatable, Sendable {
         self.platformVersion = platformVersion
         self.localeIdentifier = localeIdentifier
         self.riskAreaCode = riskAreaCode
-        self.attributionSDK = attributionSDK
-        self.adjustSDKVersion = adjustSDKVersion
     }
 }
 
@@ -68,7 +62,6 @@ public struct RequestContextProvider: RequestContextProviding {
     }
 
     public func headers(session: RequestSession) -> [String: String] {
-        let usesAppsFlyer = values.attributionSDK == "AF"
         var headers = [
             "device-id": values.deviceID,
             "model": values.model,
@@ -86,8 +79,6 @@ public struct RequestContextProvider: RequestContextProviding {
             "system_language": values.localeIdentifier,
             "user_id": session.userID,
             "sec_ver": "0",
-            "attribution_sdk": usesAppsFlyer ? "AF" : "AJ",
-            "attribution_sdk_ver": usesAppsFlyer ? "0.0.0" : values.adjustSDKVersion,
         ]
         if let riskAreaCode = values.riskAreaCode?.trimmingCharacters(in: .whitespacesAndNewlines),
            !riskAreaCode.isEmpty {

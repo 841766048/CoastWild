@@ -2,13 +2,31 @@ import XCTest
 @testable import CoastWildCore
 
 final class IntegrationEnvironmentTests: XCTestCase {
+    func testRemoteConfigurationUsesEnvironmentPackageWithoutChangingLocalIdentity() async throws {
+        for mode in [IntegrationEnvironment.Mode.development, .release] {
+            let environment = try validEnvironment(mode: mode, primaryHost: "https://api.example.com")
+            let runtime = IntegrationRuntimeConfiguration(environment: environment)
+            await runtime.apply(configuration: try JSONValue(any: ["items": [[
+                "name": "app_ext_data", "data": [
+                    "test.duckegg.ios:app_id": "test-app",
+                    "com.example.coast:app_id": "real-app",
+                ],
+            ]]]))
+            let snapshot = await runtime.snapshot()
+            XCTAssertEqual(snapshot.appID, mode == .development ? "test-app" : "real-app")
+            XCTAssertEqual(environment.bundleIdentifier, "com.example.coast")
+            XCTAssertEqual(environment.integrationPackageIdentifier,
+                           mode == .development ? "test.duckegg.ios" : "com.example.coast")
+        }
+    }
+
     func testNormalizesHostsAndUsesInjectedBundleIdentifier() throws {
         let environment = try IntegrationEnvironment(
             mode: .development,
             primaryHost: "https://api.example.com/",
-            webHost: "https://web.example.com/path/",
-            imHost: "https://im.example.com/",
-            logHost: "https://log.example.com/",
+
+
+
             privacyURL: "https://www.example.com/privacy",
             termsURL: "https://www.example.com/terms",
             appStoreID: "1234567890",
@@ -16,7 +34,6 @@ final class IntegrationEnvironmentTests: XCTestCase {
         )
 
         XCTAssertEqual(environment.primaryHost.absoluteString, "https://api.example.com")
-        XCTAssertEqual(environment.webHost.absoluteString, "https://web.example.com/path")
         XCTAssertEqual(environment.bundleIdentifier, "com.example.coast")
     }
 
@@ -43,9 +60,9 @@ final class IntegrationEnvironmentTests: XCTestCase {
         let environment = try IntegrationEnvironment(
             mode: .release,
             primaryHost: "https://api.example.com",
-            webHost: "https://web.example.com",
-            imHost: "https://im.example.com",
-            logHost: "https://log.example.com",
+
+
+
             privacyURL: "https://www.example.com/privacy",
             termsURL: "https://www.example.com/terms",
             appStoreID: " ",
@@ -80,9 +97,6 @@ final class IntegrationEnvironmentTests: XCTestCase {
         XCTAssertEqual(environment.mode, .development)
         XCTAssertEqual(environment.primaryHost.absoluteString, "https://api.example.com")
         XCTAssertEqual(environment.bundleIdentifier, "com.example.coast")
-        XCTAssertEqual(environment.adjustToken, "adjust-token")
-        XCTAssertEqual(environment.reportSubheading, " - Coast & Wild")
-        XCTAssertEqual(environment.smallIconName, "AppSmallIcon")
     }
 
     func testLoaderReportsMissingKeyWithoutCreatingPartialEnvironment() {
@@ -127,7 +141,6 @@ final class IntegrationEnvironmentTests: XCTestCase {
         )
 
         XCTAssertEqual(environment.primaryHost.absoluteString, "https://api.example.com")
-        XCTAssertEqual(environment.adjustToken, "adjust-token")
     }
 
     func testLoaderRejectsUnknownMode() {
@@ -157,9 +170,7 @@ final class IntegrationEnvironmentTests: XCTestCase {
 
     func testDefaultEndpointPathsMatchIntegrationContract() {
         XCTAssertEqual(IntegrationEndpointPaths.default.getConfig, "/config/getAppConfigPostV2")
-        XCTAssertEqual(IntegrationEndpointPaths.default.getStrategy, "/config/getStrategyPostV2")
         XCTAssertEqual(IntegrationEndpointPaths.default.oauth, "/security/oauth")
-        XCTAssertEqual(IntegrationEndpointPaths.default.ascribeRecord, "/hit/ascribeRecordReqs")
     }
 
     private func validEnvironment(
@@ -169,18 +180,13 @@ final class IntegrationEnvironmentTests: XCTestCase {
         try IntegrationEnvironment(
             mode: mode,
             primaryHost: primaryHost,
-            webHost: "https://web.example.com",
-            imHost: "https://im.example.com",
-            logHost: "https://log.example.com",
+
+
+
             privacyURL: "https://www.example.com/privacy",
             termsURL: "https://www.example.com/terms",
             appStoreID: "1234567890",
-            bundleIdentifier: "com.example.coast",
-            adjustToken: "adjust-token",
-            reportSubheading: " - Coast & Wild",
-            reportDescription: "Outdoor learning and trip planning",
-            smallIconName: "AppSmallIcon",
-            launchImageName: "LaunchImage"
+            bundleIdentifier: "com.example.coast"
         )
     }
 }

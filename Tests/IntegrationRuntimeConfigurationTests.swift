@@ -11,13 +11,8 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
             ["name": "app_fb_client_token", "data": "facebook-token"],
             ["name": "app_ext_data", "data": ["webIndexUrl": "https://web.example.com/start"]],
         ]]), encryptedConfiguration: raw)
-        await store.apply(strategy: .object(["data": .object(["extra": .number(9)])]))
         let snapshot = await store.snapshot()
-        XCTAssertEqual(snapshot.facebookAppID, "facebook-id")
-        XCTAssertEqual(snapshot.facebookClientToken, "facebook-token")
-        XCTAssertEqual(snapshot.webIndexURL?.path, "/start")
         XCTAssertEqual(snapshot.encryptedConfiguration, raw)
-        XCTAssertEqual(snapshot.strategy["data"]?["extra"], .number(9))
         await store.reset()
         let reset = await store.snapshot()
         XCTAssertEqual(reset, IntegrationRuntimeSnapshot(environment: environment))
@@ -27,11 +22,11 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
         let environment = try makeEnvironment()
         let store = IntegrationRuntimeConfiguration(environment: environment)
         await store.apply(configuration: try JSONValue(any: ["items": [[
-            "name": "app_ext_data", "data": ["test.duckegg.ios:aj_token": "old-token"],
+            "name": "app_ext_data", "data": ["test.duckegg.ios:terms": "https://old.example/terms"],
         ]]]))
         await store.apply(configuration: .object(["items": .array([])]))
         let snapshot = await store.snapshot()
-        XCTAssertEqual(snapshot.adjustToken, environment.adjustToken)
+        XCTAssertEqual(snapshot.termsURL, environment.termsURL)
         XCTAssertEqual(snapshot.configuration, .object(["items": .array([])]))
     }
 
@@ -44,7 +39,6 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
                     "test.duckegg.ios:privacy": "https://remote.example/privacy",
                     "test.duckegg.ios:terms": "https://remote.example/terms",
                     "test.duckegg.ios:app_id": "99887766",
-                    "test.duckegg.ios:aj_token": "remote-adjust",
                     "other.bundle:app_id": "must-not-apply",
                 ],
             ]],
@@ -56,7 +50,7 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
         XCTAssertEqual(snapshot.privacyURL.absoluteString, "https://remote.example/privacy")
         XCTAssertEqual(snapshot.termsURL.absoluteString, "https://remote.example/terms")
         XCTAssertEqual(snapshot.appID, "99887766")
-        XCTAssertEqual(snapshot.adjustToken, "remote-adjust")
+        XCTAssertEqual(snapshot.termsURL.absoluteString, "https://remote.example/terms")
     }
 
     func testInvalidAndEmptyValuesFallBackIndependently() async throws {
@@ -68,7 +62,6 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
                     "test.duckegg.ios:privacy": "http://insecure.example/privacy",
                     "test.duckegg.ios:terms": "not-a-url",
                     "test.duckegg.ios:app_id": "  ",
-                    "test.duckegg.ios:aj_token": "valid-token",
                 ],
             ]],
         ])
@@ -79,7 +72,6 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
         XCTAssertEqual(snapshot.privacyURL.absoluteString, "https://bundled.example/privacy")
         XCTAssertEqual(snapshot.termsURL.absoluteString, "https://bundled.example/terms")
         XCTAssertEqual(snapshot.appID, "123456")
-        XCTAssertEqual(snapshot.adjustToken, "valid-token")
     }
 
     func testMalformedPayloadLeavesBundledDefaults() async throws {
@@ -89,7 +81,7 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
         await store.apply(configuration: .object(["items": .string("invalid")]))
         let snapshot = await store.snapshot()
 
-        XCTAssertEqual(snapshot.adjustToken, environment.adjustToken)
+        XCTAssertEqual(snapshot.termsURL, environment.termsURL)
         XCTAssertEqual(snapshot.privacyURL, environment.privacyURL)
     }
 
@@ -98,32 +90,31 @@ final class IntegrationRuntimeConfigurationTests: XCTestCase {
         await store.apply(configuration: try JSONValue(any: [
             "items": [[
                 "name": "app_ext_data",
-                "data": ["test.duckegg.ios:aj_token": "first-token"],
+                "data": ["test.duckegg.ios:terms": "https://first.example/terms"],
             ]],
         ]))
         let firstSnapshot = await store.snapshot()
-        XCTAssertEqual(firstSnapshot.adjustToken, "first-token")
+        XCTAssertEqual(firstSnapshot.termsURL.absoluteString, "https://first.example/terms")
 
         await store.apply(configuration: try JSONValue(any: [
             "items": [["name": "app_ext_data", "data": [:]]],
         ]))
         let snapshot = await store.snapshot()
 
-        XCTAssertEqual(snapshot.adjustToken, "bundled-adjust")
+        XCTAssertEqual(snapshot.termsURL.absoluteString, "https://bundled.example/terms")
     }
 
     private func makeEnvironment() throws -> IntegrationEnvironment {
         try IntegrationEnvironment(
             mode: .development,
             primaryHost: "https://api.example.com",
-            webHost: "https://web.example.com",
-            imHost: "https://im.example.com",
-            logHost: "https://log.example.com",
+
+
+
             privacyURL: "https://bundled.example/privacy",
             termsURL: "https://bundled.example/terms",
             appStoreID: "123456",
-            bundleIdentifier: "test.duckegg.ios",
-            adjustToken: "bundled-adjust"
+            bundleIdentifier: "test.duckegg.ios"
         )
     }
 }

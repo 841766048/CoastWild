@@ -80,9 +80,9 @@ final class StartupController: UIViewController {
       switch StartupRoute(state: state) {
       case .login:
         env.window?.rootViewController = env.navigation(RemoteLoginController(env))
-      case .business:
-        guard case let .authenticated(session, strategy) = state else { return }
-        do { try await env.remoteAuthenticated(session: session, strategy: strategy) }
+      case .main:
+        guard case let .authenticated(session) = state else { return }
+        do { try await env.remoteAuthenticated(session: session) }
         catch { showFailure() }
       case .retry, .loading:
         showFailure()
@@ -164,8 +164,8 @@ final class RemoteLoginController: CoastController {
   private func handle(_ state: RemoteLoginState) async {
     let presentation = RemoteLoginPresentation(state: state, isConnected: connectivity.isConnected)
     render(presentation)
-    if case let .authenticated(session, strategy) = state {
-      do { try await env.remoteAuthenticated(session: session, strategy: strategy) }
+    if case let .authenticated(session) = state {
+      do { try await env.remoteAuthenticated(session: session) }
       catch { render(.retryableFailure) }
     } else if presentation == .offline {
       showOfflineAlert()

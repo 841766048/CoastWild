@@ -1,7 +1,233 @@
 import UIKit
+import FirebaseCore
+import FirebaseAuth
+import FirebaseFirestore
+import CryptoKit
+import ImageIO
 import IQKeyboardManagerSwift
 import IQKeyboardToolbarManager
 import IQKeyboardToolbar
+
+
+/// Firebase identity is device-anonymous; account hashes only partition local business accounts.
+/// Private images use owner-only child documents; credentials are never stored in documents.
+@MainActor final class FirebaseNoteSync {
+  static let changed = Notification.Name("CoastWild.notesSyncChanged")
+  private let store: CoastStore
+  private let deviceID: String
+  private let directory: URL
+  private var task: Task<Void, Never>?
+  private var retry: Task<Void, Never>?
+  private var generation = UUID()
+  private var activeAccount: String?
+  private var paused = false
+  private var requested = false
+  private var identityTask: Task<String, Error>?
+  private(set) var status = "local"
+  private lazy var database: Firestore = {
+    Firestore.firestore()
+  }()
+
+  init(store: CoastStore, deviceID: String, directory: URL) {
+    self.store = store; self.deviceID = deviceID; self.directory = directory
+  }
+
+  func schedule() {
+    guard !paused else { return }
+    if activeAccount != store.accountID {
+      generation = UUID(); task?.cancel(); task = nil; retry?.cancel()
+      activeAccount = store.accountID
+    }
+    guard let account = activeAccount else { setStatus("local"); return }
+    requested = true
+    guard task == nil else { return }
+    retry?.cancel()
+    let epoch = generation
+    task = Task { [weak self] in
+      guard let self else { return }
+      do {
+        repeat {
+          self.requested = false
+          self.setStatus("syncing")
+          let uid = try await self.identity()
+          try self.check(epoch, account)
+          try self.store.prepareNoteSync(scope: uid + "/" + self.deviceID)
+          try self.store.prepareNoteImageSync()
+          let notes = self.collection(uid: uid, account: account)
+          for id in self.store.pendingNoteIDs.sorted() {
+            try self.check(epoch, account)
+            let entry = self.store.ledger.entries.first { $0.id == id }
+            if let entry {
+              try await self.upload(entry, to: notes.document(id), epoch: epoch, account: account)
+            } else {
+              try await self.deleteNote(notes.document(id))
+            }
+            try self.check(epoch, account)
+            try self.store.acknowledgeNote(id: id, uploaded: entry)
+          }
+          try await self.readAndMergeAll(notes, epoch: epoch, account: account)
+          try self.check(epoch, account)
+        } while self.requested || !self.store.pendingNoteIDs.isEmpty
+        self.setStatus("synced")
+      } catch {
+        guard self.generation == epoch else { return }
+        self.setStatus("pending")
+        self.retry = Task { [weak self] in
+          do { try await Task.sleep(nanoseconds: 30_000_000_000) } catch { return }
+          self?.schedule()
+        }
+      }
+      if self.generation == epoch { self.task = nil }
+    }
+  }
+
+  func identity() async throws -> String {
+    if let user = Auth.auth().currentUser { return user.uid }
+    if let identityTask { return try await identityTask.value }
+    let next = Task { try await Auth.auth().signInAnonymously().user.uid }
+    identityTask = next
+    defer { identityTask = nil }
+    return try await next.value
+  }
+
+  private func collection(uid: String, account: String) -> CollectionReference {
+    let partition = SHA256.hash(data: Data(account.utf8)).map { String(format: "%02x", $0) }.joined()
+    return database.collection("users").document(uid).collection("devices").document(deviceID)
+      .collection("accounts").document(partition).collection("notes")
+  }
+
+  private func check(_ epoch: UUID, _ account: String) throws {
+    try Task.checkCancellation()
+    guard generation == epoch, store.accountID == account, !paused else { throw CancellationError() }
+  }
+
+  private func upload(_ entry: CoastEntry, to note: DocumentReference, epoch: UUID, account: String) async throws {
+    let ids = try entry.photos.map(NotePhotoPayload.id)
+    try NotePhotoPayload.validateIDs(ids)
+    let previous = try await note.getDocument(source: .server)
+    let oldIDs = previous.data()?["photoIDs"] as? [String] ?? []
+    try NotePhotoPayload.validateIDs(oldIDs)
+    try check(epoch, account)
+    let batch = database.batch()
+    for (filename, id) in zip(entry.photos, ids) where !oldIDs.contains(id) {
+      let url = directory.appendingPathComponent("Photos").appendingPathComponent(account).appendingPathComponent(filename)
+      let payload = try await Task.detached(priority: .utility) { try NotePhotoCodec.compress(url) }.value
+      try check(epoch, account)
+      var data = try JSONSerialization.jsonObject(with: JSONEncoder().encode(payload)) as! [String: Any]
+      data["updatedAt"] = FieldValue.serverTimestamp()
+      batch.setData(data, forDocument: note.collection("images").document(id))
+    }
+    for id in oldIDs where !ids.contains(id) { batch.deleteDocument(note.collection("images").document(id)) }
+    batch.setData([
+      "title": entry.title, "body": entry.body, "date": entry.date,
+      "isDraft": entry.isDraft, "tags": entry.tagList, "photoIDs": ids,
+      "updatedAt": FieldValue.serverTimestamp(), "schemaVersion": 2,
+    ], forDocument: note)
+    try check(epoch, account)
+    try await batch.commit()
+  }
+
+  private func deleteNote(_ note: DocumentReference) async throws {
+    // Firestore does not cascade parent deletion. Leave the parent until all children are gone.
+    while true {
+      try Task.checkCancellation()
+      let children = try await note.collection("images").limit(to: 20).getDocuments(source: .server)
+      let batch = database.batch()
+      for child in children.documents { batch.deleteDocument(child.reference) }
+      if children.documents.count < 20 { batch.deleteDocument(note) }
+      try await batch.commit()
+      if children.documents.count < 20 { return }
+    }
+  }
+
+  private func restorePhotos(_ ids: [String], note: DocumentReference, staging: URL, epoch: UUID, account: String) async throws -> [String] {
+    try NotePhotoPayload.validateIDs(ids)
+    let folder = directory.appendingPathComponent("Photos").appendingPathComponent(account)
+    for id in ids {
+      try check(epoch, account)
+      let url = folder.appendingPathComponent(id + ".jpg")
+      // Existing local originals remain untouched. Only missing files are fetched.
+      if FileManager.default.fileExists(atPath: url.path) { continue }
+      let snapshot = try await note.collection("images").document(id).getDocument(source: .server)
+      try check(epoch, account)
+      guard let data = snapshot.data() else { throw CoastStoreError("notes.missingPhoto") }
+      // Ignore server timestamp while decoding the explicit image schema.
+      var imageData = data; imageData.removeValue(forKey: "updatedAt")
+      let payload = try JSONDecoder().decode(NotePhotoPayload.self, from: JSONSerialization.data(withJSONObject: imageData))
+      let staged = staging.appendingPathComponent(id + ".jpg")
+      try await Task.detached(priority: .utility) { try NotePhotoCodec.restore(payload, to: staged) }.value
+      try check(epoch, account)
+    }
+    return ids.map { $0 + ".jpg" }
+  }
+
+  private func readAndMergeAll(_ collection: CollectionReference, epoch: UUID, account: String) async throws {
+    let staging = FileManager.default.temporaryDirectory.appendingPathComponent("CoastWildNoteImages").appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: staging) }
+    var result: [CoastEntry] = []
+    var cursor: DocumentSnapshot?
+    while true {
+      try Task.checkCancellation()
+      var query = collection.order(by: FieldPath.documentID()).limit(to: 200)
+      if let cursor { query = query.start(afterDocument: cursor) }
+      let page = try await query.getDocuments(source: .server)
+      try check(epoch, account)
+      for document in page.documents {
+        // A pending local edit/deletion owns its image list until its upload succeeds.
+        if store.pendingNoteIDs.contains(document.documentID) { continue }
+        let data = document.data()
+        guard let title = data["title"] as? String, title.count <= 80,
+              let body = data["body"] as? String, body.count <= 10_000,
+              let date = data["date"] as? String, CoastValidation.parseDate(date) != nil,
+              let draft = data["isDraft"] as? Bool, let tags = data["tags"] as? [String],
+              CoastValidation.tags(tags) == nil else { throw CoastStoreError("notes.invalidRemote") }
+        var entry = CoastEntry(id: document.documentID, title: title, body: body, date: date,
+                               isDraft: draft, tags: tags)
+        if data["schemaVersion"] as? Int == 2 {
+          guard let ids = data["photoIDs"] as? [String] else { throw CoastStoreError("notes.invalidPhoto") }
+          entry.cloudPhotoIDs = ids
+          entry.photos = try await restorePhotos(ids, note: document.reference, staging: staging, epoch: epoch, account: account)
+        }
+        result.append(entry)
+      }
+      guard page.documents.count == 200 else {
+        try check(epoch, account)
+        // No suspension between promotion and the ledger merge: cleanup cannot
+        // remove downloaded files while their note references are still being fetched.
+        try NotePhotoCodec.installRestoredFiles(result.flatMap(\.photos), from: staging,
+          to: directory.appendingPathComponent("Photos").appendingPathComponent(account))
+        try store.mergeRemoteNotes(result)
+        return
+      }
+      cursor = page.documents.last
+    }
+  }
+
+  func deleteCurrentAccountNotes() async throws {
+    guard let account = store.accountID else { return }
+    // If cloud deletion only partly succeeds, a failed operation must not erase local notes on retry.
+    try store.requeueAllNotes()
+    paused = true; generation = UUID(); retry?.cancel()
+    let outstanding = task
+    outstanding?.cancel()
+    // Await an already submitted write before deleting so it cannot recreate a deleted note.
+    await outstanding?.value
+    task = nil
+    let uid = try await identity()
+    let notes = collection(uid: uid, account: account)
+    while true {
+      let page = try await notes.limit(to: 200).getDocuments(source: .server)
+      if page.isEmpty { break }
+      for document in page.documents { try await deleteNote(document.reference) }
+    }
+  }
+
+  func resume() { paused = false; schedule() }
+  private func setStatus(_ value: String) {
+    status = value
+    NotificationCenter.default.post(name: Self.changed, object: nil)
+  }
+}
 
 private enum SimulatedAccountDeletionError: LocalizedError {
   case rejected
@@ -15,6 +241,14 @@ private enum SimulatedAccountDeletionError: LocalizedError {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    if !ProcessInfo.processInfo.arguments.contains("--ui-testing") || ProcessInfo.processInfo.arguments.contains("--ui-testing-public-content") {
+      FirebaseApp.configure()
+      // Configure once before either public content or private notes use Firestore.
+      let db = Firestore.firestore()
+      let settings = db.settings
+      settings.cacheSettings = MemoryCacheSettings()
+      db.settings = settings
+    }
     IQKeyboardManager.shared.isEnabled = true
     IQKeyboardManager.shared.resignOnTouchOutside = true
     IQKeyboardManager.shared.keyboardDistance = 12
@@ -27,12 +261,6 @@ private enum SimulatedAccountDeletionError: LocalizedError {
       coast = environment
       environment.window = window
       environment.showRoot()
-      if ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web-navigation") {
-        environment.showBusinessWebNavigationFixture()
-      }
-      if ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web-coast-navigation") {
-        environment.showBusinessWebCoastNavigationFixture()
-      }
     } catch {
       let vc = UIViewController()
       vc.view.backgroundColor = .systemBackground
@@ -48,10 +276,39 @@ private enum SimulatedAccountDeletionError: LocalizedError {
     return true
   }
   func applicationDidBecomeActive(_ application: UIApplication) {
-    Task { await coast?.retryAttributionIfAuthenticated() }
+    Task {
+      coast?.scheduleNoteSync()
+      coast?.refreshPublicContent()
+    }
   }
 }
 final class CoastEnvironment {
+  @MainActor private lazy var noteSync = FirebaseNoteSync(store: store, deviceID: requestContext.values.deviceID, directory: directory)
+  @MainActor var noteSyncStatus: String { noteSync.status }
+  @MainActor func scheduleNoteSync() {
+    guard !ProcessInfo.processInfo.arguments.contains("--ui-testing"), privacyConsent.isAccepted else { return }
+    noteSync.schedule()
+  }
+  @MainActor func refreshPublicContent(force: Bool = false) {
+    let args = ProcessInfo.processInfo.arguments
+    #if DEBUG
+    if args.contains("--ui-testing"), args.contains("--ui-testing-content-retry"), privacyConsent.isAccepted {
+      publicContent.refreshEmptyFixture(force: force) { [weak self] catalog in
+        self?.catalog = catalog
+        self?.learning.replaceLessons(catalog.lessons)
+      }
+      return
+    }
+    #endif
+    guard (!args.contains("--ui-testing") || args.contains("--ui-testing-public-content")), privacyConsent.isAccepted else { return }
+    publicContent.refresh(force: force, identity: { [weak self] in
+      guard let self else { throw CancellationError() }
+      return try await self.noteSync.identity()
+    }, apply: { [weak self] catalog in
+      self?.catalog = catalog
+      self?.learning.replaceLessons(catalog.lessons)
+    })
+  }
   let integration: IntegrationEnvironment
   let integrationRuntime: IntegrationRuntimeConfiguration
   let deviceIdentity: DeviceIdentityStore
@@ -59,19 +316,18 @@ final class CoastEnvironment {
   let integrationAPI: any RemoteAuthenticationAPI
   let requestContext: RequestContextProvider
   let remoteSessionCoordinator: RemoteSessionCoordinator
-  let attributionCoordinator: AttributionCoordinator?
-  let attributionSubmissionCoordinator: AttributionSubmissionCoordinator?
   let privacyConsent: PrivacyConsentStore
   let store: CoastStore
   let vault: AccountVault
-  let catalog: Catalog
+  private(set) var catalog: Catalog
+  let publicContent: PublicContentService
   let learning: LearningRepository
   let directory: URL
   let reminders = CoastReminders()
   private var rescheduleTask: Task<Void, Never>?
   weak var window: UIWindow?
   private var activeRemoteUserID: String?
-  var chinese: Bool { store.preferences.language != "en" }
+  var chinese: Bool { false }
   init() throws {
     guard let integrationURL = Bundle.main.url(
       forResource: "IntegrationConfig",
@@ -100,20 +356,16 @@ final class CoastEnvironment {
     requestContext = RequestContextProvider(values: RequestContextValues(
       deviceID: deviceID,
       model: UIDevice.current.model,
-      language: Locale.preferredLanguages.first ?? "en",
+      language: "en",
       appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
-      bundleIdentifier: integration.bundleIdentifier,
+      bundleIdentifier: integration.integrationPackageIdentifier,
       timeZone: TimeZone.current.identifier,
       country: Locale.current.region?.identifier ?? "",
       platformVersion: UIDevice.current.systemVersion,
-      localeIdentifier: Locale.current.identifier,
-      attributionSDK: "AJ",
-      adjustSDKVersion: "5.8.0" // Matches the pinned Adjust dependency in Podfile.lock.
+      localeIdentifier: Locale.current.identifier
     ))
     if testing {
       integrationAPI = UITestRemoteAuthenticationAPI()
-      attributionCoordinator = nil
-      attributionSubmissionCoordinator = nil
     } else {
       let client = IntegrationAPIClient(
         primaryHost: integration.primaryHost,
@@ -122,23 +374,6 @@ final class CoastEnvironment {
         runtimeConfiguration: integrationRuntime
       )
       integrationAPI = client
-      let attributionAdapter = AdjustAttributionAdapter(isProduction: integration.mode == .release)
-      let attribution = AttributionCoordinator(
-        authorization: SystemTrackingAuthorizationAdapter(),
-        sdk: attributionAdapter
-      )
-      attributionCoordinator = attribution
-      attributionSubmissionCoordinator = AttributionSubmissionCoordinator(
-        provider: attributionAdapter,
-        store: AttributionSnapshotStore(defaults: defaults),
-        reporter: IntegrationAttributionReporter(
-          client: client,
-          sessions: remoteSessions,
-          package: integration.bundleIdentifier,
-          version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
-          deviceID: deviceID
-        )
-      )
     }
     remoteSessionCoordinator = RemoteSessionCoordinator(
       api: integrationAPI,
@@ -148,7 +383,7 @@ final class CoastEnvironment {
     privacyConsent = PrivacyConsentStore(
       defaults: defaults,
       key: "com.coastwild.integration.privacy-consent",
-      currentVersion: 2
+      currentVersion: 4
     )
     directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(testing ? "CoastWildTests" : "CoastWild")
@@ -177,8 +412,7 @@ final class CoastEnvironment {
     store = try CoastStore(directory: directory)
     if !existed {
       var prefs = store.preferences
-      prefs.language = testing && ProcessInfo.processInfo.arguments.contains("--language-zh")
-        ? "zh-Hans" : "en"
+      prefs.language = "en"
       if !testing {
         prefs.region = Locale.current.region?.identifier == "CN" ? "CN" : "US"
         prefs.distanceUnit = prefs.region == "CN" ? "km" : "mi"
@@ -186,12 +420,14 @@ final class CoastEnvironment {
       }
       try store.updatePreferences(prefs)
     }
-    let url = Bundle.main.url(forResource: "catalog", withExtension: "json")!
-    catalog = try JSONDecoder().decode(Catalog.self, from: Data(contentsOf: url))
+    publicContent = PublicContentService(directory: directory,
+      enabled: !testing || ProcessInfo.processInfo.arguments.contains("--ui-testing-public-content"))
+    catalog = try publicContent.current.map(PublicContentService.catalog)
+      ?? .empty
     let showLearningLoading = ProcessInfo.processInfo.arguments.contains("--show-learning-loading")
     let learningDelay: ClosedRange<UInt64> = testing
       ? (showLearningLoading ? 3_000_000_000...3_000_000_000 : 0...0)
-      : 650_000_000...1_100_000_000
+      : 0...0
     let forcedFailure = ProcessInfo.processInfo.arguments.contains("--fail-learning-request")
     learning = LearningRepository(
       lessons: catalog.lessons,
@@ -200,7 +436,10 @@ final class CoastEnvironment {
     try store.activate(accountID: nil)
     // 提醒排的是当前账本里的出游。出游、装备、语言或登录状态一变就整体重排，
     // 这样删掉的出游不会再弹提醒，装备数量和文案语言也不会过期。
-    store.onChange = { [weak self] in self?.scheduleReminders() }
+    store.onChange = { [weak self] in
+      self?.scheduleReminders()
+      Task { @MainActor [weak self] in self?.scheduleNoteSync() }
+    }
     scheduleReminders()
   }
 
@@ -258,6 +497,7 @@ final class CoastEnvironment {
     )
   }
   @MainActor func showRoot() {
+    refreshPublicContent()
     IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
       IQBarButtonItemConfiguration(title: t("Done", "完成"))
     if privacyConsent.isAccepted {
@@ -266,69 +506,12 @@ final class CoastEnvironment {
       window?.rootViewController = PrivacyConsentController(self)
     }
   }
-  @MainActor func showBusinessWebNavigationFixture() {
-    let bootstrap = BusinessWebBootstrap(
-      httpHeaders: [:],
-      baseURLs: .init(
-        app: integration.webHost.absoluteString,
-        im: integration.imHost.absoluteString,
-        log: integration.logHost.absoluteString,
-        privacy: integration.privacyURL.absoluteString,
-        terms: integration.termsURL.absoluteString),
-      packageInfo: .init(
-        localeIdentifier: Locale.current.identifier,
-        appName: "Coast & Wild",
-        packageName: integration.bundleIdentifier),
-      encryptedConfiguration: .object([:]),
-      strategy: .object([:]),
-      userInfo: .object([:]),
-      appID: integration.appStoreID,
-      reportSubheading: integration.reportSubheading,
-      reportDescription: integration.reportDescription)
-    let controller = BusinessWebController(
-      url: integration.webHost,
-      bootstrap: bootstrap,
-      allowedHosts: Set([integration.webHost.host!]),
-      appIconDataURL: "",
-      onBridgeMessage: { _ in })
-    let nav = UINavigationController(rootViewController: controller)
-    nav.setNavigationBarHidden(false, animated: false)
-    window?.rootViewController = nav
-  }
-  @MainActor func showBusinessWebCoastNavigationFixture() {
-    let bootstrap = BusinessWebBootstrap(
-      httpHeaders: [:],
-      baseURLs: .init(
-        app: integration.webHost.absoluteString,
-        im: integration.imHost.absoluteString,
-        log: integration.logHost.absoluteString,
-        privacy: integration.privacyURL.absoluteString,
-        terms: integration.termsURL.absoluteString),
-      packageInfo: .init(
-        localeIdentifier: Locale.current.identifier,
-        appName: "Coast & Wild",
-        packageName: integration.bundleIdentifier),
-      encryptedConfiguration: .object([:]),
-      strategy: .object([:]),
-      userInfo: .object([:]),
-      appID: integration.appStoreID,
-      reportSubheading: integration.reportSubheading,
-      reportDescription: integration.reportDescription)
-    let controller = BusinessWebController(
-      url: integration.webHost,
-      bootstrap: bootstrap,
-      allowedHosts: Set([integration.webHost.host!]),
-      appIconDataURL: "",
-      onBridgeMessage: { _ in })
-    let nav = navigation(controller)
-    nav.setNavigationBarHidden(false, animated: false)
-    window?.rootViewController = nav
-  }
   @MainActor func acceptPrivacy() {
     privacyConsent.accept()
     showRoot()
   }
   @MainActor func showMainInterface() {
+    refreshPublicContent()
     let tabs = CoastTabBarController()
       let controllers: [(UIViewController, String, String)] = [
         (ExploreController(self), t("Explore", "探索"), "search"),
@@ -373,109 +556,14 @@ final class CoastEnvironment {
     nav.navigationBar.prefersLargeTitles = false
     return nav
   }
-  @MainActor func remoteAuthenticated(session: RemoteSession, strategy: JSONValue) async throws {
+  @MainActor func remoteAuthenticated(session: RemoteSession) async throws {
     let userID = session.userID
-    let runtime = await integrationRuntime.snapshot()
-    let headers = runtime.headers(base: requestContext.headers(session: session.requestSession))
-    let bootstrap = try BusinessWebBootstrap.authenticated(
-      environment: integration, runtime: runtime, session: session, strategy: strategy,
-      headers: headers, package: .init(
-        localeIdentifier: store.preferences.language,
-        appName: Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Coast & Wild",
-        packageName: integration.bundleIdentifier), language: store.preferences.language)
-    let url = try BusinessWebEntry.url(
-      bundled: integration.webHost, configured: runtime.webIndexURL, strategy: strategy,
-      timestamp: Int64(Date().timeIntervalSince1970))
     try store.activate(accountID: userID)
     var prefs = store.preferences
     prefs.onboardingDone = true
     try store.updatePreferences(prefs)
     activeRemoteUserID = userID
-    if ProcessInfo.processInfo.arguments.contains("--ui-testing") &&
-       !ProcessInfo.processInfo.arguments.contains("--ui-testing-business-web") {
-      // The existing native UI suite uses a fake authentication API and no remote H5.
-      showMainInterface()
-    } else {
-      let icon = UIImage(named: integration.smallIconName)?.jpegData(compressionQuality: 0.2)
-      weak var bridgeController: BusinessWebController?
-      let controller = BusinessWebController(
-        url: url, bootstrap: bootstrap, allowedHosts: Set([integration.webHost.host!]),
-        appIconDataURL: icon.map { "data:image/jpeg;base64," + $0.base64EncodedString() } ?? "",
-        onApplicationAction: { [weak self] action in
-          Task { @MainActor [weak self, weak bridgeController] in
-            guard let self, self.isCurrentBusinessController(bridgeController) else { return }
-            await self.applicationBridgeHandler(for: bridgeController).handle(action)
-          }
-        },
-        onBridgeMessage: { _ in })
-      bridgeController = controller
-      let nav = navigation(controller)
-      nav.setNavigationBarHidden(true, animated: false)
-      window?.rootViewController = nav
-    }
-    Task { await startAttribution(userID: userID) }
-  }
-  @MainActor private func isCurrentBusinessController(_ controller: BusinessWebController?) -> Bool {
-    guard let controller, let navigation = window?.rootViewController as? UINavigationController else { return false }
-    return navigation.viewControllers.first === controller
-  }
-
-  @MainActor private func applicationBridgeHandler(for controller: BusinessWebController?) -> BusinessBridgeApplicationHandler {
-    BusinessBridgeApplicationHandler(
-      backgroundLogin: { [remoteSessionCoordinator] in
-        await remoteSessionCoordinator.backgroundLogin(riskInfo: nil)
-      },
-      makeBootstrap: { [weak self, weak controller] session, strategy in
-        guard let self else { throw CancellationError() }
-        let runtime = await self.integrationRuntime.snapshot()
-        let latestSession = await self.remoteSessions.session()
-        guard self.isCurrentBusinessController(controller), latestSession == session else { throw CancellationError() }
-        let headers = runtime.headers(base: self.requestContext.headers(session: session.requestSession))
-        let bootstrap = try BusinessWebBootstrap.authenticated(
-          environment: self.integration, runtime: runtime, session: session, strategy: strategy,
-          headers: headers, package: .init(
-            localeIdentifier: self.store.preferences.language,
-            appName: Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Coast & Wild",
-            packageName: self.integration.bundleIdentifier), language: self.store.preferences.language)
-        try self.store.activate(accountID: session.userID)
-        self.activeRemoteUserID = session.userID
-        Task { await self.startAttribution(userID: session.userID) }
-        return bootstrap
-      },
-      sendBackgroundLoginSuccess: { [weak self, weak controller] bootstrap in
-        guard let self, self.isCurrentBusinessController(controller) else { return }
-        try controller?.completeBackgroundLogin(with: bootstrap)
-      },
-      logout: { [weak self] in
-        guard let self else { return }
-        do { try await self.logout() }
-        catch { self.showRoot() }
-      },
-      persistLanguage: { [weak self] language in
-        guard let self else { return }
-        var preferences = self.store.preferences
-        preferences.language = language
-        try self.store.updatePreferences(preferences)
-      },
-      refreshInterface: { [weak self, weak controller] in
-        guard let self, self.isCurrentBusinessController(controller) else { return }
-        IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
-          IQBarButtonItemConfiguration(title: self.t("Done", "完成"))
-        controller?.refreshLanguage(self.store.preferences.language)
-      },
-      nativeLog: { event, length, summary in
-        NSLog("%@ length=%ld %@", event, length, summary)
-      },
-      showRecoverableFailure: { [weak self, weak controller] in
-        guard let self, let controller, self.isCurrentBusinessController(controller) else { return }
-        guard controller.presentedViewController == nil else { return }
-        let alert = UIAlertController(
-          title: self.t("Please try again", "请重试"),
-          message: self.t("The request could not be completed. Your current page is kept; please try again.",
-                         "请求暂时未能完成。当前页面已保留，请重试。"), preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: self.t("OK", "好"), style: .default))
-        controller.present(alert, animated: true)
-      })
+    showMainInterface()
   }
 
   @MainActor func authenticated() throws {
@@ -496,6 +584,9 @@ final class CoastEnvironment {
       remoteDelete: {
         try await Task.sleep(nanoseconds: 350_000_000)
         if shouldFail { throw SimulatedAccountDeletionError.rejected }
+        if !ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+          try await self.noteSync.deleteCurrentAccountNotes()
+        }
       },
       localDelete: { [store] in
         try await MainActor.run {
@@ -509,24 +600,18 @@ final class CoastEnvironment {
         await remoteSessionCoordinator.logout()
       }
     )
-    try await service.deleteAccount()
-    showRoot()
-  }
-  func startAttribution(userID: String) async {
-    guard let attributionCoordinator, privacyConsent.isAccepted else { return }
-    let configuration = await integrationRuntime.snapshot()
-    await attributionCoordinator.start(
-      privacyConsentGranted: true,
-      appToken: configuration.adjustToken
-    )
-    let session = await remoteSessions.session()
-    if session?.userID == userID, session?.isFirstRegistration == true {
-      try? await attributionSubmissionCoordinator?.submitOnce(userID: userID)
+    do {
+      try await service.deleteAccount()
+      if !ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+        noteSync.resume()
+      }
+    } catch {
+      if !ProcessInfo.processInfo.arguments.contains("--ui-testing") {
+        noteSync.resume()
+      }
+      throw error
     }
-  }
-  func retryAttributionIfAuthenticated() async {
-    guard let activeRemoteUserID else { return }
-    await startAttribution(userID: activeRemoteUserID)
+    showRoot()
   }
   func photoURL(_ filename: String) -> URL {
     directory.appendingPathComponent("Photos").appendingPathComponent(store.accountID ?? "none")
@@ -714,6 +799,9 @@ final class CoastNavigationController: UINavigationController,
   }
 
   override func pushViewController(_ viewController: UIViewController, animated: Bool) {
+    for controller in viewControllers + [viewController] {
+      controller.navigationItem.backButtonDisplayMode = .minimal
+    }
     super.pushViewController(
       viewController, animated: animated && !UIAccessibility.isReduceMotionEnabled)
   }
@@ -734,6 +822,9 @@ final class CoastNavigationController: UINavigationController,
   }
 
   override func setViewControllers(_ viewControllers: [UIViewController], animated: Bool) {
+    for controller in viewControllers {
+      controller.navigationItem.backButtonDisplayMode = .minimal
+    }
     super.setViewControllers(
       viewControllers, animated: animated && !UIAccessibility.isReduceMotionEnabled)
   }
@@ -745,7 +836,7 @@ final class CoastNavigationController: UINavigationController,
     let root =
       viewController is ExploreController || viewController is LearnController
       || viewController is TripsController || viewController is JournalController
-      || viewController is WelcomeController || viewController is BusinessWebController
+      || viewController is WelcomeController
     setNavigationBarHidden(
       root, animated: animated && !UIAccessibility.isReduceMotionEnabled)
   }

@@ -21,6 +21,6 @@ final class StartupRouteTests: XCTestCase {
             "token": .string("test"), "userInfo": .object(["userId": .string("user")]),
             "isFirstRegister": .number(0)
         ]))
-        XCTAssertEqual(StartupRoute(state: .authenticated(session: session, strategy: .object([:]))), .business)
+        XCTAssertEqual(StartupRoute(state: .authenticated(session: session)), .main)
     }
 }

@@ -1,13 +1,13 @@
 import Foundation
 
 public enum StartupRoute: Equatable, Sendable {
-    case loading, login, business, retry
+    case loading, login, main, retry
 
     public init(state: RemoteLoginState) {
         switch state {
         case .idle: self = .login
         case .loading: self = .loading
-        case .authenticated: self = .business
+        case .authenticated: self = .main
         case .failed(.api(.httpStatus(401))): self = .login
         case .failed: self = .retry
         }
@@ -27,7 +27,7 @@ public enum RemoteLoginPresentation: Equatable, Sendable {
             self = .ready
         case .loading:
             self = .loading
-        case let .authenticated(session, _):
+        case let .authenticated(session):
             self = .authenticated(userID: session.userID)
         case .failed:
             self = isConnected ? .retryableFailure : .offline

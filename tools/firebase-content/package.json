@@ -1,0 +1,10 @@
+{
+  "name": "coast-wild-firebase-content",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "publish": "node publish.mjs",
+    "test": "node --test"
+  }
+}

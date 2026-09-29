@@ -59,7 +59,7 @@ enum LearningHTMLRenderer {
   }
 
   private static func dataURI(named name: String) -> String {
-    guard let image = UIImage(named: name), let data = image.jpegData(compressionQuality: 0.86) else { return "" }
+    guard let image = PublicContentImages.image(named: name), let data = image.jpegData(compressionQuality: 0.86) else { return "" }
     return "data:image/jpeg;base64," + data.base64EncodedString()
   }
 }

@@ -3,7 +3,6 @@ import Foundation
 public protocol RemoteAuthenticationAPI: Sendable {
     func getConfig(session: RequestSession) async throws -> IntegrationConfigBundle
     func oauth(_ request: OAuthRequest, session: RequestSession) async throws -> JSONValue
-    func getStrategy(session: RequestSession) async throws -> JSONValue
     func resetRuntime() async
 }
 
@@ -22,7 +21,7 @@ public enum RemoteLoginError: Error, Equatable, Sendable {
 public enum RemoteLoginState: Equatable, Sendable {
     case idle
     case loading
-    case authenticated(session: RemoteSession, strategy: JSONValue)
+    case authenticated(session: RemoteSession)
     case failed(RemoteLoginError)
 }
 
@@ -62,9 +61,7 @@ public actor RemoteSessionCoordinator {
         do {
             _ = try await api.getConfig(session: session.requestSession)
             guard generation == loginGeneration else { return .idle }
-            let strategy = try await api.getStrategy(session: session.requestSession)
-            guard generation == loginGeneration else { return .idle }
-            currentState = .authenticated(session: session, strategy: strategy)
+            currentState = .authenticated(session: session)
         } catch {
             guard generation == loginGeneration else { return .idle }
             currentState = .failed(map(error))
@@ -79,7 +76,7 @@ public actor RemoteSessionCoordinator {
 
     @discardableResult
     public func backgroundLogin(riskInfo: String?) async -> RemoteLoginState {
-        await deviceLogin(riskInfo: riskInfo, preserveSessionUntilStrategySucceeds: true)
+        await deviceLogin(riskInfo: riskInfo)
     }
 
     public func logout() async {
@@ -95,7 +92,7 @@ public actor RemoteSessionCoordinator {
         await api.resetRuntime()
     }
 
-    private func deviceLogin(riskInfo: String?, preserveSessionUntilStrategySucceeds: Bool = false) async -> RemoteLoginState {
+    private func deviceLogin(riskInfo: String?) async -> RemoteLoginState {
         guard beginLoading() else { return currentState }
         let generation = loginGeneration
 
@@ -117,9 +114,6 @@ public actor RemoteSessionCoordinator {
                 currentState = .failed(.invalidOAuthResponse)
                 return currentState
             }
-            let backgroundStrategy = preserveSessionUntilStrategySucceeds
-                ? try await api.getStrategy(session: session.requestSession) : nil
-            guard generation == loginGeneration else { return .idle }
             do {
                 try await sessions.save(session)
             } catch {
@@ -130,14 +124,7 @@ public actor RemoteSessionCoordinator {
             guard generation == loginGeneration else { return .idle }
             await sessions.markLoginSucceeded()
             guard generation == loginGeneration else { return .idle }
-            let strategy: JSONValue
-            if let backgroundStrategy {
-                strategy = backgroundStrategy
-            } else {
-                strategy = try await api.getStrategy(session: session.requestSession)
-            }
-            guard generation == loginGeneration else { return .idle }
-            currentState = .authenticated(session: session, strategy: strategy)
+            currentState = .authenticated(session: session)
         } catch {
             guard generation == loginGeneration else { return .idle }
             currentState = .failed(map(error))

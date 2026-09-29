@@ -131,16 +131,6 @@ public final class IntegrationAPIClient: @unchecked Sendable {
         )
     }
 
-    public func getStrategy(session: RequestSession) async throws -> JSONValue {
-        let state = await runtimeState.requestState()
-        guard let key = state.key, !key.isEmpty else {
-            throw IntegrationAPIError.missingEncryptionKey
-        }
-        let strategy = try await post(path: paths.getStrategy, parameters: [:], key: key, session: session)
-        await runtimeState.apply(strategy: strategy, epoch: state.epoch)
-        return strategy
-    }
-
     public func oauth(_ request: OAuthRequest, session: RequestSession) async throws -> JSONValue {
         var parameters = request.parameters
         if parameters["info"] == nil,
@@ -162,17 +152,6 @@ public final class IntegrationAPIClient: @unchecked Sendable {
     public func headers(session: RequestSession) async -> [String: String] {
         let base = contextProvider.headers(session: session)
         return await runtimeConfiguration?.snapshot().headers(base: base) ?? base
-    }
-
-    public func submitAttribution(
-        _ request: AttributionRequest,
-        session: RequestSession
-    ) async throws -> JSONValue {
-        try await postWithDerivedKey(
-            path: paths.ascribeRecord,
-            parameters: request.parameters,
-            session: session
-        )
     }
 
     private func postWithDerivedKey(
@@ -287,13 +266,6 @@ private actor IntegrationRuntimeState {
         guard requestEpoch == epoch else { return }
         await configuration?.apply(configuration: value, encryptedConfiguration: encryptedConfiguration)
         await keyStore.store(key)
-    }
-
-    func apply(strategy: JSONValue, epoch requestEpoch: UInt64) async {
-        await acquire()
-        defer { release() }
-        guard requestEpoch == epoch else { return }
-        await configuration?.apply(strategy: strategy)
     }
 
     func reset() async {

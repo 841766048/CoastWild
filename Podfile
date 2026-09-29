@@ -7,7 +7,6 @@ target 'CoastWild' do
   pod 'IQKeyboardManagerSwift', '~> 8.0'
   pod 'BRPickerView/DatePicker', '~> 3.0'
   pod 'SkeletonView', '~> 1.30.4'
-  pod 'Adjust', '5.8.0'
   target 'CoastWildUITests' do
     # UI tests run out of process and import only XCTest, not the app's SDKs.
     inherit! :none

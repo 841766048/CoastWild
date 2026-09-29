@@ -8,3 +8,9 @@ docs/*.diff
 
 Pods/
 .worktrees/
+.firebase/
+firebase-debug*.log
+firestore-debug.log
+tools/firebase-tests/node_modules/
+.firebase-public/
+.firebase-content/

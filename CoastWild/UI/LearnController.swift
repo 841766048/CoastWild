@@ -23,12 +23,20 @@ final class LearnController: CoastController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    NotificationCenter.default.addObserver(self, selector: #selector(contentUpdated), name: PublicContentService.changed, object: nil)
     render()
+  }
+
+  @objc private func contentUpdated() {
+    loadTask?.cancel()
+    cachedLessons.removeAll()
+    renderedInChinese = nil
+    if viewIfLoaded?.window != nil, navigationController?.topViewController === self { render(preservingScrollPosition: true) }
   }
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    if let renderedInChinese, renderedInChinese != env.chinese {
+    if renderedInChinese == nil || renderedInChinese != env.chinese {
       render(preservingScrollPosition: true)
     } else {
       refreshProgressLabels()
@@ -69,6 +77,7 @@ final class LearnController: CoastController {
       add(subtitle)
       stack.setCustomSpacing(14, after: subtitle)
     }
+    if addPublicContentStatus(isEmpty: env.catalog.lessons.isEmpty) { return }
     add(categoryPills())
     if let lessons = cachedLessons[category] {
       renderLessons(lessons)
@@ -183,7 +192,7 @@ final class LearnController: CoastController {
     content.translatesAutoresizingMaskIntoConstraints = false
     content.isUserInteractionEnabled = false
     button.addSubview(content)
-    let image = UIImageView(image: UIImage(named: lesson.image))
+    let image = UIImageView(image: PublicContentImages.image(named: lesson.image))
     image.contentMode = .scaleAspectFill
     image.clipsToBounds = true
     image.heightAnchor.constraint(equalToConstant: imageHeight).isActive = true
@@ -322,7 +331,7 @@ final class LessonController: CoastController {
     icon.heightAnchor.constraint(equalToConstant: 32).isActive = true
     add(icon)
     stack.setCustomSpacing(12, after: icon)
-    let image = UIImageView(image: UIImage(named: value.assetName))
+    let image = UIImageView(image: PublicContentImages.image(named: value.assetName))
     image.contentMode = .scaleAspectFit
     image.clipsToBounds = true
     image.backgroundColor = UIColor(hex: 0xF7F4EA)

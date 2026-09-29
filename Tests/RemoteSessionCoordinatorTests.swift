@@ -16,11 +16,11 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
         let state = await coordinator.automaticLogin()
         let calls = await dependencies.api.calls()
 
-        XCTAssertEqual(state, .authenticated(session: existing, strategy: .object(["route": .string("web")])) )
-        XCTAssertEqual(calls, ["config:saved", "strategy:saved"])
+        XCTAssertEqual(state, .authenticated(session: existing) )
+        XCTAssertEqual(calls, ["config:saved"])
     }
 
-    func testManualAndBackgroundLoginUseThreeStepFlowAndReloginFlag() async throws {
+    func testManualAndBackgroundLoginUseNativeFlowAndReloginFlag() async throws {
         let dependencies = try makeDependencies()
         let coordinator = RemoteSessionCoordinator(
             api: dependencies.api,
@@ -31,13 +31,13 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
         let manual = await coordinator.manualLogin(riskInfo: "risk")
         let manualCalls = await dependencies.api.calls()
         XCTAssertAuthenticated(manual)
-        XCTAssertEqual(manualCalls, ["config:", "oauth:device-uuid:0:risk", "strategy:remote-token"])
+        XCTAssertEqual(manualCalls, ["config:", "oauth:device-uuid:0:risk"])
 
         await dependencies.api.resetCalls()
         let background = await coordinator.backgroundLogin(riskInfo: nil)
         let backgroundCalls = await dependencies.api.calls()
         XCTAssertAuthenticated(background)
-        XCTAssertEqual(backgroundCalls, ["config:", "oauth:device-uuid:1:", "strategy:remote-token"])
+        XCTAssertEqual(backgroundCalls, ["config:", "oauth:device-uuid:1:"])
     }
 
     func testConcurrentLoginDoesNotStartDuplicateRequests() async throws {
@@ -55,10 +55,10 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
         let calls = await dependencies.api.calls()
 
         XCTAssertEqual(duplicate, .loading)
-        XCTAssertEqual(calls, ["config:", "oauth:device-uuid:0:", "strategy:remote-token"])
+        XCTAssertEqual(calls, ["config:", "oauth:device-uuid:0:"])
     }
 
-    func testStrategyFailureKeepsNewSessionAndLogoutRetainsDeviceIdentity() async throws {
+    func testUnusedStrategyCannotBlockLoginAndLogoutRetainsDeviceIdentity() async throws {
         let dependencies = try makeDependencies(strategyError: .network(.notConnectedToInternet))
         let coordinator = RemoteSessionCoordinator(
             api: dependencies.api,
@@ -69,7 +69,7 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
         let state = await coordinator.manualLogin(riskInfo: nil)
         let storedAfterFailure = await dependencies.sessions.session()
 
-        XCTAssertEqual(state, .failed(.api(.network(.notConnectedToInternet))))
+        XCTAssertAuthenticated(state)
         XCTAssertEqual(storedAfterFailure?.token, "remote-token")
 
         await coordinator.logout()
@@ -99,7 +99,7 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
         XCTAssertEqual(stored, existing)
     }
 
-    func testBackgroundStrategyFailurePreservesCurrentSessionAndCanRetry() async throws {
+    func testBackgroundLoginDoesNotRequestWebStrategy() async throws {
         let dependencies = try makeDependencies(strategyError: .network(.notConnectedToInternet))
         let existing = try RemoteSession(oauthResponse: oauthResponse(token: "saved", userID: "existing"))
         try await dependencies.sessions.save(existing)
@@ -108,8 +108,8 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
 
         let failed = await coordinator.backgroundLogin(riskInfo: nil)
         let stored = await dependencies.sessions.session()
-        XCTAssertEqual(failed, .failed(.api(.network(.notConnectedToInternet))))
-        XCTAssertEqual(stored, existing)
+        XCTAssertAuthenticated(failed)
+        XCTAssertEqual(stored?.token, "remote-token")
 
         await dependencies.api.clearStrategyError()
         let retried = await coordinator.backgroundLogin(riskInfo: nil)
@@ -128,7 +128,7 @@ final class RemoteSessionCoordinatorTests: XCTestCase {
         _ = await first.value
         XCTAssertEqual(duplicate, .loading)
         let calls = await dependencies.api.calls()
-        XCTAssertEqual(calls, ["config:", "oauth:device-uuid:0:", "strategy:remote-token"])
+        XCTAssertEqual(calls, ["config:", "oauth:device-uuid:0:"])
     }
 
     func testLogoutDuringBackgroundLoginCannotRestoreTheSession() async throws {

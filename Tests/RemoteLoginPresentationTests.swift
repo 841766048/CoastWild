@@ -13,7 +13,7 @@ final class RemoteLoginPresentationTests: XCTestCase {
         ]))
         XCTAssertEqual(
             RemoteLoginPresentation(
-                state: .authenticated(session: session, strategy: .object([:])),
+                state: .authenticated(session: session),
                 isConnected: true
             ),
             .authenticated(userID: "remote-user")

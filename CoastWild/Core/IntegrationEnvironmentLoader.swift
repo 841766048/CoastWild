@@ -36,18 +36,10 @@ public enum IntegrationEnvironmentLoader {
         return try IntegrationEnvironment(
             mode: mode,
             primaryHost: string("CoastPrimaryHost", in: info),
-            webHost: string("CoastWebHost", in: info),
-            imHost: string("CoastIMHost", in: info),
-            logHost: string("CoastLogHost", in: info),
             privacyURL: string("CoastPrivacyURL", in: info),
             termsURL: string("CoastTermsURL", in: info),
             appStoreID: string("CoastAppStoreID", in: info),
-            bundleIdentifier: bundleIdentifier,
-            adjustToken: string("CoastAdjustToken", in: info),
-            reportSubheading: string("CoastReportSubheading", in: info),
-            reportDescription: string("CoastReportDescription", in: info),
-            smallIconName: string("CoastSmallIconName", in: info),
-            launchImageName: string("CoastLaunchImageName", in: info)
+            bundleIdentifier: bundleIdentifier
         )
     }
 

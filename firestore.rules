@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Administrator-published catalog snapshot: schemaVersion, version, catalogJSON,
+    // images [{name,path,sha256,bytes}]. Separate from all private user collections.
+    // Clients fetch exactly current; publication requires IAM administrator credentials.
+    match /publicCatalog/current {
+      allow get: if request.auth != null;
+      allow list, write: if false;
+    }
+    // Private notes and bounded compressed JPEG backups; never business tokens.
+    // Device UUID and account SHA256 partition data; authentication UID is the security boundary.
+    function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+    function validTag(tags, index) {
+      return tags.size() <= index || (tags[index] is string && tags[index].size() > 0 && tags[index].size() <= 12);
+    }
+    function validNote(data) {
+      return data.keys().hasAll(['title', 'body', 'date', 'isDraft', 'tags', 'updatedAt', 'schemaVersion'])
+        && data.keys().hasOnly(['title', 'body', 'date', 'isDraft', 'tags', 'updatedAt', 'schemaVersion', 'photoIDs'])
+        && data.title is string && data.title.size() <= 80
+        && data.body is string && data.body.size() <= 10000
+        && data.date is string && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.isDraft is bool
+        && data.tags is list && data.tags.size() <= 5
+        && validTag(data.tags, 0) && validTag(data.tags, 1) && validTag(data.tags, 2)
+        && validTag(data.tags, 3) && validTag(data.tags, 4)
+        && ((data.schemaVersion == 1 && !('photoIDs' in data))
+          || (data.schemaVersion == 2 && validPhotos(data.photoIDs)))
+        && data.updatedAt == request.time;
+    }
+    function validPhotoAt(ids, i) {
+      return ids.size() <= i || (ids[i] is string && ids[i].matches('^[A-Za-z0-9_-]{1,100}$'));
+    }
+    function validPhotos(ids) {
+      return ids is list && ids.size() <= 12 && ids.toSet().size() == ids.size()
+        && validPhotoAt(ids,0) && validPhotoAt(ids,1) && validPhotoAt(ids,2)
+        && validPhotoAt(ids,3) && validPhotoAt(ids,4) && validPhotoAt(ids,5)
+        && validPhotoAt(ids,6) && validPhotoAt(ids,7) && validPhotoAt(ids,8)
+        && validPhotoAt(ids,9) && validPhotoAt(ids,10) && validPhotoAt(ids,11);
+    }
+    function validImage(data) {
+      return data.keys().hasAll(['base64','bytes','sha256','width','height','mimeType','schemaVersion','updatedAt'])
+        && data.keys().hasOnly(['base64','bytes','sha256','width','height','mimeType','schemaVersion','updatedAt'])
+        && data.base64 is string && data.base64.size() > 0 && data.base64.size() <= 273068
+        && data.base64.matches('^[A-Za-z0-9+/]*={0,2}$')
+        && data.bytes is int && data.bytes > 0 && data.bytes <= 204800
+        && data.width is int && data.width > 0 && data.width <= 1600
+        && data.height is int && data.height > 0 && data.height <= 1600
+        && data.sha256 is string && data.sha256.matches('^[a-f0-9]{64}$')
+        && data.mimeType == 'image/jpeg' && data.schemaVersion == 1
+        && data.updatedAt == request.time;
+    }
+    match /users/{uid}/devices/{device}/accounts/{account}/notes/{note} {
+      function validPath() {
+        return device.matches('^[A-Za-z0-9-]{1,128}$')
+          && account.matches('^[a-f0-9]{64}$');
+      }
+      allow read, delete: if owner(uid) && validPath();
+      allow create, update: if owner(uid) && validPath()
+        && note.matches('^[A-Za-z0-9-]{1,128}$') && validNote(request.resource.data);
+      match /images/{image} {
+        allow read, delete: if owner(uid) && validPath();
+        allow create, update: if owner(uid) && validPath()
+          && note.matches('^[A-Za-z0-9-]{1,128}$')
+          && image.matches('^[A-Za-z0-9_-]{1,100}$')
+          && validImage(request.resource.data)
+          && image in getAfter(/databases/$(database)/documents/users/$(uid)/devices/$(device)/accounts/$(account)/notes/$(note)).data.photoIDs;
+      }
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

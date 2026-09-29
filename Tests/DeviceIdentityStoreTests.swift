@@ -3,7 +3,7 @@ import XCTest
 @testable import CoastWildCore
 
 final class DeviceIdentityStoreTests: XCTestCase {
-    func testUserDefaultsValueWinsWithoutKeychainAccess() async throws {
+    func testKeychainValueWinsOverUserDefaults() async throws {
         let defaults = makeDefaults()
         defaults.set("cached-device", forKey: "uuidKey")
         let keychain = KeychainFake(value: "keychain-device")
@@ -16,9 +16,19 @@ final class DeviceIdentityStoreTests: XCTestCase {
 
         let value = try store.resolve()
 
-        XCTAssertEqual(value, "cached-device")
-        XCTAssertEqual(keychain.readAccounts, [])
+        XCTAssertEqual(value, "keychain-device")
+        XCTAssertEqual(defaults.string(forKey: "uuidKey"), "keychain-device")
+        XCTAssertEqual(keychain.readAccounts, ["test.duckegg.ios_UUID"])
         XCTAssertEqual(keychain.writes.count, 0)
+    }
+
+    func testLegacyDefaultsValueIsPersistedInKeychain() throws {
+        let defaults = makeDefaults()
+        defaults.set("legacy-device", forKey: "uuidKey")
+        let keychain = KeychainFake(value: nil)
+        let store = DeviceIdentityStore(bundleIdentifier: "real.bundle", defaults: defaults, keychain: keychain)
+        XCTAssertEqual(try store.resolve(), "legacy-device")
+        XCTAssertEqual(keychain.writes, [.init(account: "real.bundle_UUID", value: "legacy-device", accessibility: .afterFirstUnlockThisDeviceOnly)])
     }
 
     func testKeychainValueRestoresUserDefaults() async throws {

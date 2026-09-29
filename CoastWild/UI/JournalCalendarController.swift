@@ -15,6 +15,10 @@ final class JournalCalendarController: CoastController {
   override func viewDidLoad() {
     super.viewDidLoad()
     month = startOfMonth(latestEntryDay() ?? CoastLedger.isoDay(Date()))
+    NotificationCenter.default.addObserver(self, selector: #selector(syncChanged), name: FirebaseNoteSync.changed, object: nil)
+  }
+  @objc private func syncChanged() {
+    if isViewLoaded, view.window != nil, navigationController?.topViewController === self { render() }
   }
 
   override func viewWillAppear(_ animated: Bool) {

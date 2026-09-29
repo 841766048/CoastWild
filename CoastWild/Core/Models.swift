@@ -1,4 +1,58 @@
 import Foundation
+import ImageIO
+
+/// ImageIO runs on a utility task; thumbnails are redrawn/re-encoded without source EXIF/GPS.
+enum NotePhotoCodec {
+  /// Called synchronously on the store's actor immediately before merging note references.
+  static func installRestoredFiles(_ filenames: [String], from staging: URL, to live: URL) throws {
+    let files = Array(Set(filenames))
+    for name in files {
+      _ = try NotePhotoPayload.id(filename: name)
+      guard FileManager.default.fileExists(atPath: live.appendingPathComponent(name).path)
+        || FileManager.default.fileExists(atPath: staging.appendingPathComponent(name).path)
+      else { throw CoastStoreError("notes.missingPhoto") }
+    }
+    try FileManager.default.createDirectory(at: live, withIntermediateDirectories: true)
+    for name in files where !FileManager.default.fileExists(atPath: live.appendingPathComponent(name).path) {
+      try FileManager.default.moveItem(at: staging.appendingPathComponent(name), to: live.appendingPathComponent(name))
+    }
+  }
+
+  static func compress(_ url: URL) throws -> NotePhotoPayload {
+    guard let source = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary)
+    else { throw CoastStoreError("notes.invalidPhoto") }
+    for maximum in [1600, 1200, 900, 640, 400, 240] {
+      try Task.checkCancellation()
+      guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+        kCGImageSourceCreateThumbnailFromImageAlways: true,
+        kCGImageSourceCreateThumbnailWithTransform: true,
+        kCGImageSourceThumbnailMaxPixelSize: maximum,
+      ] as CFDictionary) else { throw CoastStoreError("notes.invalidPhoto") }
+      for quality in [0.8, 0.6, 0.4] {
+        let output = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(output, "public.jpeg" as CFString, 1, nil)
+        else { throw CoastStoreError("notes.invalidPhoto") }
+        CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
+        if CGImageDestinationFinalize(destination), output.length <= NotePhotoPayload.maximumBytes {
+          return try NotePhotoPayload(jpeg: output as Data, width: image.width, height: image.height)
+        }
+      }
+    }
+    throw CoastStoreError("notes.invalidPhoto")
+  }
+
+  static func restore(_ payload: NotePhotoPayload, to url: URL) throws {
+    let data = try payload.decodedJPEG()
+    guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+          let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+          properties[kCGImagePropertyPixelWidth] as? Int == payload.width,
+          properties[kCGImagePropertyPixelHeight] as? Int == payload.height,
+          CGImageSourceCreateImageAtIndex(source, 0, nil) != nil
+    else { throw CoastStoreError("notes.invalidPhoto") }
+    try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try data.write(to: url, options: [.atomic, .completeFileProtection])
+  }
+}
 
 public enum CoastLessonDetailType: String, Codable, Equatable {
     case web
@@ -280,6 +334,49 @@ public struct CoastTripItem: Codable, Identifiable, Equatable {
     }
 }
 
+public struct NotePhotoPayload: Codable, Equatable, Sendable {
+    public static let maximumBytes = 204_800
+    public var base64: String
+    public var bytes: Int
+    public var sha256: String
+    public var width: Int
+    public var height: Int
+    public var mimeType: String
+    public var schemaVersion: Int
+
+    public static func validateIDs(_ ids: [String]) throws {
+        guard ids.count <= 12, Set(ids).count == ids.count,
+              ids.allSatisfy({ $0.range(of: "^[A-Za-z0-9_-]{1,100}$", options: .regularExpression) != nil })
+        else { throw CoastStoreError("notes.invalidPhoto") }
+    }
+
+    public static func id(filename: String) throws -> String {
+        guard filename.hasSuffix(".jpg") else { throw CoastStoreError("notes.invalidPhoto") }
+        let id = String(filename.dropLast(4))
+        try validateIDs([id])
+        return id
+    }
+
+    public init(jpeg: Data, width: Int, height: Int) throws {
+        base64 = jpeg.base64EncodedString(); bytes = jpeg.count
+        sha256 = PublicContentRelease.digest(jpeg)
+        self.width = width; self.height = height
+        mimeType = "image/jpeg"; schemaVersion = 1
+        _ = try decodedJPEG()
+    }
+
+    public func decodedJPEG() throws -> Data {
+        guard schemaVersion == 1, mimeType == "image/jpeg",
+              (1...1600).contains(width), (1...1600).contains(height),
+              bytes > 0, bytes <= Self.maximumBytes, base64.utf8.count <= 273_068,
+              let data = Data(base64Encoded: base64), data.count == bytes,
+              data.prefix(2) == Data([0xff, 0xd8]), data.suffix(2) == Data([0xff, 0xd9]),
+              PublicContentRelease.digest(data) == sha256
+        else { throw CoastStoreError("notes.invalidPhoto") }
+        return data
+    }
+}
+
 public struct CoastEntry: Codable, Identifiable, Equatable {
     public var id: String
     public var title: String
@@ -288,6 +385,8 @@ public struct CoastEntry: Codable, Identifiable, Equatable {
     public var tripID: String?
     public var activityID: String?
     public var photos: [String]
+    /// nil is a legacy text-only cloud snapshot; [] is an authoritative empty image list.
+    public var cloudPhotoIDs: [String]?
     public var isDraft: Bool
     public var sourceEntryID: String?
     /// 新增字段保持可选，已有账本没有这一项也能解码。
@@ -358,6 +457,10 @@ public struct CoastProgress: Codable, Equatable {
 }
 
 public struct CoastLedger: Codable, Equatable {
+    /// Durable outbox. Missing on legacy ledgers; deleted IDs remain until acknowledged.
+    public var pendingNoteIDs: Set<String>?
+    public var noteSyncScope: String?
+    public var noteImageSyncVersion: Int?
     public var trips: [CoastTrip]
     public var entries: [CoastEntry]
     public var bookmarks: Set<String>

@@ -15,57 +15,34 @@ public struct IntegrationEnvironment: Equatable, Sendable {
 
     public let mode: Mode
     public let primaryHost: URL
-    public let webHost: URL
-    public let imHost: URL
-    public let logHost: URL
     public let privacyURL: URL
     public let termsURL: URL
     public let appStoreID: String
     public let bundleIdentifier: String
-    public let adjustToken: String
-    public let reportSubheading: String
-    public let reportDescription: String
-    public let smallIconName: String
-    public let launchImageName: String
+    /// Backend identity is separate from the installed app and local device identity.
+    public var integrationPackageIdentifier: String {
+        mode == .development ? "test.duckegg.ios" : bundleIdentifier
+    }
 
     public init(
         mode: Mode,
         primaryHost: String,
-        webHost: String,
-        imHost: String,
-        logHost: String,
         privacyURL: String,
         termsURL: String,
         appStoreID: String,
-        bundleIdentifier: String,
-        adjustToken: String = "",
-        reportSubheading: String = "",
-        reportDescription: String = "",
-        smallIconName: String = "",
-        launchImageName: String = ""
+        bundleIdentifier: String
     ) throws {
         self.mode = mode
         self.primaryHost = try Self.normalizedURL(primaryHost, field: "primaryHost")
-        self.webHost = try Self.normalizedURL(webHost, field: "webHost")
-        self.imHost = try Self.normalizedURL(imHost, field: "imHost")
-        self.logHost = try Self.normalizedURL(logHost, field: "logHost")
         self.privacyURL = try Self.normalizedURL(privacyURL, field: "privacyURL")
         self.termsURL = try Self.normalizedURL(termsURL, field: "termsURL")
         self.appStoreID = appStoreID.trimmingCharacters(in: .whitespacesAndNewlines)
         self.bundleIdentifier = bundleIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.adjustToken = adjustToken.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.reportSubheading = reportSubheading
-        self.reportDescription = reportDescription
-        self.smallIconName = smallIconName.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.launchImageName = launchImageName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     public func validateForRelease() throws {
         let urls: [(String, URL)] = [
             ("primaryHost", primaryHost),
-            ("webHost", webHost),
-            ("imHost", imHost),
-            ("logHost", logHost),
             ("privacyURL", privacyURL),
             ("termsURL", termsURL),
         ]

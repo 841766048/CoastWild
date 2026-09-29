@@ -89,10 +89,10 @@ final class PrivacyConsentController: UIViewController, UITextViewDelegate {
 
     stack.addArrangedSubview(infoRow(
       icon: "person.crop.circle", title: env.t("Account information", "账户信息"),
-      detail: env.t("Used to sign in and save preferences", "用于登录与保存个人设置")))
+      detail: env.t("Sign-in and private notes sync with Firebase in the US", "用于登录，并通过美国区域 Firebase 同步私有笔记")))
     stack.addArrangedSubview(infoRow(
       icon: "photo", title: env.t("Photo access", "照片权限"),
-      detail: env.t("Requested only when adding a cover or entry", "仅在添加封面或记录时请求")))
+      detail: env.t("Journal photos, including existing ones, upload as compressed backups", "手记照片（含已有照片）会以压缩副本上传云端")))
     stack.setCustomSpacing(17, after: stack.arrangedSubviews.last!)
 
     let agreementRow = UIStackView()
@@ -198,7 +198,7 @@ final class PrivacyConsentController: UIViewController, UITextViewDelegate {
     titleLabel.widthAnchor.constraint(equalToConstant: env.chinese ? 76 : 108).isActive = true
     row.addArrangedSubview(titleLabel)
     row.addArrangedSubview(coastLabel(detail, size: 12, color: CoastStyle.muted))
-    row.heightAnchor.constraint(equalToConstant: 38).isActive = true
+    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 38).isActive = true
     return row
   }
 

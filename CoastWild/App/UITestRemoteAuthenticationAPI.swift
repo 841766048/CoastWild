@@ -17,7 +17,4 @@ actor UITestRemoteAuthenticationAPI: RemoteAuthenticationAPI {
     ])
   }
 
-  func getStrategy(session: RequestSession) async throws -> JSONValue {
-    .object(["isReviewPkg": .bool(true)])
-  }
 }

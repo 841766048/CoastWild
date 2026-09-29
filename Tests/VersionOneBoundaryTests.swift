@@ -3,19 +3,24 @@ import XCTest
 @testable import CoastWildCore
 
 final class VersionOneBoundaryTests: XCTestCase {
-    func testFormerPurchaseTopicsAreUnknown() throws {
-        let removed = ["OpenAppPurchase", "LogPurchase", "onCreateOrder", "GetProductPrice", "openVipService", "recharge", "UpdateCoins"]
-        let handler = BoundaryHandler()
-        let router = BridgeRouter(allowedHosts: ["h5.example.com"], handler: handler)
-        for name in removed {
-            XCTAssertFalse(BridgeTopic.allCases.map(\.rawValue).contains(name), name)
-            XCTAssertNil(BridgeTopic(rawValue: name), name)
-            XCTAssertThrowsError(try router.route(name: name, body: nil, sourceURL: URL(string: "https://h5.example.com"), isMainFrame: true)) {
-                XCTAssertEqual($0 as? BridgeError, .unknownTopic(name))
+    func testNativeVersionExcludesWebTrackingAndBundledCatalog() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        let production = root.appendingPathComponent("CoastWild")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: production.appendingPathComponent("Resources/catalog.json").path))
+        let files = try XCTUnwrap(FileManager.default.enumerator(at: production, includingPropertiesForKeys: nil))
+        for case let file as URL in files where file.pathExtension == "swift" {
+            let source = try String(contentsOf: file)
+            for token in ["BusinessWeb", "BridgeRouter", "WKScriptMessageHandler", "AdjustSdk", "ATTrackingManager", "AttributionCoordinator", "getStrategy", "attribution_sdk", "adjustToken"] {
+                XCTAssertFalse(source.contains(token), "\(file.lastPathComponent): \(token)")
+            }
+        }
+        for path in ["Podfile", "Podfile.lock", "project.yml", "CoastWild.xcodeproj/project.pbxproj"] {
+            let source = try String(contentsOf: root.appendingPathComponent(path))
+            for token in ["Adjust", "NSUserTrackingUsageDescription", "catalog.json", "BusinessWeb"] {
+                XCTAssertFalse(source.contains(token), "\(path): \(token)")
             }
         }
     }
-
     func testProductionContainsNoPurchaseImplementationOrConfiguration() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
         let production = root.appendingPathComponent("CoastWild")
@@ -28,8 +33,4 @@ final class VersionOneBoundaryTests: XCTestCase {
             }
         }
     }
-}
-
-private final class BoundaryHandler: BridgeMessageHandling {
-    func handle(_ message: BridgeMessage) { XCTFail("Removed topic was dispatched") }
 }

@@ -7,7 +7,7 @@ let package = Package(
     products: [.library(name: "CoastWildCore", targets: ["CoastWildCore"])],
     targets: [
         .target(name: "CoastWildCore", path: "CoastWild/Core"),
-        .testTarget(name: "CoastWildCoreTests", dependencies: ["CoastWildCore"], path: "Tests")
+        .testTarget(name: "CoastWildCoreTests", dependencies: ["CoastWildCore"], path: "Tests", exclude: ["Fixtures"])
     ],
     swiftLanguageVersions: [.v5]
 )

@@ -8,27 +8,11 @@
     <string>com.huankecontact.test</string>
     <key>CoastPrimaryHost</key>
     <string>https://test-app.bigegg.work</string>
-    <key>CoastWebHost</key>
-    <string>https://test-h5.bigegg.work/h5_web/v1_0/</string>
-    <key>CoastIMHost</key>
-    <string>https://test-im.bigegg.work</string>
-    <key>CoastLogHost</key>
-    <string>https://test-log.bigegg.work</string>
     <key>CoastPrivacyURL</key>
     <string>https://h5.bigegg.work/privacyPolicy.html</string>
     <key>CoastTermsURL</key>
     <string>https://h5.bigegg.work/termConditions.html</string>
     <key>CoastAppStoreID</key>
     <string>6744892295</string>
-    <key>CoastAdjustToken</key>
-    <string>hewhqhygv8qo</string>
-    <key>CoastReportSubheading</key>
-    <string> - Coast &amp; Wild</string>
-    <key>CoastReportDescription</key>
-    <string>Outdoor learning and trip planning</string>
-    <key>CoastSmallIconName</key>
-    <string>coast-hiker</string>
-    <key>CoastLaunchImageName</key>
-    <string>coast-wide</string>
 </dict>
 </plist>

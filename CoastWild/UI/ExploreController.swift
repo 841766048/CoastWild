@@ -13,7 +13,7 @@ private func exploreLabel(_ text: String, size: CGFloat, weight: UIFont.Weight =
 }
 
 private func explorePhoto(_ name: String, height: CGFloat, radius: CGFloat = 16) -> UIImageView {
-  let image = UIImageView(image: UIImage(named: name))
+  let image = UIImageView(image: PublicContentImages.image(named: name))
   image.contentMode = .scaleAspectFill
   image.clipsToBounds = true
   image.layer.cornerRadius = radius
@@ -22,7 +22,13 @@ private func explorePhoto(_ name: String, height: CGFloat, radius: CGFloat = 16)
 }
 
 final class ExploreController: CoastController {
-  override func viewDidLoad() { super.viewDidLoad(); title = nil; render() }
+  override func viewDidLoad() {
+    super.viewDidLoad(); title = nil; render()
+    NotificationCenter.default.addObserver(self, selector: #selector(contentUpdated), name: PublicContentService.changed, object: nil)
+  }
+  @objc private func contentUpdated() {
+    if viewIfLoaded?.window != nil, navigationController?.topViewController === self { render() }
+  }
   override func viewWillAppear(_ animated: Bool) { super.viewWillAppear(animated); if isViewLoaded { render() } }
 
   func render() {
@@ -55,6 +61,7 @@ final class ExploreController: CoastController {
     add(search)
     stack.setCustomSpacing(15, after: search)
 
+    if addPublicContentStatus(isEmpty: env.catalog.items.isEmpty) { return }
     guard let home = env.catalog.home else { return }
     if let hero = env.feature(home.hero) {
       let feature = UIStackView()

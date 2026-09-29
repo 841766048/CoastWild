@@ -1,6 +1,7 @@
 import Foundation
 
 struct Catalog: Decodable {
+  static let empty = Catalog(items: [], lessons: [], home: nil, learn: nil, categories: [], gearTemplates: [])
   let items: [CoastContent]
   let lessons: [CoastLesson]
   /// 探索首页的编排。旧 catalog.json 没有这一项时首页不展示推荐位。

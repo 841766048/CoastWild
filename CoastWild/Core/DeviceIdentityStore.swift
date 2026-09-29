@@ -103,15 +103,13 @@ public final class DeviceIdentityStore: @unchecked Sendable {
     public func resolve() throws -> String {
         lock.lock()
         defer { lock.unlock() }
-        if let cached = nonempty(defaults.string(forKey: Self.defaultsKey)) {
-            return cached
-        }
         if let restored = nonempty(try keychain.read(account: account)) {
             defaults.set(restored, forKey: Self.defaultsKey)
             return restored
         }
 
-        let generated = uuidGenerator().uuidString.lowercased()
+        let generated = nonempty(defaults.string(forKey: Self.defaultsKey))
+            ?? uuidGenerator().uuidString.lowercased()
         try keychain.write(
             generated,
             account: account,

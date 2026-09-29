@@ -6,10 +6,15 @@ final class JournalController: CoastController {
   var drafts = false
   override func viewDidLoad() {
     super.viewDidLoad()
+    NotificationCenter.default.addObserver(self, selector: #selector(syncChanged), name: FirebaseNoteSync.changed, object: nil)
+  }
+  @objc private func syncChanged() {
+    if isViewLoaded, view.window != nil, navigationController?.topViewController === self { render() }
   }
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     render()
+    env.scheduleNoteSync()
   }
   func render() {
     reset()
@@ -25,6 +30,14 @@ final class JournalController: CoastController {
         guard let self else { return }; self.push(JournalEditorController(self.env, entry: nil))
       })
     add(coastLabel(env.t("Keep the moments that stay with you.", "把舍不得忘记的片刻留下。"), size: 16, color: CoastStyle.muted))
+    let syncCopy: String
+    switch env.noteSyncStatus {
+    case "syncing": syncCopy = env.t("Syncing notes and photo backups…", "正在同步笔记与照片备份…")
+    case "synced": syncCopy = env.t("Notes and compressed photos synced", "笔记与压缩照片已同步")
+    case "pending": syncCopy = env.t("Saved on this device · Cloud sync will retry", "已保存到本机 · 云端同步稍后重试")
+    default: syncCopy = env.t("Saved on this device", "已保存到本机")
+    }
+    add(coastLabel(syncCopy, size: 12, color: CoastStyle.muted))
     let draftCount = env.store.ledger.entries.filter(\.isDraft).count
     chips([env.t("Entries", "手记"), env.t("Drafts", "草稿") + " · \(draftCount)"], selected: drafts ? 1 : 0) {
       [weak self] i in
@@ -483,8 +496,8 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
     let alert = UIAlertController(
       title: env.t("Add a tag", "添加标签"),
       message: env.t(
-        "Up to \(CoastEntry.tagLengthLimit) characters. Tags stay on this device.",
-        "最多 \(CoastEntry.tagLengthLimit) 个字符。标签只保存在本机。"),
+        "Up to \(CoastEntry.tagLengthLimit) characters. Tags sync with your notes.",
+        "最多 \(CoastEntry.tagLengthLimit) 个字符。标签随笔记同步。"),
       preferredStyle: .alert)
     alert.addTextField { field in
       field.placeholder = self.env.t("For example: morning swell", "例如：晨浪")

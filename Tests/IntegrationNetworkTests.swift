@@ -12,7 +12,6 @@ final class IntegrationNetworkTests: XCTestCase {
         await runtime.apply(configuration: try JSONValue(any: ["items": [[
             "name": "app_fb_id", "data": "remote-id",
         ]]]), encryptedConfiguration: .object(["k4": .string("cipher")]))
-        await runtime.apply(strategy: .object(["server": .bool(true)]))
         let keyStore = IntegrationKeyStore(initialKey: "old-key")
         let client = makeClient(transport: ScriptedTransport(results: []), keyStore: keyStore,
                                 runtimeConfiguration: runtime)
@@ -22,7 +21,7 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertNil(key)
         XCTAssertEqual(snapshot, IntegrationRuntimeSnapshot(environment: environment))
         await assertThrows(.missingEncryptionKey) {
-            _ = try await client.getStrategy(session: .anonymous)
+            _ = try await client.oauth(OAuthRequest(token: "device", relogin: false), session: .anonymous)
         }
     }
 
@@ -64,8 +63,8 @@ final class IntegrationNetworkTests: XCTestCase {
             makeContextProvider().riskParameters(session: .anonymous), rawKey: "1234567890abcdef"))
         let headers = try XCTUnwrap(body["http_headers"] as? [String: String])
         XCTAssertEqual(headers["rc_type"], "TW")
-        XCTAssertEqual(headers["attribution_sdk"], "AF")
-        XCTAssertEqual(headers["attribution_sdk_ver"], "0.0.0")
+        XCTAssertNil(headers["attribution_sdk"])
+        XCTAssertNil(headers["attribution_sdk_ver"])
     }
 
     func testGetConfigUsesHostKeyAndCachesDerivedKey() async throws {
@@ -157,7 +156,6 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertEqual(snapshot.privacyURL.absoluteString, "https://remote.example/privacy")
         XCTAssertEqual(snapshot.termsURL.absoluteString, "https://remote.example/terms")
         XCTAssertEqual(snapshot.appID, "99887766")
-        XCTAssertEqual(snapshot.adjustToken, "remote-adjust")
     }
 
     func testGetConfigDoesNotApplyOverridesWhenK4CannotDecrypt() async throws {
@@ -192,7 +190,7 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertEqual(snapshot, IntegrationRuntimeSnapshot(environment: environment))
     }
 
-    func testThreeSecretEndpointsUseDerivedKeyAndExpectedParameters() async throws {
+    func testOAuthUsesDerivedKeyAndExpectedParameters() async throws {
         let host = URL(string: "https://test-app.bigegg.work")!
         let key = "1234567890abcdeffedcba9876543210"
         let response = try encryptedResponse(
@@ -200,7 +198,7 @@ final class IntegrationNetworkTests: XCTestCase {
             key: key,
             url: host
         )
-        let transport = ScriptedTransport(results: Array(repeating: .success(response), count: 3))
+        let transport = ScriptedTransport(results: Array(repeating: .success(response), count: 1))
         let client = makeClient(
             host: host,
             transport: transport,
@@ -208,32 +206,13 @@ final class IntegrationNetworkTests: XCTestCase {
         )
         let session = RequestSession(token: "session", userID: "user")
 
-        _ = try await client.getStrategy(session: session)
         _ = try await client.oauth(
             OAuthRequest(token: "device-123", relogin: true, riskInfo: "risk"),
             session: session
         )
-        _ = try await client.submitAttribution(
-            AttributionRequest(
-                package: "test.duckegg.ios",
-                version: "2.3.4",
-                deviceID: "device-123",
-                userID: "user",
-                source: "network",
-                adGroupID: "group",
-                adSetID: "creative",
-                campaignID: "campaign",
-                sdk: "AJ",
-                sdkVersion: "5.4.0"
-            ),
-            session: session
-        )
-
         let requests = await transport.requests()
         XCTAssertEqual(requests.map { $0.url?.path }, [
-            IntegrationEndpointPaths.default.getStrategy,
             IntegrationEndpointPaths.default.oauth,
-            IntegrationEndpointPaths.default.ascribeRecord,
         ])
         let bodies = try requests.map { request in
             try IntegrationCipher.decryptJSONObject(
@@ -241,10 +220,9 @@ final class IntegrationNetworkTests: XCTestCase {
                 key: key
             )
         }
-        XCTAssertEqual(bodies[1]["oauthType"] as? String, "4")
-        XCTAssertEqual(bodies[1]["relogin"] as? String, "1")
-        XCTAssertEqual(bodies[1]["info"] as? String, "risk")
-        XCTAssertEqual(bodies[2]["attributionSdk"] as? String, "AJ")
+        XCTAssertEqual(bodies[0]["oauthType"] as? String, "4")
+        XCTAssertEqual(bodies[0]["relogin"] as? String, "1")
+        XCTAssertEqual(bodies[0]["info"] as? String, "risk")
         XCTAssertTrue(bodies.allSatisfy { $0["http_headers"] != nil })
     }
 
@@ -269,7 +247,7 @@ final class IntegrationNetworkTests: XCTestCase {
             sleeper: { await sleeper.record() }
         )
 
-        let result = try await client.getStrategy(session: .anonymous)
+        let result = try await client.oauth(OAuthRequest(token: "device", relogin: false), session: .anonymous)
         let requestCount = await transport.requests().count
         let sleepCount = await sleeper.count()
 
@@ -295,7 +273,7 @@ final class IntegrationNetworkTests: XCTestCase {
         )
 
         await assertThrows(.business(code: 42, message: "retry me")) {
-            _ = try await client.getStrategy(session: .anonymous)
+            _ = try await client.oauth(OAuthRequest(token: "device", relogin: false), session: .anonymous)
         }
         let requestCount = await transport.requests().count
         XCTAssertEqual(requestCount, 3)
@@ -310,7 +288,7 @@ final class IntegrationNetworkTests: XCTestCase {
         )
 
         await assertThrows(.missingEncryptionKey) {
-            _ = try await client.getStrategy(session: .anonymous)
+            _ = try await client.oauth(OAuthRequest(token: "device", relogin: false), session: .anonymous)
         }
         let requestCount = await transport.requests().count
         XCTAssertEqual(requestCount, 0)
@@ -318,16 +296,14 @@ final class IntegrationNetworkTests: XCTestCase {
 
     func testRequestContextBuildsAllFixedAndConditionalHeaders() {
         let provider = makeContextProvider(
-            riskAreaCode: "TW",
-            attributionSDK: "AF",
-            adjustSDKVersion: "5.4.0"
+            riskAreaCode: "TW"
         )
 
         let headers = provider.headers(
             session: RequestSession(token: "session-token", userID: "user-42")
         )
 
-        XCTAssertEqual(headers.count, 19)
+        XCTAssertEqual(headers.count, 17)
         XCTAssertEqual(headers["device-id"], "device-123")
         XCTAssertEqual(headers["model"], "iPhone15,2")
         XCTAssertEqual(headers["lang"], "zh")
@@ -345,15 +321,13 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertEqual(headers["user_id"], "user-42")
         XCTAssertEqual(headers["sec_ver"], "0")
         XCTAssertEqual(headers["rc_type"], "TW")
-        XCTAssertEqual(headers["attribution_sdk"], "AF")
-        XCTAssertEqual(headers["attribution_sdk_ver"], "0.0.0")
+        XCTAssertNil(headers["attribution_sdk"])
+        XCTAssertNil(headers["attribution_sdk_ver"])
     }
 
-    func testRequestContextUsesAdjustDefaultsAndOmitsBlankRiskArea() {
+    func testRequestContextOmitsTrackingAndBlankRiskArea() {
         let provider = makeContextProvider(
-            riskAreaCode: "",
-            attributionSDK: "unexpected",
-            adjustSDKVersion: "5.4.0"
+            riskAreaCode: ""
         )
 
         let headers = provider.headers(session: .anonymous)
@@ -361,8 +335,8 @@ final class IntegrationNetworkTests: XCTestCase {
         XCTAssertNil(headers["rc_type"])
         XCTAssertEqual(headers["Authorization"], "Bearer ")
         XCTAssertEqual(headers["user_id"], "")
-        XCTAssertEqual(headers["attribution_sdk"], "AJ")
-        XCTAssertEqual(headers["attribution_sdk_ver"], "5.4.0")
+        XCTAssertNil(headers["attribution_sdk"])
+        XCTAssertNil(headers["attribution_sdk_ver"])
     }
 
     func testRequestContextCanBeReusedForNativeAndWebView() {
@@ -477,9 +451,7 @@ final class IntegrationNetworkTests: XCTestCase {
     }
 
     private func makeContextProvider(
-        riskAreaCode: String? = nil,
-        attributionSDK: String = "AJ",
-        adjustSDKVersion: String = "5.4.0"
+        riskAreaCode: String? = nil
     ) -> RequestContextProvider {
         RequestContextProvider(
             values: RequestContextValues(
@@ -492,9 +464,7 @@ final class IntegrationNetworkTests: XCTestCase {
                 country: "TW",
                 platformVersion: "17.5",
                 localeIdentifier: "zh_TW",
-                riskAreaCode: riskAreaCode,
-                attributionSDK: attributionSDK,
-                adjustSDKVersion: adjustSDKVersion
+                riskAreaCode: riskAreaCode
             )
         )
     }
@@ -520,14 +490,13 @@ final class IntegrationNetworkTests: XCTestCase {
         try IntegrationEnvironment(
             mode: .development,
             primaryHost: "https://test-app.bigegg.work",
-            webHost: "https://test-h5.bigegg.work",
-            imHost: "https://test-im.bigegg.work",
-            logHost: "https://test-log.bigegg.work",
+
+
+
             privacyURL: "https://bundled.example/privacy",
             termsURL: "https://bundled.example/terms",
             appStoreID: "123456",
-            bundleIdentifier: "test.duckegg.ios",
-            adjustToken: "bundled-adjust"
+            bundleIdentifier: "test.duckegg.ios"
         )
     }
 

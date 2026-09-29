@@ -89,10 +89,10 @@ final class CoastWildCoreTests: XCTestCase {
 
     func testLegalDocumentsResolveLocalizedBundleResources() {
         XCTAssertEqual(LegalDocument.privacy.localResource(language: "en"), "Legal/privacy-en")
-        XCTAssertEqual(LegalDocument.privacy.localResource(language: "zh-Hans"), "Legal/privacy-zh-Hans")
-        XCTAssertEqual(LegalDocument.terms.localResource(language: "zh-CN"), "Legal/terms-zh-Hans")
+        XCTAssertEqual(LegalDocument.privacy.localResource(language: "zh-Hans"), "Legal/privacy-en")
+        XCTAssertEqual(LegalDocument.terms.localResource(language: "zh-CN"), "Legal/terms-en")
         XCTAssertEqual(LegalDocument.terms.title(language: "en"), "Terms of Use")
-        XCTAssertEqual(LegalDocument.privacy.title(language: "zh-Hans"), "隐私政策")
+        XCTAssertEqual(LegalDocument.privacy.title(language: "zh-Hans"), "Privacy Policy")
     }
 
     func testLegalDocumentsAcceptOnlyConfiguredHTTPSRemoteURLs() {
@@ -105,7 +105,7 @@ final class CoastWildCoreTests: XCTestCase {
             LegalDocument.privacy.remoteURL(language: "en", configuration: values)?.absoluteString,
             "https://legal.coastwild.app/en/privacy")
         XCTAssertNil(LegalDocument.terms.remoteURL(language: "en", configuration: values))
-        XCTAssertNil(LegalDocument.privacy.remoteURL(language: "zh-Hans", configuration: values))
+        XCTAssertEqual(LegalDocument.privacy.remoteURL(language: "zh-Hans", configuration: values)?.absoluteString, "https://legal.coastwild.app/en/privacy")
     }
 
     func testMigratingAccountDataStoreCopiesLegacyDataThenRemovesIt() throws {
@@ -163,7 +163,7 @@ final class CoastWildCoreTests: XCTestCase {
     func testCatalogContainsCompleteLearningLibrary() throws {
         struct Fixture: Decodable { let lessons: [CoastLesson] }
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        let data = try Data(contentsOf: root.appendingPathComponent("CoastWild/Resources/catalog.json"))
+        let data = try Data(contentsOf: root.appendingPathComponent("Tests/Fixtures/public-catalog.json"))
         let lessons = try JSONDecoder().decode(Fixture.self, from: data).lessons
         XCTAssertEqual(lessons.count, 45)
         XCTAssertEqual(Set(lessons.map(\.key)).count, 45)
@@ -183,7 +183,7 @@ final class CoastWildCoreTests: XCTestCase {
     func testEveryLearningLessonUsesItsOwnPhotoAndIllustration() throws {
         struct Fixture: Decodable { let lessons: [CoastLesson] }
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        let data = try Data(contentsOf: root.appendingPathComponent("CoastWild/Resources/catalog.json"))
+        let data = try Data(contentsOf: root.appendingPathComponent("Tests/Fixtures/public-catalog.json"))
         let lessons = try JSONDecoder().decode(Fixture.self, from: data).lessons
 
         XCTAssertEqual(Set(lessons.map(\.image)).count, 45)
@@ -437,7 +437,7 @@ final class CoastWildCoreTests: XCTestCase {
         XCTAssertThrowsError(try store.saveEntry(CoastEntry(date: "2026-01-01", isDraft: false))) { XCTAssertEqual(($0 as? LocalizedError)?.errorDescription, "entry.content.required") }
     }
 
-    func testFinalEntryGetsLocalizedUntitledName() throws {
+    func testFinalEntryGetsEnglishUntitledName() throws {
         let store = try activeStore()
         try store.saveEntry(CoastEntry(title: "  ", body: "Memory", date: "2026-01-01", isDraft: false))
         XCTAssertEqual(store.ledger.entries[0].title, "Untitled entry")
@@ -446,7 +446,7 @@ final class CoastWildCoreTests: XCTestCase {
         preferences.language = "zh-Hans"
         try store.updatePreferences(preferences)
         try store.saveEntry(CoastEntry(title: "  ", body: "记忆", date: "2026-01-02", isDraft: false))
-        XCTAssertEqual(store.ledger.entries[1].title, "未命名手记")
+        XCTAssertEqual(store.ledger.entries[1].title, "Untitled entry")
     }
 
     func testEntryCannotReferenceMissingTrip() throws {

@@ -83,7 +83,7 @@ func coastButton(_ title: String, secondary: Bool = false, action: @escaping () 
   return button
 }
 func coastImage(_ name: String, height: CGFloat) -> UIImageView {
-  let image = UIImageView(image: UIImage(named: name))
+  let image = UIImageView(image: PublicContentImages.image(named: name))
   image.contentMode = .scaleAspectFill
   image.clipsToBounds = true
   image.layer.cornerRadius = 16
@@ -128,7 +128,6 @@ class CoastController: UIViewController {
       stack.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor, constant: -24),
       stack.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor, constant: -40),
     ])
-    navigationItem.backButtonTitle = env.t("Back", "返回")
   }
   func reset() { stack.arrangedSubviews.forEach { $0.removeFromSuperview() } }
   func add(_ view: UIView) { stack.addArrangedSubview(view) }

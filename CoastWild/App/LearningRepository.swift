@@ -13,7 +13,7 @@ enum LearningRequestError: LocalizedError, Equatable {
 }
 
 final class LearningRepository {
-  private let lessons: [CoastLesson]
+  private var lessons: [CoastLesson]
   private let delayNanoseconds: ClosedRange<UInt64>
   private let shouldFail: @Sendable () -> Bool
 
@@ -31,6 +31,8 @@ final class LearningRepository {
     try await waitForResponse()
     return lessons.filter { $0.category == category }
   }
+
+  func replaceLessons(_ value: [CoastLesson]) { lessons = value }
 
   func lesson(id: String) async throws -> CoastLesson {
     try await waitForResponse()

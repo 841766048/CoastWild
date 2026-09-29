@@ -44,6 +44,9 @@ public final class CoastStore {
         }
         if fileManager.fileExists(atPath: preferencesURL.path) {
             preferences = try read(CoastPreferences.self, from: preferencesURL)
+            if preferences.language != "en" {
+                try updatePreferences(preferences, notify: false)
+            }
         }
     }
 
@@ -63,6 +66,11 @@ public final class CoastStore {
         }
         self.accountID = accountID
         ledger = loaded
+        if ledger.pendingNoteIDs == nil {
+            var migrated = ledger
+            migrated.pendingNoteIDs = Set(ledger.entries.map(\.id))
+            try commit(migrated, notify: false, trackNotes: false)
+        }
         try migrateLegacyReminders()
         onChange?()
     }
@@ -86,6 +94,8 @@ public final class CoastStore {
     }
 
     private func updatePreferences(_ next: CoastPreferences, notify: Bool) throws {
+        var next = next
+        next.language = "en"
         let data = try encode(next)
         try write(data, to: preferencesURL)
         preferences = next
@@ -96,12 +106,72 @@ public final class CoastStore {
         try commit(next, notify: true)
     }
 
-    private func commit(_ next: CoastLedger, notify: Bool) throws {
+    private func commit(_ incoming: CoastLedger, notify: Bool, trackNotes: Bool = true) throws {
         guard let accountID else { throw CoastStoreError("account.required") }
+        var next = incoming
+        if trackNotes {
+            var pending = ledger.pendingNoteIDs ?? []
+            let ids = Set(ledger.entries.map(\.id)).union(next.entries.map(\.id))
+            for id in ids where ledger.entries.first(where: { $0.id == id }) != next.entries.first(where: { $0.id == id }) {
+                pending.insert(id)
+            }
+            next.pendingNoteIDs = pending
+        }
         let data = try encode(next)
         try write(data, to: ledgerURL(for: accountID))
         ledger = next
         if notify { onChange?() }
+    }
+
+    public var pendingNoteIDs: Set<String> { ledger.pendingNoteIDs ?? [] }
+
+    public func prepareNoteSync(scope: String) throws {
+        guard ledger.noteSyncScope != scope else { return }
+        var next = ledger
+        next.noteSyncScope = scope
+        next.pendingNoteIDs = pendingNoteIDs.union(ledger.entries.map(\.id))
+        try commit(next, notify: false, trackNotes: false)
+    }
+
+    public func requeueAllNotes() throws {
+        var next = ledger
+        next.pendingNoteIDs = pendingNoteIDs.union(ledger.entries.map(\.id))
+        try commit(next, notify: false, trackNotes: false)
+    }
+
+    public func prepareNoteImageSync() throws {
+        guard ledger.noteImageSyncVersion != 1 else { return }
+        var next = ledger
+        next.noteImageSyncVersion = 1
+        next.pendingNoteIDs = pendingNoteIDs.union(ledger.entries.filter { !$0.photos.isEmpty }.map(\.id))
+        try commit(next, notify: false, trackNotes: false)
+    }
+
+    public func acknowledgeNote(id: String, uploaded: CoastEntry?) throws {
+        guard ledger.entries.first(where: { $0.id == id }) == uploaded else { return }
+        var next = ledger
+        next.pendingNoteIDs?.remove(id)
+        try commit(next, notify: false, trackNotes: false)
+    }
+
+    /// A server snapshot is applied only after pending local changes are protected.
+    public func mergeRemoteNotes(_ remote: [CoastEntry]) throws {
+        var next = ledger
+        let local = ledger.entries
+        var merged = remote.filter { !pendingNoteIDs.contains($0.id) }.map { entry -> CoastEntry in
+            var value = entry
+            if let previous = local.first(where: { $0.id == entry.id }) {
+                if entry.cloudPhotoIDs == nil { value.photos = previous.photos }
+                value.tripID = previous.tripID
+                value.activityID = previous.activityID
+                value.sourceEntryID = previous.sourceEntryID
+            }
+            return value
+        }
+        merged.append(contentsOf: local.filter { pendingNoteIDs.contains($0.id) })
+        next.entries = merged.sorted { $0.id < $1.id }
+        guard next != ledger else { return }
+        try commit(next, notify: true, trackNotes: false)
     }
 
     public func saveTrip(_ incoming: CoastTrip) throws {

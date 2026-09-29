@@ -6,7 +6,7 @@ final class ProfileController: CoastController {
     render()
   }
   func render() {
-    reset(); title = env.t("Your space", "个人空间"); navigationItem.backButtonTitle = title
+    reset(); title = env.t("Your space", "个人空间")
     contentTop.constant = 31; stack.spacing = 16
     let avatar = accountPortrait(env, size: 27); add(avatar); stack.setCustomSpacing(12, after: avatar)
     add(coastStats([
@@ -42,7 +42,7 @@ final class ProfileController: CoastController {
       },
       privacy
     ], spacing: 0, inset: 0))
-    add(coastNotice(env.t("Data stays on this device, in your own account space.", "数据保存在此设备中，每个账号使用独立空间。")))
+    add(coastNotice(env.t("Notes and compressed photos sync privately. Other records stay on this device.", "手记与压缩照片私有同步，其他记录保存在本机。")))
   }
 }
 final class AccountController: CoastController {
@@ -73,8 +73,8 @@ final class AccountController: CoastController {
     confirm(
       env.t("Delete account permanently?", "永久注销账号？"),
       env.t(
-        "This permanently removes this account's trips, journals, saved content and progress from this device. The current network request is simulated.",
-        "这会永久删除此账号在本设备上的出游、手记、收藏和学习进度。当前网络注销请求为模拟流程。"
+        "This deletes accessible cloud notes and photo backups, then this account's local content. Network access is required. The separate business-server account deletion remains simulated.",
+        "这会先删除可访问的云端手记及照片备份，再删除此账号的本地内容，需要网络。独立业务服务端的账号注销仍为模拟流程。"
       )
     ) { [weak self] in self?.performDeletion() }
   }
@@ -106,7 +106,7 @@ final class PreferencesController: CoastController {
   func render() {
     reset(); title = nil; contentTop.constant = 27; view.backgroundColor = UIColor(hex: 0xF3F8FA)
     heading(env.t("Preferences", "偏好设置"))
-    add(coastLabel(env.t("Language, content region and units can be set separately.", "语言、内容地区与计量单位可以分别设置。"), size: 14, color: CoastStyle.muted))
+    add(coastLabel(env.t("Content region and units can be set separately.", "内容地区与计量单位可以分别设置。"), size: 14, color: CoastStyle.muted))
     stack.setCustomSpacing(10, after: stack.arrangedSubviews[0])
     stack.setCustomSpacing(20, after: stack.arrangedSubviews[1])
     let fields = UIStackView(); fields.axis = .vertical; fields.spacing = 18
@@ -134,9 +134,6 @@ final class PreferencesController: CoastController {
       control.menu = UIMenu(children: values.enumerated().map { i, text in
         UIAction(title: text, state: (selectedValue ?? value) == text ? .on : .off) { _ in selected(i) }
       }); group.addArrangedSubview(control); fields.addArrangedSubview(group); return control
-    }
-    choice(env.t("Language", "语言"), value: env.chinese ? "简体中文" : "English", values: ["English", "简体中文"]) { [weak self] i in
-      guard let self else { return }; self.update { $0.language = i == 0 ? "en" : "zh-Hans" }; self.env.showRoot()
     }
     choice(env.t("Region", "地区"), value: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国"), values: [env.t("United States", "美国"), env.t("Mainland China", "中国大陆")]) { [weak self] i in self?.update { $0.region = i == 0 ? "US" : "CN" } }
     let selectedDistance = env.store.preferences.distanceUnit == "km" ? env.t("Kilometers", "公里") : env.t("Miles", "英里")
@@ -177,7 +174,7 @@ final class PrivacyController: CoastController {
     stack.setCustomSpacing(20, after: stack.arrangedSubviews.last!)
     add(coastFormPanel([
       coastLabel(env.t("Your memories belong to you.", "你的回忆，属于你。"), size: 23, weight: .bold),
-      coastLabel(env.t("Trips, saved content and journals stay on this device. Accounts are local and are not uploaded to the cloud.", "出游、收藏与手记保存在此设备上。账号仅在本地使用，不会上传云端。"), size: 16, color: CoastStyle.muted)
+      coastLabel(env.t("Notes and compressed photo backups sync to Firebase in the US. Reinstall recovery is best-effort on this device and requires the same anonymous identity. Trips and saved content stay local.", "手记与压缩照片备份同步到美国区域 Firebase。同设备重装后会尽力恢复，但需要保留同一匿名身份，不保证恢复成功。出游与收藏仍保存在本地。"), size: 16, color: CoastStyle.muted)
     ]))
     let clearSpace = coastSettingRow(env.t("Clear this space", "清除此空间数据"), icon: "trash", destructive: true) { [weak self] in self?.clear() }
     clearSpace.accessibilityIdentifier = "privacy.clear-space"

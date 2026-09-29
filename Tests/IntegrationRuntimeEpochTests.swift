@@ -22,28 +22,8 @@ final class IntegrationRuntimeEpochTests: XCTestCase {
         XCTAssertNil(key)
     }
 
-    func testStrategyResponseAfterResetCannotRestoreRuntimeOrKey() async throws {
-        let fixture = try makeFixture(pausing: .strategy, directStrategy: true)
-        defer { fixture.cleanUp() }
-        let request = Task { try await fixture.client.getStrategy(session: .anonymous) }
-        await fixture.transport.waitUntilPaused()
-
-        await fixture.client.resetRuntime()
-        await fixture.transport.resume()
-        _ = try await request.value
-
-        let snapshot = await fixture.runtime.snapshot()
-        let key = await fixture.keys.key()
-        XCTAssertEqual(snapshot, IntegrationRuntimeSnapshot(environment: fixture.environment))
-        XCTAssertNil(key)
-    }
-
     func testOldConfigResponseCannotOverwriteLoginStartedAfterLogout() async throws {
         try await assertOldLoginCannotOverwriteNewLogin(pausing: .config)
-    }
-
-    func testOldStrategyResponseCannotOverwriteLoginStartedAfterLogout() async throws {
-        try await assertOldLoginCannotOverwriteNewLogin(pausing: .strategy)
     }
 
     private func assertOldLoginCannotOverwriteNewLogin(pausing endpoint: Endpoint) async throws {
@@ -54,16 +34,14 @@ final class IntegrationRuntimeEpochTests: XCTestCase {
         await fixture.coordinator.logout()
 
         let newLogin = await fixture.coordinator.manualLogin(riskInfo: nil)
-        guard case let .authenticated(session, strategy) = newLogin else {
+        guard case let .authenticated(session) = newLogin else {
             await fixture.transport.resume()
             _ = await oldLogin.value
             return XCTFail("Expected the new login to complete: \(newLogin)")
         }
         XCTAssertEqual(session.token, "new-session")
-        XCTAssertEqual(strategy, .object(["generation": .string("new")]))
         let newSnapshot = await fixture.runtime.snapshot()
         XCTAssertEqual(newSnapshot.configuration["generation"], .string("new"))
-        XCTAssertEqual(newSnapshot.strategy, strategy)
 
         await fixture.transport.resume()
         let oldResult = await oldLogin.value
@@ -78,7 +56,7 @@ final class IntegrationRuntimeEpochTests: XCTestCase {
         XCTAssertEqual(state, newLogin)
     }
 
-    private enum Endpoint { case config, strategy }
+    private enum Endpoint { case config }
     private static let oldKey = "1234567890abcdeffedcba9876543210"
     private static let newKey = "abcdefghijklmnopqrstuvwxyzaabbcc"
 
@@ -96,30 +74,20 @@ final class IntegrationRuntimeEpochTests: XCTestCase {
         func cleanUp() { defaults.removePersistentDomain(forName: suite) }
     }
 
-    private func makeFixture(pausing endpoint: Endpoint, directStrategy: Bool = false) throws -> Fixture {
+    private func makeFixture(pausing endpoint: Endpoint) throws -> Fixture {
         let environment = try IntegrationEnvironment(
             mode: .development,
-            primaryHost: "https://test-app.bigegg.work", webHost: "https://web.example.com",
-            imHost: "https://im.example.com", logHost: "https://log.example.com",
+            primaryHost: "https://test-app.bigegg.work",
+
             privacyURL: "https://bundled.example/privacy", termsURL: "https://bundled.example/terms",
-            appStoreID: "123456", bundleIdentifier: "test.duckegg.ios",
-            adjustToken: "bundled-adjust"
+            appStoreID: "123456", bundleIdentifier: "test.duckegg.ios"
         )
         var steps: [EpochPausingTransport.Step] = []
-        if !directStrategy {
-            steps.append(.init(response: try configResponse(generation: "old", key: Self.oldKey),
-                               pauses: endpoint == .config))
-        }
-        if endpoint == .strategy {
-            if !directStrategy {
-                steps.append(.init(response: try oauthResponse(generation: "old", key: Self.oldKey)))
-            }
-            steps.append(.init(response: try response(["generation": "old"], key: Self.oldKey), pauses: true))
-        }
+        steps.append(.init(response: try configResponse(generation: "old", key: Self.oldKey),
+                           pauses: endpoint == .config))
         steps += [
             .init(response: try configResponse(generation: "new", key: Self.newKey)),
             .init(response: try oauthResponse(generation: "new", key: Self.newKey)),
-            .init(response: try response(["generation": "new"], key: Self.newKey)),
         ]
         let transport = EpochPausingTransport(steps: steps)
         let runtime = IntegrationRuntimeConfiguration(environment: environment)
