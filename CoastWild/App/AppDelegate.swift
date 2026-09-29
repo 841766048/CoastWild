@@ -413,11 +413,6 @@ final class CoastEnvironment {
     if !existed {
       var prefs = store.preferences
       prefs.language = "en"
-      if !testing {
-        prefs.region = Locale.current.region?.identifier == "CN" ? "CN" : "US"
-        prefs.distanceUnit = prefs.region == "CN" ? "km" : "mi"
-        prefs.temperatureUnit = prefs.region == "CN" ? "c" : "f"
-      }
       try store.updatePreferences(prefs)
     }
     publicContent = PublicContentService(directory: directory,

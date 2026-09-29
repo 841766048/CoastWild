@@ -68,9 +68,6 @@ final class WelcomeController: CoastController {
       subtitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 1),
       subtitle.centerXAnchor.constraint(equalTo: hero.centerXAnchor),
     ])
-    add(preferenceRow(icon: "trips", title: env.t("Explore region", "探索地区"), value: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国")) { [weak self] in
-      guard let self else { return }; self.push(PreferencesController(self.env))
-    })
     let question = coastLabel(env.t("What are you most interested in?", "你最感兴趣的是什么？"), size: 16, weight: .bold)
     add(question)
     stack.setCustomSpacing(3, after: question)

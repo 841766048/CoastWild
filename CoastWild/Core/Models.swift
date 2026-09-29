@@ -186,7 +186,6 @@ public struct CoastReminderPlan: Codable, Equatable {
 
 public struct CoastPreferences: Codable, Equatable {
     public var language: String
-    public var region: String
     public var distanceUnit: String
     public var temperatureUnit: String
     public var onboardingDone: Bool
@@ -197,7 +196,6 @@ public struct CoastPreferences: Codable, Equatable {
 
     public init(
         language: String = "en",
-        region: String = "CN",
         distanceUnit: String = "km",
         temperatureUnit: String = "c",
         onboardingDone: Bool = false,
@@ -205,7 +203,6 @@ public struct CoastPreferences: Codable, Equatable {
         reminders: CoastReminderPlan? = nil
     ) {
         self.language = language
-        self.region = region
         self.distanceUnit = distanceUnit
         self.temperatureUnit = temperatureUnit
         self.onboardingDone = onboardingDone
@@ -272,7 +269,7 @@ public struct CoastTrip: Codable, Identifiable, Equatable {
         start: String = "",
         end: String = "",
         notes: String = "",
-        timeZone: String = "Asia/Shanghai",
+        timeZone: String = TimeZone.current.identifier,
         completed: Bool = false,
         items: [CoastTripItem] = [],
         coverPhoto: String? = nil,
@@ -400,21 +397,12 @@ public struct CoastEntry: Codable, Identifiable, Equatable {
         set { tags = newValue }
     }
 
-    public init() {
+    /// New entries use the device time zone; persisted date strings are unchanged.
+    public init(now: Date = Date(), timeZone: TimeZone = .current) {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = .current
-        formatter.dateFormat = "yyyy-MM-dd"
-        self.init(date: formatter.string(from: Date()))
-    }
-
-    /// New entries follow the selected content region; persisted dates are unchanged.
-    public init(region: String, now: Date = Date()) {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: region == "CN" ? "Asia/Shanghai" : "America/Los_Angeles")
+        formatter.timeZone = timeZone
         formatter.dateFormat = "yyyy-MM-dd"
         self.init(date: formatter.string(from: now))
     }

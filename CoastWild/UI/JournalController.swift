@@ -97,7 +97,7 @@ final class JournalEditorController: CoastController, UITextViewDelegate,
         self.entry = draft
       }
     } else {
-      self.entry = entry ?? CoastEntry(region: env.store.preferences.region)
+      self.entry = entry ?? CoastEntry()
     }
     if entry == nil { self.entry.tripID = tripID }
     super.init(env)

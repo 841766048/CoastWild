@@ -106,7 +106,7 @@ final class PreferencesController: CoastController {
   func render() {
     reset(); title = nil; contentTop.constant = 27; view.backgroundColor = UIColor(hex: 0xF3F8FA)
     heading(env.t("Preferences", "偏好设置"))
-    add(coastLabel(env.t("Content region and units can be set separately.", "内容地区与计量单位可以分别设置。"), size: 14, color: CoastStyle.muted))
+    add(coastLabel("Choose your preferred distance and temperature units.", size: 14, color: CoastStyle.muted))
     stack.setCustomSpacing(10, after: stack.arrangedSubviews[0])
     stack.setCustomSpacing(20, after: stack.arrangedSubviews[1])
     let fields = UIStackView(); fields.axis = .vertical; fields.spacing = 18
@@ -135,7 +135,6 @@ final class PreferencesController: CoastController {
         UIAction(title: text, state: (selectedValue ?? value) == text ? .on : .off) { _ in selected(i) }
       }); group.addArrangedSubview(control); fields.addArrangedSubview(group); return control
     }
-    choice(env.t("Region", "地区"), value: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国"), values: [env.t("United States", "美国"), env.t("Mainland China", "中国大陆")]) { [weak self] i in self?.update { $0.region = i == 0 ? "US" : "CN" } }
     let selectedDistance = env.store.preferences.distanceUnit == "km" ? env.t("Kilometers", "公里") : env.t("Miles", "英里")
     let units = choice(env.t("Units", "单位"), value: selectedDistance + " · " + (env.store.preferences.temperatureUnit == "c" ? "°C" : "°F"), values: [env.t("Kilometers", "公里"), env.t("Miles", "英里")], selectedValue: selectedDistance) { [weak self] i in self?.update { $0.distanceUnit = i == 0 ? "km" : "mi" } }
     let form = coastFormPanel([fields]); add(form); stack.setCustomSpacing(24, after: form)

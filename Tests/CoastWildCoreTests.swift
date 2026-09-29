@@ -127,12 +127,13 @@ final class CoastWildCoreTests: XCTestCase {
         XCTAssertEqual(legacy.data, Data("legacy".utf8))
     }
 
-    func testNewJournalDateUsesContentRegionAcrossMidnight() {
+    func testNewJournalDateUsesTimeZoneAcrossMidnight() {
         let now = ISO8601DateFormatter().date(from: "2026-09-19T16:30:00Z")!
-        XCTAssertEqual(CoastEntry(region: "CN", now: now).date, "2026-09-20")
-        XCTAssertEqual(CoastEntry(region: "US", now: now).date, "2026-09-19")
+        XCTAssertEqual(CoastEntry(now: now, timeZone: TimeZone(identifier: "Asia/Taipei")!).date, "2026-09-20")
+        XCTAssertEqual(CoastEntry(now: now, timeZone: TimeZone(identifier: "America/Los_Angeles")!).date, "2026-09-19")
         let winter = ISO8601DateFormatter().date(from: "2026-01-01T07:30:00Z")!
-        XCTAssertEqual(CoastEntry(region: "US", now: winter).date, "2025-12-31")
+        XCTAssertEqual(CoastEntry(now: winter, timeZone: TimeZone(identifier: "America/Los_Angeles")!).date, "2025-12-31")
+        XCTAssertEqual(CoastEntry(now: now).date, CoastEntry(now: now, timeZone: .current).date)
         XCTAssertEqual(CoastEntry(date: "2024-02-29").date, "2024-02-29")
     }
 
@@ -204,7 +205,6 @@ final class CoastWildCoreTests: XCTestCase {
     func testModelsExposeContractDefaults() {
         let preferences = CoastPreferences()
         XCTAssertEqual(preferences.language, "en")
-        XCTAssertEqual(preferences.region, "CN")
         XCTAssertEqual(preferences.distanceUnit, "km")
         XCTAssertEqual(preferences.temperatureUnit, "c")
         XCTAssertFalse(preferences.onboardingDone)
@@ -212,7 +212,7 @@ final class CoastWildCoreTests: XCTestCase {
 
         let trip = CoastTrip(name: "Coast")
         XCTAssertFalse(trip.id.isEmpty)
-        XCTAssertEqual(trip.timeZone, "Asia/Shanghai")
+        XCTAssertEqual(trip.timeZone, TimeZone.current.identifier)
         XCTAssertEqual(trip.items, [])
         XCTAssertNil(trip.coverPhoto)
         let entry = CoastEntry()
@@ -552,7 +552,7 @@ final class CoastWildCoreTests: XCTestCase {
 
     func testPreferencesPersistWithoutAccountAndClearOnlyCurrentLedger() throws {
         let store = try CoastStore(directory: directory)
-        try store.updatePreferences(CoastPreferences(language: "en", region: "US", distanceUnit: "mi", temperatureUnit: "f", onboardingDone: true))
+        try store.updatePreferences(CoastPreferences(language: "en", distanceUnit: "mi", temperatureUnit: "f", onboardingDone: true))
         try store.activate(accountID: "one")
         try store.saveTrip(CoastTrip(name: "One"))
         try store.activate(accountID: "two")

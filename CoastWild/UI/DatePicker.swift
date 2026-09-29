@@ -19,9 +19,8 @@ enum CoastDatePicker {
     controller.view.endEditing(true)
     let formatter = formatter(time: time)
     let local = self.formatter(time: time)
-    local.timeZone = TimeZone(identifier: controller.env.store.preferences.region == "CN"
-      ? "Asia/Shanghai" : "America/Los_Angeles")
-    let defaultValue = time ? local.string(from: Date()) : CoastEntry(region: controller.env.store.preferences.region).date
+    local.timeZone = .current
+    let defaultValue = local.string(from: Date())
     var initial = formatter.date(from: value) ?? formatter.date(from: defaultValue)!
     if let minimum { initial = max(initial, minimum) }
     if let maximum { initial = min(initial, maximum) }

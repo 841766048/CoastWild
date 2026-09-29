@@ -54,22 +54,14 @@ final class TripEditorController: CoastController, PHPickerViewControllerDelegat
   var trip: CoastTrip
   let original: CoastTrip?
   let pending: String?
-  var selectedRegion: String
-  var regionChanged = false
-  var regionButton: UIButton!
   var coverStack: UIStackView!
   var start: CoastDateField!, end: CoastDateField!
   var name: UITextField!, notes: UITextView!,
     errorLabel = coastLabel("", size: 14, color: CoastStyle.red)
   init(_ env: CoastEnvironment, trip: CoastTrip?, pending: String? = nil) {
-    self.trip =
-      trip
-      ?? CoastTrip(
-        name: "",
-        timeZone: env.store.preferences.region == "CN" ? "Asia/Shanghai" : "America/Los_Angeles")
+    self.trip = trip ?? CoastTrip(name: "")
     self.original = trip
     self.pending = pending
-    self.selectedRegion = (trip?.timeZone == "Asia/Shanghai") ? "CN" : (trip == nil ? env.store.preferences.region : "US")
     super.init(env)
   }
   required init?(coder: NSCoder) { fatalError() }
@@ -92,8 +84,6 @@ final class TripEditorController: CoastController, PHPickerViewControllerDelegat
     name = editorTextField(placeholder: env.t("Give your trip a name", "给出游起个名字"), value: trip.name)
     name.accessibilityIdentifier = "trip.name"
     add(editorFormPanel([editorFieldGroup(env.t("Trip name", "出游名称"), control: name)], height: 113))
-    regionButton = editorSelectButton(regionTitle()) { [weak self] in self?.chooseRegion() }
-    add(editorFormPanel([editorFieldGroup(env.t("Region", "地区"), control: regionButton)], height: 113))
     start = CoastDateField(self, title: env.t("Start date", "开始日期"), value: trip.start, id: "trip.start")
     end = CoastDateField(self, title: env.t("End date", "结束日期"), value: trip.end, id: "trip.end")
     start.maximum = { [weak self] in CoastValidation.parseDate(self?.end.text ?? "") }
@@ -110,17 +100,6 @@ final class TripEditorController: CoastController, PHPickerViewControllerDelegat
       env.t(
         "Leave both dates blank if undecided. Existing activities keep their relative day.",
         "日期未定可同时留空。编辑日期会保留已有活动的相对天序。"))
-  }
-  func regionTitle() -> String { selectedRegion == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国") }
-  func chooseRegion() {
-    menu(env.t("Region", "地区"), choices: [
-      (env.t("United States", "美国"), { [weak self] in self?.setRegion("US") }),
-      (env.t("Mainland China", "中国大陆"), { [weak self] in self?.setRegion("CN") }),
-    ])
-  }
-  func setRegion(_ region: String) {
-    selectedRegion = region; regionChanged = true; regionButton.accessibilityValue = regionTitle()
-    regionButton.configuration?.title = regionTitle()
   }
   func renderCover() {
     coverStack.arrangedSubviews.forEach { view in
@@ -242,7 +221,7 @@ final class TripEditorController: CoastController, PHPickerViewControllerDelegat
   func cancel() {
     let changed =
       name.text != trip.name || start.text != trip.start || end.text != trip.end
-      || notes.text != trip.notes || regionChanged || trip.coverPhoto != original?.coverPhoto
+      || notes.text != trip.notes || trip.coverPhoto != original?.coverPhoto
     let finish = { [weak self] in
       self?.env.cleanUnusedPhotos()
       self?.navigationController?.popViewController(animated: true)
@@ -260,7 +239,6 @@ final class TripEditorController: CoastController, PHPickerViewControllerDelegat
     trip.start = start.text ?? ""
     trip.end = end.text ?? ""
     trip.notes = notes.text ?? ""
-    if original == nil || regionChanged { trip.timeZone = selectedRegion == "CN" ? "Asia/Shanghai" : "America/Los_Angeles" }
     if let issue = CoastValidation.trip(trip) {
       errorLabel.text =
         env.t(
