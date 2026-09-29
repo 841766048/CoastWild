@@ -20,6 +20,7 @@
 		2D33BBACDF2314391BC6B30A /* ProfileController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6EB62C965D21935136A741F /* ProfileController.swift */; };
 		2D5A76FED9D737945BDCA3AD /* terms-en.html in Resources */ = {isa = PBXBuildFile; fileRef = 42F6806D9C426685FD155E72 /* terms-en.html */; };
 		356284BC5F9F062F2DADB3AF /* IntegrationAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FE561C6CF5CCE7FCA16EECA /* IntegrationAPIClient.swift */; };
+		3DE704FE9056D8E80CDDC80B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3139FB7AF48C3C91118F7C19 /* PrivacyInfo.xcprivacy */; };
 		41D8080511F488ABF36269F9 /* UITestRemoteAuthenticationAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68CF5D16C9FF2556A075E833 /* UITestRemoteAuthenticationAPI.swift */; };
 		480C2A18590A43EDF5071B75 /* CoastStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BE46D2AEEBA347131A3685 /* CoastStore.swift */; };
 		4879CB5C2C2131CEA907614F /* PrivacyConsentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC7E4D8570AFA86313B4A52 /* PrivacyConsentStore.swift */; };
@@ -118,6 +119,7 @@
 		29F787657B06587245B0D7CC /* RemoteLoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteLoginController.swift; sourceTree = "<group>"; };
 		2F19E4CEB7C89B94B2F467E9 /* IntegrationRuntimeConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationRuntimeConfiguration.swift; sourceTree = "<group>"; };
 		2F6B82DB48C994E98856C819 /* LearningHTMLRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningHTMLRenderer.swift; sourceTree = "<group>"; };
+		3139FB7AF48C3C91118F7C19 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; name = PrivacyInfo.xcprivacy; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		32A8A6E29E612DD7755958B1 /* AccountDeletionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletionService.swift; sourceTree = "<group>"; };
 		383D24E3AFDDFF193BCAB646 /* AccountVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountVault.swift; sourceTree = "<group>"; };
 		397E5A73764863BF1D0D3224 /* Pods-CoastWild.debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "Pods-CoastWild.debug.xcconfig"; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 				D3AD01D87E3E96FA449A70F9 /* LaunchScreen.storyboard */,
 				A50D1A4A5832D613BFD1FF4D /* InfoPlist.strings */,
 				C32791FF862B73D6719AFB4B /* Legal */,
+				3139FB7AF48C3C91118F7C19 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -475,6 +478,7 @@
 				233C7141691F02EB3BE67A3A /* LaunchScreen.storyboard in Resources */,
 				DD1576B528E89E172466F73E /* privacy-en.html in Resources */,
 				2D5A76FED9D737945BDCA3AD /* terms-en.html in Resources */,
+				3DE704FE9056D8E80CDDC80B /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
