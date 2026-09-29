@@ -61,15 +61,15 @@ class CISupportTests(unittest.TestCase):
             self.support.validate_context("main-ipa", self.env, self.config, {"BUNDLE_ID": "other.app"})
 
     def test_export_requires_matching_team_profile_and_distribution(self):
-        options = {"method": "app-store-connect", "teamID": "8S59A5XCJ9", "provisioningProfiles": {"com.huankecontact.coastwild": "profile-id"}}
+        options = {"method": "app-store-connect", "teamID": "T4VGJVH22P", "provisioningProfiles": {"com.huankecontact.coastwild": "profile-id"}}
         self.support.validate_export(options)
-        for key, value in (("method", "development"), ("teamID", "OTHER"), ("provisioningProfiles", {})):
+        for key, value in (("method", "development"), ("teamID", "OTHER"), ("teamID", "8S59A5XCJ9"), ("provisioningProfiles", {})):
             with self.subTest(key=key), self.assertRaises(ValueError):
                 self.support.validate_export(dict(options, **{key: value}))
 
     def test_effective_device_signing_rejects_local_development_profile(self):
         settings = [{"target": "CoastWild", "buildSettings": {
-            "PRODUCT_BUNDLE_IDENTIFIER": "com.huankecontact.coastwild", "DEVELOPMENT_TEAM": "8S59A5XCJ9",
+            "PRODUCT_BUNDLE_IDENTIFIER": "com.huankecontact.coastwild", "DEVELOPMENT_TEAM": "T4VGJVH22P",
             "CODE_SIGN_IDENTITY": "Apple Distribution: Coast", "PROVISIONING_PROFILE_SPECIFIER": "App Store profile",
         }}]
         self.support.validate_signing_settings(settings)

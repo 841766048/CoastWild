@@ -13,7 +13,7 @@
 
 ## 正式 Bundle ID 迁移状态
 
-工程 Debug/Release、`project.yml`、`IntegrationConfig.plist`、Codemagic 签名匹配及 CI 校验统一使用 `com.huankecontact.coastwild`。按用户要求，旧 Team ID 和本地开发描述文件配置暂时不变；本次不代表新账号签名迁移完成。
+工程 Debug/Release、`project.yml`、`IntegrationConfig.plist`、Codemagic 签名匹配及 CI 校验统一使用 `com.huankecontact.coastwild`。工程与 CI 的 Team ID 已更新为 `T4VGJVH22P`。本地开发描述文件引用按用户要求暂时不变；Codemagic 必须应用新团队的 App Store 描述文件后才能归档。
 
 已在原 Firebase 项目 `coast-wild-20260915` 注册正式 Bundle ID 对应的 iOS 应用，并从 Firebase CLI 获取完整 `GoogleService-Info.plist`。新 Firebase App ID 为 `1:396075139301:ios:33e5decb0b119794cdd40c`，与旧应用不同；项目、数据库和存储桶保持不变。Firebase 包名不匹配这一 CI 阻塞已解除，但不代表签名或云端首次打包已验证。
 
@@ -27,12 +27,12 @@
 
 1. **iOS certificates**：添加有效的 Apple Distribution 证书（`.p12`，包含私钥），填写导出密码。
 2. **iOS provisioning profiles**：添加在 Apple Developer 中手动创建的 **App Store** 类型 `.mobileprovision` 文件。本流程不使用 Xcode-managed 自动管理的描述文件。
-3. 两者必须匹配，并对应 Bundle ID **`com.huankecontact.coastwild`**。当前 CI 仍按用户要求保留团队 **`8S59A5XCJ9`** 的校验；新团队 ID 确认后需要单独迁移。
+3. 两者必须匹配，并对应 Bundle ID **`com.huankecontact.coastwild`**、团队 **`T4VGJVH22P`**。CI 会拒绝旧团队签名。
 4. 确认 Codemagic 显示该描述文件具有匹配的证书。工作流按 Bundle ID 和 `app_store` 类型自动选择，不需要在 YAML 填证书文件名。
 
 也可以先在 Codemagic 配置 Apple Developer Portal / App Store Connect API 集成，再使用平台的获取/生成入口；选择获取手动创建的 App Store 描述文件，不选 Xcode-managed 文件。这里的自动匹配签名资源不等同于 Xcode 自动签名。已有外部证书仍需要对应私钥，不能只上传 `.cer`。本次没有创建、吊销或替换 Apple 证书，也没有写入任何 `.p8`、密码、API token。
 
-**请勿上传本机的 `huankeProfileDev` 开发描述文件来代替 App Store 描述文件。** 本地工程仍保留原签名；只有 Codemagic 临时 checkout 会由 `xcode-project use-profiles` 应用云端签名，随后校验实际 iphoneos 签名设置。
+**请勿上传本机的 `huankeProfileDev` 开发描述文件来代替 App Store 描述文件。** 本地工程仍保留该开发描述文件引用，但 Team ID 已更新；本地真机运行需另选新团队匹配的开发描述文件。Codemagic 临时 checkout 会由 `xcode-project use-profiles` 应用云端签名，随后校验实际 iphoneos 签名设置。
 
 仅导出 IPA 不要求配置自动发布的 API Key 或数字 Apple ID。未来需要上传 TestFlight 时，再核实 App Store Connect 的应用记录、数字 Apple ID 和 API 权限；不要直接使用业务配置中的示例数字 ID。
 

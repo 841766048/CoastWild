@@ -7,7 +7,7 @@ import sys
 from urllib.parse import urlparse
 
 BUNDLE_ID = "com.huankecontact.coastwild"
-TEAM_ID = "8S59A5XCJ9"
+TEAM_ID = "T4VGJVH22P"
 
 
 def require(condition, message):

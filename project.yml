@@ -50,7 +50,7 @@ targets:
         OTHER_LDFLAGS: "$(inherited) -ObjC"
         CODE_SIGN_STYLE: Manual
         DEVELOPMENT_TEAM: ''
-        'DEVELOPMENT_TEAM[sdk=iphoneos*]': 8S59A5XCJ9
+        'DEVELOPMENT_TEAM[sdk=iphoneos*]': T4VGJVH22P
         PROVISIONING_PROFILE_SPECIFIER: ''
         'PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]': huankeProfileDev
         GENERATE_INFOPLIST_FILE: YES
