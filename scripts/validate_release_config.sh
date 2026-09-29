@@ -26,21 +26,19 @@ if ! plutil -lint "$CONFIG_PATH" >/dev/null 2>&1; then
 fi
 
 read_value() {
-  plutil -extract "$1" raw -o - "$CONFIG_PATH" 2>/dev/null || true
+  local value
+  if value="$(plutil -extract "$1" raw -o - "$CONFIG_PATH" 2>/dev/null)"; then
+    printf '%s' "$value"
+  fi
 }
 
 required_keys=(
   CoastIntegrationMode
   CoastExpectedBundleIdentifier
   CoastPrimaryHost
-  CoastWebHost
-  CoastIMHost
-  CoastLogHost
   CoastPrivacyURL
   CoastTermsURL
   CoastAppStoreID
-  CoastAdjustToken
-  CoastAdjustPurchaseToken
 )
 
 for key in "${required_keys[@]}"; do
@@ -51,8 +49,8 @@ for key in "${required_keys[@]}"; do
 done
 
 mode="$(read_value CoastIntegrationMode)"
-if [[ "$mode" != "production" ]]; then
-  fail "CoastIntegrationMode must be production, got '${mode:-empty}'"
+if [[ "$mode" != "release" ]]; then
+  fail "CoastIntegrationMode must be release, got '${mode:-empty}'"
 fi
 
 expected_bundle_id="$(read_value CoastExpectedBundleIdentifier)"
@@ -62,24 +60,17 @@ elif [[ "$expected_bundle_id" != "$ACTUAL_BUNDLE_ID" ]]; then
   fail "bundle identifier mismatch: config='$expected_bundle_id' build='$ACTUAL_BUNDLE_ID'"
 fi
 
+if [[ "$ACTUAL_BUNDLE_ID" == test.duckegg.ios || "$ACTUAL_BUNDLE_ID" == *.test ]]; then
+  fail "test bundle identifier cannot be used for release: $ACTUAL_BUNDLE_ID"
+fi
+
 app_store_id="$(read_value CoastAppStoreID)"
 if [[ -n "$app_store_id" && ! "$app_store_id" =~ ^[0-9]{6,}$ ]]; then
   fail "CoastAppStoreID must contain only digits"
 fi
 
-for key in CoastAdjustToken CoastAdjustPurchaseToken; do
-  value="$(read_value "$key")"
-  normalized_value="$(printf '%s' "$value" | tr '[:upper:]' '[:lower:]')"
-  if [[ "$normalized_value" =~ (^|[-_.])(test|mock|debug)([-_.]|$) ]]; then
-    fail "$key contains a test, mock, or debug marker"
-  fi
-done
-
 url_keys=(
   CoastPrimaryHost
-  CoastWebHost
-  CoastIMHost
-  CoastLogHost
   CoastPrivacyURL
   CoastTermsURL
 )

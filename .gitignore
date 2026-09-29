@@ -14,3 +14,5 @@ firestore-debug.log
 tools/firebase-tests/node_modules/
 .firebase-public/
 .firebase-content/
+.ci-cache/
+__pycache__/

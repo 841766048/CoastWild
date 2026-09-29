@@ -1,0 +1,67 @@
+# Same file on main and codex/native-uikit. No credentials or store publishing.
+workflows:
+  dev-checks:
+    name: Native UIKit - tests and simulator build
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      xcode: "26.1.1"
+      cocoapods: "1.16.2"
+      node: "22"
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: codex/native-uikit
+          include: true
+          source: true
+      cancel_previous_builds: true
+    cache:
+      cache_paths:
+        - $HOME/Library/Caches/CocoaPods
+        - $HOME/.cocoapods
+        - $CM_BUILD_DIR/.ci-cache/SourcePackages
+    scripts:
+      - name: Check branch and test-backend configuration
+        script: python3 scripts/ci/ci_support.py preflight dev-checks
+      - name: Install locked dependencies
+        script: bash scripts/ci/run.sh dependencies
+      - name: Run configuration, core and content tests
+        script: bash scripts/ci/run.sh checks
+      - name: Build simulator application without signing
+        script: bash scripts/ci/run.sh simulator
+    artifacts:
+      - build/codemagic/*.log
+      - build/codemagic/DerivedData/Build/Products/Debug-iphonesimulator/CoastWild.app
+
+  main-ipa:
+    name: Main - signed IPA (test backend, manual)
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    # No triggering section: start manually on main after configuring signing.
+    environment:
+      xcode: "26.1.1"
+      cocoapods: "1.16.2"
+      node: "22"
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.huankecontact.test
+    cache:
+      cache_paths:
+        - $HOME/Library/Caches/CocoaPods
+        - $HOME/.cocoapods
+        - $CM_BUILD_DIR/.ci-cache/SourcePackages
+    scripts:
+      - name: Require manual main build and calculate build number
+        script: python3 scripts/ci/ci_support.py preflight main-ipa
+      - name: Install locked dependencies
+        script: bash scripts/ci/run.sh dependencies
+      - name: Run configuration, core and content tests
+        script: bash scripts/ci/run.sh checks
+      - name: Apply cloud signing and export IPA (no publishing)
+        script: bash scripts/ci/run.sh archive
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/xcarchive/*.xcarchive/dSYMs/*.dSYM
+      - build/codemagic/*.log
+      - /tmp/xcodebuild_logs/*.log
