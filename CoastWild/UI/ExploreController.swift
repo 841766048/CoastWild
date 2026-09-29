@@ -43,11 +43,6 @@ final class ExploreController: CoastController {
     add(header)
     stack.setCustomSpacing(10, after: header)
 
-    let region = fieldButton(icon: "globe", title: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国"), filled: true, height: 42) { [weak self] in
-      guard let self else { return }; self.push(PreferencesController(self.env))
-    }
-    add(region)
-    stack.setCustomSpacing(12, after: region)
     let search = fieldButton(icon: "search", title: env.t("Places, stories, experiences", "目的地、故事与体验"), filled: true, height: 46) { [weak self] in
       guard let self else { return }; self.push(SearchController(self.env))
     }

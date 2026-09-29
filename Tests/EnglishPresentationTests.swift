@@ -11,7 +11,6 @@ final class EnglishPresentationTests: XCTestCase {
         try original.saveEntry(entry)
         var legacy = original.preferences
         legacy.language = "zh-Hans"
-        legacy.region = "CN"
         legacy.distanceUnit = "km"
         legacy.temperatureUnit = "c"
         legacy.interests = ["surf"]
@@ -34,7 +33,6 @@ final class EnglishPresentationTests: XCTestCase {
         let store = try CoastStore(directory: directory)
         var requested = store.preferences
         requested.language = "zh-Hans"
-        requested.region = "CN"
         requested.distanceUnit = "km"
         try store.updatePreferences(requested)
         requested.language = "en"
