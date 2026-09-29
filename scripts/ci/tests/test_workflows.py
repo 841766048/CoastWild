@@ -11,10 +11,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertTrue(path.exists(), "Codemagic workflow configuration is missing")
         self.workflows = yaml.safe_load(path.read_text())["workflows"]
 
-    def test_only_v1_workflows_and_no_publishing(self):
+    def test_only_v1_workflows_and_pinned_toolchain(self):
         self.assertEqual(set(self.workflows), {"dev-checks", "main-ipa"})
         for workflow in self.workflows.values():
-            self.assertNotIn("publishing", workflow)
             self.assertEqual(workflow["environment"]["xcode"], "26.1.1")
             self.assertEqual(workflow["environment"]["cocoapods"], "1.16.2")
 
@@ -25,6 +24,20 @@ class WorkflowTests(unittest.TestCase):
         self.assertNotIn("groups", dev["environment"])
         self.assertNotIn("ios_signing", dev["environment"])
         self.assertNotIn("integrations", dev)
+        self.assertNotIn("publishing", dev)
+
+    def test_main_uploads_with_integration_without_automatic_review(self):
+        main = self.workflows["main-ipa"]
+        self.assertEqual(main.get("integrations"), {
+            "app_store_connect": "CoastWild-NewAccount",
+        })
+        self.assertEqual(main.get("publishing"), {
+            "app_store_connect": {
+                "auth": "integration",
+                "submit_to_testflight": False,
+                "submit_to_app_store": False,
+            },
+        })
 
     def test_main_manual_only_and_exact_signing(self):
         main = self.workflows["main-ipa"]

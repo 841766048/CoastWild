@@ -71,7 +71,7 @@ def main():
             require(bool(env_file), "CM_ENV is required to share the cloud build number")
             with open(env_file, "a", encoding="utf-8") as file:
                 file.write(f"\nCOAST_BUILD_NUMBER={build_number}\n")
-        print("Preflight passed: test backend; no automatic TestFlight/App Store publishing.")
+        print("Preflight passed: test backend; main-ipa uploads only, with no automatic review submission or release.")
     elif command == "export" and len(sys.argv) == 3:
         with open(sys.argv[2], "rb") as file:
             validate_export(plistlib.load(file))

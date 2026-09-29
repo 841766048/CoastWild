@@ -1,4 +1,4 @@
-# Same file on main and codex/native-uikit. No credentials or store publishing.
+# Same file on main and codex/native-uikit. Credentials stay in Codemagic.
 workflows:
   dev-checks:
     name: Native UIKit - tests and simulator build
@@ -35,9 +35,11 @@ workflows:
       - build/codemagic/DerivedData/Build/Products/Debug-iphonesimulator/CoastWild.app
 
   main-ipa:
-    name: Main - signed IPA (test backend, manual)
+    name: Main - App Store Connect upload (test backend, manual)
     instance_type: mac_mini_m2
     max_build_duration: 90
+    integrations:
+      app_store_connect: CoastWild-NewAccount
     # No triggering section: start manually on main after configuring signing.
     environment:
       xcode: "26.1.1"
@@ -58,10 +60,16 @@ workflows:
         script: bash scripts/ci/run.sh dependencies
       - name: Run configuration, core and content tests
         script: bash scripts/ci/run.sh checks
-      - name: Apply cloud signing and export IPA (no publishing)
+      - name: Apply cloud signing and export IPA
         script: bash scripts/ci/run.sh archive
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/xcarchive/*.xcarchive/dSYMs/*.dSYM
       - build/codemagic/*.log
       - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        # Upload only: no automatic beta review, App Store review, or release.
+        submit_to_testflight: false
+        submit_to_app_store: false

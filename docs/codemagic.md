@@ -1,4 +1,4 @@
-# Codemagic：第一版构建与手动 IPA
+# Codemagic：第一版构建与手动触发上传
 
 仓库根目录就是 iOS 工程目录，不要在工作流中再次 `cd ios`。`main` 与 `codex/native-uikit` 使用同一份 `codemagic.yaml`；第二版分支不在这次配置范围内。
 
@@ -7,9 +7,17 @@
 | ID | 分支 | 触发 | 产物 |
 |---|---|---|---|
 | `dev-checks` | `codex/native-uikit` | Git push，或手动启动 | 测试日志、未签名模拟器 App |
-| `main-ipa` | `main` | 仅手动启动 | App Store 签名 IPA、dSYM、构建日志 |
+| `main-ipa` | `main` | 仅手动启动 | App Store 签名 IPA、dSYM、构建日志，并上传 App Store Connect |
 
-**当前 IPA 明确连接测试后端，不代表正式上线准备完成。** 当前配置保持 `development`、`https://test-app.bigegg.work`，正式 Bundle ID 已改为 `com.huankecontact.coastwild`。不自动上传 TestFlight、不提交审核、不发布 App Store。
+**当前 IPA 明确连接测试后端，不代表正式上线准备完成。** 当前配置保持 `development`、`https://test-app.bigegg.work`，正式 Bundle ID 已改为 `com.huankecontact.coastwild`。手动启动 main-ipa 后上传 App Store Connect；不自动提交 TestFlight Beta 审核、App Store 审核或上架。
+
+## 上传授权
+
+`main-ipa.integrations.app_store_connect` 引用 Codemagic Developer Portal 中已保存的 `CoastWild-NewAccount`，使用 `publishing.app_store_connect.auth: integration` 上传。该名称是 API key name，不是 Key ID、证书或描述文件引用名。私钥仅保存在 Codemagic，不进入仓库。
+
+苹果后台需已有 `com.huankecontact.coastwild` 对应应用记录，API Key 需有 App Manager 权限。`submit_to_testflight: false` 与 `submit_to_app_store: false` 不阻止上传，只关闭自动提交审核。Apple 处理完成后到应用 TestFlight 页查看构建并手动配置测试。
+
+云端构建 `6abbaa50083ff0a9a53a61af`（提交 `65d2b42`）已成功导出签名 IPA；该次旧流程没有上传步骤。新增上传配置需推送后重新构建验证，不能将本地 YAML 检查当作上传成功。
 
 ## 正式 Bundle ID 迁移状态
 
@@ -34,14 +42,14 @@
 
 **请勿上传本机的 `huankeProfileDev` 开发描述文件来代替 App Store 描述文件。** 本地工程仍保留该开发描述文件引用，但 Team ID 已更新；本地真机运行需另选新团队匹配的开发描述文件。Codemagic 临时 checkout 会由 `xcode-project use-profiles` 应用云端签名，随后校验实际 iphoneos 签名设置。
 
-仅导出 IPA 不要求配置自动发布的 API Key 或数字 Apple ID。未来需要上传 TestFlight 时，再核实 App Store Connect 的应用记录、数字 Apple ID 和 API 权限；不要直接使用业务配置中的示例数字 ID。
+上传通过集成授权及 IPA 的 Bundle ID 匹配苹果后台应用；不使用业务配置中的示例数字 App Store ID 作为上传目标。
 
 ## 首次运行
 
 1. Codemagic 打开 CoastWild，确认读取仓库根目录的 `codemagic.yaml`。
 2. 选择分支 `codex/native-uikit` 和 `dev-checks`，先运行无签名验证。自动 push 触发还要求 GitHub webhook / 仓库集成正常。
 3. 签名配置完成后，选择分支 `main` 和 `main-ipa`，手动 Start new build。
-4. 成功后从 Artifacts 下载 IPA、dSYM 和日志。此次配置没有发布步骤。
+4. 在 Publishing 日志确认 App Store Connect 上传结果；Artifacts 仍可下载 IPA、dSYM 和日志。Apple 处理完成后查看 TestFlight 构建。
 
 若平台提示缺少匹配签名，是账户端证书/描述文件尚未配置完整；修改代码不会生成缺失私钥。
 
