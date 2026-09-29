@@ -6,7 +6,7 @@ final class ProfileController: CoastController {
     render()
   }
   func render() {
-    reset(); title = env.t("Your space", "个人空间"); navigationItem.backButtonTitle = title
+    reset(); title = env.t("Your space", "个人空间")
     contentTop.constant = 31; stack.spacing = 16
     let avatar = accountPortrait(env, size: 27); add(avatar); stack.setCustomSpacing(12, after: avatar)
     add(coastStats([
@@ -130,7 +130,7 @@ final class PreferencesController: CoastController {
   func render() {
     reset(); title = nil; contentTop.constant = 27; view.backgroundColor = UIColor(hex: 0xF3F8FA)
     heading(env.t("Preferences", "偏好设置"))
-    add(coastLabel(env.t("Language, content region and units can be set separately.", "语言、内容地区与计量单位可以分别设置。"), size: 14, color: CoastStyle.muted))
+    add(coastLabel(env.t("Content region and units can be set separately.", "内容地区与计量单位可以分别设置。"), size: 14, color: CoastStyle.muted))
     stack.setCustomSpacing(10, after: stack.arrangedSubviews[0])
     stack.setCustomSpacing(20, after: stack.arrangedSubviews[1])
     let fields = UIStackView(); fields.axis = .vertical; fields.spacing = 18
@@ -158,9 +158,6 @@ final class PreferencesController: CoastController {
       control.menu = UIMenu(children: values.enumerated().map { i, text in
         UIAction(title: text, state: (selectedValue ?? value) == text ? .on : .off) { _ in selected(i) }
       }); group.addArrangedSubview(control); fields.addArrangedSubview(group); return control
-    }
-    choice(env.t("Language", "语言"), value: env.chinese ? "简体中文" : "English", values: ["English", "简体中文"]) { [weak self] i in
-      guard let self else { return }; self.update { $0.language = i == 0 ? "en" : "zh-Hans" }; self.env.showRoot()
     }
     choice(env.t("Region", "地区"), value: env.store.preferences.region == "CN" ? env.t("Mainland China", "中国大陆") : env.t("United States", "美国"), values: [env.t("United States", "美国"), env.t("Mainland China", "中国大陆")]) { [weak self] i in self?.update { $0.region = i == 0 ? "US" : "CN" } }
     let selectedDistance = env.store.preferences.distanceUnit == "km" ? env.t("Kilometers", "公里") : env.t("Miles", "英里")

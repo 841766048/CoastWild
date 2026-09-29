@@ -17,7 +17,7 @@ final class BusinessWebEntryTests: XCTestCase {
         let runtime = IntegrationRuntimeConfiguration(environment: environment)
         let raw: JSONValue = .object(["k2": .string("k2"), "k3": .string("k3"), "k4": .string("k4"), "extra": .number(1)])
         await runtime.apply(configuration: try JSONValue(any: ["items": [[
-            "name": "app_ext_data", "data": ["example.app:privacy": "https://web.example/new-privacy"],
+            "name": "app_ext_data", "data": ["test.duckegg.ios:privacy": "https://web.example/new-privacy"],
         ]]]), encryptedConfiguration: raw)
         let user: JSONValue = .object(["userId": .string("user"), "nested": .array([.number(1)])])
         let session = try RemoteSession(oauthResponse: .object([
@@ -27,7 +27,7 @@ final class BusinessWebEntryTests: XCTestCase {
         let bootstrap = try BusinessWebEntry.bootstrap(
             environment: environment, runtime: await runtime.snapshot(), session: session,
             strategy: strategy, headers: ["Authorization": "Bearer token"],
-            package: .init(localeIdentifier: "en", appName: "App", packageName: "example.app"))
+            package: .init(localeIdentifier: "en", appName: "App", packageName: environment.integrationPackageIdentifier))
         XCTAssertEqual(bootstrap.encryptedConfiguration, raw)
         XCTAssertEqual(bootstrap.strategy, strategy)
         XCTAssertEqual(bootstrap.userInfo, user)

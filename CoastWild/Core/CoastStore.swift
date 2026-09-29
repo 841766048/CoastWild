@@ -44,6 +44,9 @@ public final class CoastStore {
         }
         if fileManager.fileExists(atPath: preferencesURL.path) {
             preferences = try read(CoastPreferences.self, from: preferencesURL)
+            if preferences.language != "en" {
+                try updatePreferences(preferences, notify: false)
+            }
         }
     }
 
@@ -86,6 +89,8 @@ public final class CoastStore {
     }
 
     private func updatePreferences(_ next: CoastPreferences, notify: Bool) throws {
+        var next = next
+        next.language = "en"
         let data = try encode(next)
         try write(data, to: preferencesURL)
         preferences = next

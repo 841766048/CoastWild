@@ -22,6 +22,10 @@ public struct IntegrationEnvironment: Equatable, Sendable {
     public let termsURL: URL
     public let appStoreID: String
     public let bundleIdentifier: String
+    /// Keep the installed/Keychain identity separate from the development backend package.
+    public var integrationPackageIdentifier: String {
+        mode == .development ? "test.duckegg.ios" : bundleIdentifier
+    }
     public let adjustToken: String
     public let adjustPurchaseToken: String
     public let reportSubheading: String

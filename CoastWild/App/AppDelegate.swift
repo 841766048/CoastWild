@@ -77,7 +77,7 @@ final class CoastEnvironment {
   weak var window: UIWindow?
   private var purchaseUpdatesTask: Task<Void, Never>?
   private var activeRemoteUserID: String?
-  var chinese: Bool { store.preferences.language != "en" }
+  var chinese: Bool { false }
   init() throws {
     guard let integrationURL = Bundle.main.url(
       forResource: "IntegrationConfig",
@@ -113,9 +113,9 @@ final class CoastEnvironment {
     requestContext = RequestContextProvider(values: RequestContextValues(
       deviceID: deviceID,
       model: UIDevice.current.model,
-      language: Locale.preferredLanguages.first ?? "en",
+      language: "en",
       appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
-      bundleIdentifier: integration.bundleIdentifier,
+      bundleIdentifier: integration.integrationPackageIdentifier,
       timeZone: TimeZone.current.identifier,
       country: Locale.current.region?.identifier ?? "",
       platformVersion: UIDevice.current.systemVersion,
@@ -162,7 +162,7 @@ final class CoastEnvironment {
         reporter: IntegrationAttributionReporter(
           client: client,
           sessions: remoteSessions,
-          package: integration.bundleIdentifier,
+          package: integration.integrationPackageIdentifier,
           version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
           deviceID: deviceID
         )
@@ -221,8 +221,7 @@ final class CoastEnvironment {
     store = try CoastStore(directory: directory)
     if !existed {
       var prefs = store.preferences
-      prefs.language = testing && ProcessInfo.processInfo.arguments.contains("--language-zh")
-        ? "zh-Hans" : "en"
+      prefs.language = "en"
       if !testing {
         prefs.region = Locale.current.region?.identifier == "CN" ? "CN" : "US"
         prefs.distanceUnit = prefs.region == "CN" ? "km" : "mi"
@@ -322,7 +321,7 @@ final class CoastEnvironment {
       packageInfo: .init(
         localeIdentifier: Locale.current.identifier,
         appName: "Coast & Wild",
-        packageName: integration.bundleIdentifier),
+        packageName: integration.integrationPackageIdentifier),
       encryptedConfiguration: .object([:]),
       strategy: .object([:]),
       userInfo: .object([:]),
@@ -351,7 +350,7 @@ final class CoastEnvironment {
       packageInfo: .init(
         localeIdentifier: Locale.current.identifier,
         appName: "Coast & Wild",
-        packageName: integration.bundleIdentifier),
+        packageName: integration.integrationPackageIdentifier),
       encryptedConfiguration: .object([:]),
       strategy: .object([:]),
       userInfo: .object([:]),
@@ -426,7 +425,7 @@ final class CoastEnvironment {
       headers: headers, package: .init(
         localeIdentifier: store.preferences.language,
         appName: Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Coast & Wild",
-        packageName: integration.bundleIdentifier), language: store.preferences.language)
+        packageName: integration.integrationPackageIdentifier), language: store.preferences.language)
     let url = try BusinessWebEntry.url(
       bundled: integration.webHost, configured: runtime.webIndexURL, strategy: strategy,
       timestamp: Int64(Date().timeIntervalSince1970))
@@ -482,7 +481,7 @@ final class CoastEnvironment {
           headers: headers, package: .init(
             localeIdentifier: self.store.preferences.language,
             appName: Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Coast & Wild",
-            packageName: self.integration.bundleIdentifier), language: self.store.preferences.language)
+            packageName: self.integration.integrationPackageIdentifier), language: self.store.preferences.language)
         try self.store.activate(accountID: session.userID)
         self.activeRemoteUserID = session.userID
         Task { await self.startAttribution(userID: session.userID) }
@@ -776,6 +775,9 @@ final class CoastNavigationController: UINavigationController,
   }
 
   override func pushViewController(_ viewController: UIViewController, animated: Bool) {
+    for controller in viewControllers + [viewController] {
+      controller.navigationItem.backButtonDisplayMode = .minimal
+    }
     super.pushViewController(
       viewController, animated: animated && !UIAccessibility.isReduceMotionEnabled)
   }
@@ -796,6 +798,9 @@ final class CoastNavigationController: UINavigationController,
   }
 
   override func setViewControllers(_ viewControllers: [UIViewController], animated: Bool) {
+    for controller in viewControllers {
+      controller.navigationItem.backButtonDisplayMode = .minimal
+    }
     super.setViewControllers(
       viewControllers, animated: animated && !UIAccessibility.isReduceMotionEnabled)
   }

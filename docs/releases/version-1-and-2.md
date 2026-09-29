@@ -1,5 +1,30 @@
 # 第一版 / 第二版内购分支管理
 
+## 2026-09-29 扩展拆分（优先于下面的历史操作说明）
+
+第一版进一步移除业务 Web 切换、二级业务 Web、JS Bridge、ATT/Adjust、内置 catalog.json 及预置内容兜底。第二版继续保留这些能力和支付/金币闭环。第一版保留云端公共内容缓存、手记/图片保存与同步、JSON 网络编解码、隐私协议和课程正文展示。
+
+当前第一版目录为 `ios/`，分支 `codex/native-uikit`；第二版目录为 `ios/.worktrees/native-coin-learning/`，分支 `codex/native-coin-learning`。本轮修改保持未提交，不推送、不合并。下面 2026-09-23 的祖先关系和自动合并预演结果仅覆盖当时内购拆分，不证明本轮删除后普通 merge 能自动恢复所有功能。
+
+第二版已经具备 19 个 Bridge topic、主/二级 Web、ATT/Adjust、预置目录和支付链路。本轮有选择同步测试后端 package 身份修复：development 使用 `test.duckegg.ios`，正式环境使用实际 Bundle ID；设备钥匙串仍使用实际 Bundle ID。请求头、归因请求、Web 注入和动态配置前缀使用同一协议身份。不会用第一版文件整体覆盖第二版而删除内购。
+
+### 第二版合并前的恢复范围
+
+1. 业务路由：AppDelegate 的 remoteAuthenticated、业务容器构造、后台登录/退出回调；BusinessWebEntry、BusinessWebBootstrap、BusinessWebNavigationPolicy、BusinessWebController、InternalWebController、InternalWebContract。
+2. Bridge：BridgeMessage、BridgeRouter、BridgeEventEmitter、BusinessBridgeAction、JavaScriptCallbackEncoder，以及 IAPBridgeHandler 与对应容器注册。
+3. 归因：AttributionAdapters、AttributionCoordinator、AttributionSubmission、IntegrationAttributionReporter；ATT 用途声明、Adjust Pod/lock、运行时配置及归因请求路径。
+4. 预置内容：catalog.json、Catalog/LearningRepository 的预置加载调用、资源构建引用；不得将第一版无缓存错误逻辑误当作第二版预置内容实现。
+5. 共享文件选择性恢复：IntegrationAPIClient、IntegrationEndpointPaths、IntegrationDTOs、IntegrationEnvironment/Loader、IntegrationRuntimeConfiguration、RequestContext、RemoteSessionCoordinator、project.yml/生成工程。保持第二版购买配置/端点/状态与第一版后来修复的共享功能。
+6. 用 VersionTwoBoundaryTests、Bridge/Web/归因/支付测试、模拟器构建和金币购买消费 UI 回归确认结果；不能以无合并冲突替代验收。
+
+只有在用户授权提交/合并之后，才把第一版删除历史整合入第二版并选择性恢复上述能力，或对审阅后的删除补丁逐项逆向恢复。禁止全局 ours 策略和直接整文件覆盖共享代码。当前未提交状态不可运行历史说明中的直接合并命令。
+
+原始第一版工作区快照及暂存/未暂存补丁保存在 Git common directory 下 `recovery/2026-09-29-native-v1-split/`，不编入 App，也不上传远端。恢复时先解压到独立临时目录再选择性比较，不在当前工作区直接覆盖。
+
+新增 VersionTwoBoundaryTests 检查功能文件/关键调用/资源/依赖，以及开发和正式配置隔离；其他行为由现有专门测试覆盖。云同步等与移除能力无关的第一版未提交功能未自动整批移入第二版。
+
+本轮验收：core 286 项通过，Release 模拟器构建通过；签名 Debug 产物在独立 iOS 18.6 模拟器上通过免费学习及购买→消费解锁→阅读→重启保留两项 UI 测试。该购买测试使用 DEBUG 专用受控 StoreKit 返回，不代表真实 Apple 付款。初次误用无签名/Release 产物的 UI 失败已定位并记录在第一版拆分报告中，未因此修改生产支付逻辑。
+
 ## 发布边界
 
 - 第一版：`codex/native-uikit`，删除项目自身的支付 API、StoreKit 交易实现、JS 购买及金币消息、恢复购买入口、购买事件上报和购买专用配置。

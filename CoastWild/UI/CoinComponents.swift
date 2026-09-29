@@ -144,10 +144,6 @@ class CoinScreen: CoastController {
     super.viewDidLoad()
     view.backgroundColor = CoinStyle.background
     stack.spacing = 20
-    navigationItem.backButtonTitle = "Learn"
-    let back = UIBarButtonItem(title: "Learn", style: .plain, target: nil, action: nil)
-    if #available(iOS 26.0, *) { back.hidesSharedBackground = true }
-    navigationItem.backBarButtonItem = back
   }
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)

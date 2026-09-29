@@ -55,7 +55,7 @@ public actor IntegrationRuntimeConfiguration {
     public init(environment: IntegrationEnvironment) {
         let defaults = IntegrationRuntimeSnapshot(environment: environment)
         self.defaults = defaults
-        bundleIdentifier = environment.bundleIdentifier
+        bundleIdentifier = environment.integrationPackageIdentifier
         current = defaults
     }
 

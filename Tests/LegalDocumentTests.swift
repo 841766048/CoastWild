@@ -8,9 +8,7 @@ final class LegalDocumentTests: XCTestCase {
             .appendingPathComponent("CoastWild/Resources/Legal")
         let expectations: [String: [String]] = [
             "privacy-en.html": ["remote account", "device identifier", "web content", "payment", "attribution", "retention", "delete your account", "support@coastwild.app"],
-            "privacy-zh-Hans.html": ["远程账号", "设备标识", "网页内容", "支付", "归因", "保留", "注销账号", "support@coastwild.app"],
             "terms-en.html": ["simulated", "apple subscription", "delete"],
-            "terms-zh-Hans.html": ["模拟", "apple 订阅", "注销"],
         ]
 
         for (filename, phrases) in expectations {
