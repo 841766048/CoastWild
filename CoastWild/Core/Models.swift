@@ -50,7 +50,12 @@ enum NotePhotoCodec {
           CGImageSourceCreateImageAtIndex(source, 0, nil) != nil
     else { throw CoastStoreError("notes.invalidPhoto") }
     try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+    #if os(iOS)
     try data.write(to: url, options: [.atomic, .completeFileProtection])
+    #else
+    // iOS data-protection attributes cannot be written by the macOS test host.
+    try data.write(to: url, options: .atomic)
+    #endif
   }
 }
 

@@ -22,7 +22,7 @@ workflows:
         - $HOME/.cocoapods
         - $CM_BUILD_DIR/.ci-cache/SourcePackages
     scripts:
-      - name: Check branch and test-backend configuration
+      - name: Check branch and Firebase configuration
         script: python3 scripts/ci/ci_support.py preflight dev-checks
       - name: Install locked dependencies
         script: bash scripts/ci/run.sh dependencies
@@ -35,7 +35,7 @@ workflows:
       - build/codemagic/DerivedData/Build/Products/Debug-iphonesimulator/CoastWild.app
 
   main-ipa:
-    name: Main - App Store Connect upload (test backend, manual)
+    name: Main - App Store Connect upload (Firebase, manual)
     instance_type: mac_mini_m2
     max_build_duration: 90
     integrations:

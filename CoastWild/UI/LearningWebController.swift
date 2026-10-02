@@ -3,7 +3,7 @@ import SkeletonView
 import UIKit
 import WebKit
 
-final class LearningWebController: UIViewController, WKNavigationDelegate {
+final class LearningWebController: UIViewController, WKNavigationDelegate, WKUIDelegate {
   private let env: CoastEnvironment
   private let lessonID: String
   private let webView = WKWebView(frame: .zero)
@@ -29,6 +29,7 @@ final class LearningWebController: UIViewController, WKNavigationDelegate {
       UIBarButtonItem(image: UIImage(systemName: env.store.ledger.bookmarks.contains(lessonID) ? "bookmark.fill" : "bookmark"), style: .plain, target: self, action: #selector(toggleBookmark)),
     ]
     webView.navigationDelegate = self
+    webView.uiDelegate = self
     webView.translatesAutoresizingMaskIntoConstraints = false
     placeholder.translatesAutoresizingMaskIntoConstraints = false
     skeleton.setLoadingAccessibility(
@@ -119,6 +120,15 @@ final class LearningWebController: UIViewController, WKNavigationDelegate {
       }
       LearningShare.present(image, from: self, item: item)
     }
+  }
+
+  // Articles never need camera or microphone access, regardless of content origin.
+  func webView(
+    _ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+    initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType,
+    decisionHandler: @escaping (WKPermissionDecision) -> Void
+  ) {
+    decisionHandler(.deny)
   }
 
   func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {

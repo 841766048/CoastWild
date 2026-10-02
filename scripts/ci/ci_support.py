@@ -1,4 +1,4 @@
-"""Fail-closed checks for the initial, test-backend Codemagic workflows."""
+"""Fail-closed checks for Firebase-only native Codemagic workflows."""
 import json
 import os
 import pathlib
@@ -20,17 +20,17 @@ def validate_context(workflow, env, config, firebase):
     require(workflow in branches, "Unknown workflow")
     require(env.get("CM_BRANCH") == branches[workflow], "Workflow does not match the selected branch")
     require(env.get("CM_PULL_REQUEST", "false") != "true", "These workflows do not accept pull-request builds")
-    require(config.get("CoastIntegrationMode") == "development", "This workflow is for the test backend only; configure a separate reviewed production workflow")
+    require(config.get("CoastAuthenticationProvider") == "firebase-anonymous", "Firebase anonymous authentication is required")
+    require(not any(key in config for key in ("CoastPrimaryHost", "CoastIntegrationMode", "CoastTermsURL", "CoastAppStoreID")), "Retired business configuration is not allowed")
     require(config.get("CoastExpectedBundleIdentifier") == BUNDLE_ID, "Integration bundle ID mismatch")
     require(firebase.get("BUNDLE_ID") == BUNDLE_ID, "Firebase bundle ID mismatch: download GoogleService-Info.plist for " + BUNDLE_ID + "; do not edit the old Firebase plist")
-    for key in ("CoastPrimaryHost", "CoastPrivacyURL", "CoastTermsURL"):
+    for key in ("CoastPrivacyURL", "CoastSupportURL"):
         value = config.get(key)
         require(isinstance(value, str) and bool(value.strip()), "Missing URL: " + key)
         url = urlparse(value)
         require(url.scheme == "https" and bool(url.hostname) and not url.username and not url.password, "Invalid HTTPS URL: " + key)
-    require(config.get("CoastPrimaryHost") == "https://test-app.bigegg.work", "Unexpected test API host")
-    app_id = config.get("CoastAppStoreID", "")
-    require(isinstance(app_id, str) and app_id.isascii() and app_id.isdigit(), "App Store ID must be numeric (not used for publishing by this workflow)")
+        require(url.hostname == "docs.google.com" and url.path.startswith("/document/d/"), "Expected supplied Google document: " + key)
+    require(config.get("CoastTermsResource") == "terms-en", "Bundled terms are required")
     if workflow == "dev-checks":
         return None
     require(env.get("CM_TRIGGER_SOURCE") == "api", "IPA export must be started manually in Codemagic")
@@ -71,7 +71,7 @@ def main():
             require(bool(env_file), "CM_ENV is required to share the cloud build number")
             with open(env_file, "a", encoding="utf-8") as file:
                 file.write(f"\nCOAST_BUILD_NUMBER={build_number}\n")
-        print("Preflight passed: test backend; main-ipa uploads only, with no automatic review submission or release.")
+        print("Preflight passed: Firebase identity; main-ipa uploads only, with no automatic review submission or release.")
     elif command == "export" and len(sys.argv) == 3:
         with open(sys.argv[2], "rb") as file:
             validate_export(plistlib.load(file))
@@ -80,6 +80,12 @@ def main():
         with open(sys.argv[2], encoding="utf-8") as file:
             validate_signing_settings(json.load(file))
         print("Effective device signing settings verified.")
+    elif command == "config" and len(sys.argv) == 4:
+        with open(sys.argv[2], "rb") as file:
+            config = plistlib.load(file)
+        require(sys.argv[3] == BUNDLE_ID, "Actual bundle ID mismatch")
+        validate_context("dev-checks", {"CM_BRANCH": "codex/native-uikit"}, config, {"BUNDLE_ID": sys.argv[3]})
+        print("Firebase-only application configuration verified.")
     else:
         raise ValueError("usage: ci_support.py preflight <dev-checks|main-ipa> | export <plist> | signing <json>")
 

@@ -18,12 +18,11 @@ class CISupportTests(unittest.TestCase):
     def setUp(self):
         self.assertTrue(MODULE.exists(), "CI preflight implementation is missing")
         self.config = {
-            "CoastIntegrationMode": "development",
+            "CoastAuthenticationProvider": "firebase-anonymous",
             "CoastExpectedBundleIdentifier": "com.huankecontact.coastwild",
-            "CoastPrimaryHost": "https://test-app.bigegg.work",
-            "CoastPrivacyURL": "https://h5.bigegg.work/privacyPolicy.html",
-            "CoastTermsURL": "https://h5.bigegg.work/termConditions.html",
-            "CoastAppStoreID": "6744892295",
+            "CoastPrivacyURL": "https://docs.google.com/document/d/privacy/edit",
+            "CoastSupportURL": "https://docs.google.com/document/d/support/edit",
+            "CoastTermsResource": "terms-en",
         }
         self.firebase = {"BUNDLE_ID": "com.huankecontact.coastwild"}
         self.env = {"CM_BRANCH": "main", "CM_TRIGGER_SOURCE": "api", "PROJECT_BUILD_NUMBER": "7"}
@@ -54,7 +53,7 @@ class CISupportTests(unittest.TestCase):
                 self.support.validate_context("main-ipa", dict(self.env, PROJECT_BUILD_NUMBER=number), self.config, self.firebase)
 
     def test_config_mismatch_and_insecure_url_rejected(self):
-        for key, value in (("CoastIntegrationMode", "release"), ("CoastExpectedBundleIdentifier", "other.app"), ("CoastPrimaryHost", "http://example.com"), ("CoastAppStoreID", "")):
+        for key, value in (("CoastAuthenticationProvider", "business"), ("CoastExpectedBundleIdentifier", "other.app"), ("CoastPrivacyURL", "http://example.com"), ("CoastSupportURL", ""), ("CoastTermsResource", "remote"), ("CoastPrimaryHost", "https://retired.example")):
             with self.subTest(key=key), self.assertRaises(ValueError):
                 self.support.validate_context("main-ipa", self.env, dict(self.config, **{key: value}), self.firebase)
         with self.assertRaises(ValueError):

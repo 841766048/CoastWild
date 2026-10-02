@@ -9,7 +9,7 @@
 | `dev-checks` | `codex/native-uikit` | Git push，或手动启动 | 测试日志、未签名模拟器 App |
 | `main-ipa` | `main` | 仅手动启动 | App Store 签名 IPA、dSYM、构建日志，并上传 App Store Connect |
 
-**当前 IPA 明确连接测试后端，不代表正式上线准备完成。** 当前配置保持 `development`、`https://test-app.bigegg.work`，正式 Bundle ID 已改为 `com.huankecontact.coastwild`。手动启动 main-ipa 后上传 App Store Connect；不自动提交 TestFlight Beta 审核、App Store 审核或上架。
+**main 现使用 Firebase 匿名认证，不再连接旧业务测试后端。** 正式 Bundle ID 为 `com.huankecontact.coastwild`。CI 验证 Firebase 配置、隐私与支持链接、本地用户协议及归档权限。手动启动 main-ipa 后上传 App Store Connect；不自动提交 TestFlight Beta 审核、App Store 审核或上架。在线协议仍需补全主体、联系信息等占位内容后才能正式提审。
 
 ## 上传授权
 

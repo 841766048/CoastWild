@@ -97,8 +97,8 @@ final class CoastWildCoreTests: XCTestCase {
 
     func testLegalDocumentsAcceptOnlyConfiguredHTTPSRemoteURLs() {
         let values = [
-            "LEGAL_PRIVACY_URL_EN": "https://legal.coastwild.app/en/privacy",
-            "LEGAL_TERMS_URL_EN": "http://legal.coastwild.app/en/terms",
+            "CoastPrivacyURL": "https://legal.coastwild.app/en/privacy",
+            "CoastTermsURL": "http://legal.coastwild.app/en/terms",
         ]
 
         XCTAssertEqual(

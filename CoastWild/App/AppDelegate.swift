@@ -8,8 +8,18 @@ import IQKeyboardManagerSwift
 import IQKeyboardToolbarManager
 import IQKeyboardToolbar
 
+enum CoastTestMode {
+  static var isEnabled: Bool {
+    #if DEBUG
+    return ProcessInfo.processInfo.arguments.contains("--ui-testing")
+    #else
+    return false
+    #endif
+  }
+}
 
-/// Firebase identity is device-anonymous; account hashes only partition local business accounts.
+
+/// Firebase identity is device-anonymous; account aliases preserve legacy note partitions.
 /// Private images use owner-only child documents; credentials are never stored in documents.
 @MainActor final class FirebaseNoteSync {
   static let changed = Notification.Name("CoastWild.notesSyncChanged")
@@ -22,7 +32,6 @@ import IQKeyboardToolbar
   private var activeAccount: String?
   private var paused = false
   private var requested = false
-  private var identityTask: Task<String, Error>?
   private(set) var status = "local"
   private lazy var database: Firestore = {
     Firestore.firestore()
@@ -83,11 +92,8 @@ import IQKeyboardToolbar
 
   func identity() async throws -> String {
     if let user = Auth.auth().currentUser { return user.uid }
-    if let identityTask { return try await identityTask.value }
-    let next = Task { try await Auth.auth().signInAnonymously().user.uid }
-    identityTask = next
-    defer { identityTask = nil }
-    return try await next.value
+    throw NSError(domain: "CoastWild.Auth", code: 1,
+      userInfo: [NSLocalizedDescriptionKey: "Please continue with your device account first."])
   }
 
   private func collection(uid: String, account: String) -> CollectionReference {
@@ -229,11 +235,6 @@ import IQKeyboardToolbar
   }
 }
 
-private enum SimulatedAccountDeletionError: LocalizedError {
-  case rejected
-  var errorDescription: String? { "account.deletion.simulated" }
-}
-
 @main final class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
   var coast: CoastEnvironment?
@@ -241,7 +242,7 @@ private enum SimulatedAccountDeletionError: LocalizedError {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    if !ProcessInfo.processInfo.arguments.contains("--ui-testing") || ProcessInfo.processInfo.arguments.contains("--ui-testing-public-content") {
+    if !CoastTestMode.isEnabled || ProcessInfo.processInfo.arguments.contains("--ui-testing-public-content") {
       FirebaseApp.configure()
       // Configure once before either public content or private notes use Firestore.
       let db = Firestore.firestore()
@@ -267,7 +268,7 @@ private enum SimulatedAccountDeletionError: LocalizedError {
       let label = UILabel()
       label.numberOfLines = 0
       label.text =
-        "无法打开本地数据，请重新启动。\nUnable to open local data. Please restart.\n\(error.localizedDescription)"
+        "Unable to open local data. Please restart.\n\(error.localizedDescription)"
       label.frame = CGRect(x: 30, y: 150, width: window.bounds.width - 60, height: 240)
       vc.view.addSubview(label)
       window.rootViewController = vc
@@ -283,16 +284,18 @@ private enum SimulatedAccountDeletionError: LocalizedError {
   }
 }
 final class CoastEnvironment {
-  @MainActor private lazy var noteSync = FirebaseNoteSync(store: store, deviceID: requestContext.values.deviceID, directory: directory)
+  @MainActor private lazy var noteSync = FirebaseNoteSync(store: store, deviceID: deviceID, directory: directory)
   @MainActor var noteSyncStatus: String { noteSync.status }
   @MainActor func scheduleNoteSync() {
-    guard !ProcessInfo.processInfo.arguments.contains("--ui-testing"), privacyConsent.isAccepted else { return }
+    guard !CoastTestMode.isEnabled, privacyConsent.isAccepted,
+          accountState?.deletion == nil, store.accountID != nil else { return }
     noteSync.schedule()
   }
   @MainActor func refreshPublicContent(force: Bool = false) {
+    guard accountState?.deletion == nil, store.accountID != nil else { return }
     let args = ProcessInfo.processInfo.arguments
     #if DEBUG
-    if args.contains("--ui-testing"), args.contains("--ui-testing-content-retry"), privacyConsent.isAccepted {
+    if CoastTestMode.isEnabled, args.contains("--ui-testing-content-retry"), privacyConsent.isAccepted {
       publicContent.refreshEmptyFixture(force: force) { [weak self] catalog in
         self?.catalog = catalog
         self?.learning.replaceLessons(catalog.lessons)
@@ -300,7 +303,7 @@ final class CoastEnvironment {
       return
     }
     #endif
-    guard (!args.contains("--ui-testing") || args.contains("--ui-testing-public-content")), privacyConsent.isAccepted else { return }
+    guard (!CoastTestMode.isEnabled || args.contains("--ui-testing-public-content")), privacyConsent.isAccepted else { return }
     publicContent.refresh(force: force, identity: { [weak self] in
       guard let self else { throw CancellationError() }
       return try await self.noteSync.identity()
@@ -309,16 +312,15 @@ final class CoastEnvironment {
       self?.learning.replaceLessons(catalog.lessons)
     })
   }
-  let integration: IntegrationEnvironment
-  let integrationRuntime: IntegrationRuntimeConfiguration
   let deviceIdentity: DeviceIdentityStore
-  let remoteSessions: RemoteSessionStore
-  let integrationAPI: any RemoteAuthenticationAPI
-  let requestContext: RequestContextProvider
-  let remoteSessionCoordinator: RemoteSessionCoordinator
+  let deviceID: String
+  let defaults: UserDefaults
+  private let identityStorage = SecurityKeychainValueStore(service: "com.coastwild.firebase.account")
+  private(set) var accountState: FirebaseAccountState?
+  @MainActor private var authenticationTask: Task<Void, Error>?
+  @MainActor private var deletingAccount = false
   let privacyConsent: PrivacyConsentStore
   let store: CoastStore
-  let vault: AccountVault
   private(set) var catalog: Catalog
   let publicContent: PublicContentService
   let learning: LearningRepository
@@ -326,60 +328,23 @@ final class CoastEnvironment {
   let reminders = CoastReminders()
   private var rescheduleTask: Task<Void, Never>?
   weak var window: UIWindow?
-  private var activeRemoteUserID: String?
   var chinese: Bool { false }
   init() throws {
-    guard let integrationURL = Bundle.main.url(
-      forResource: "IntegrationConfig",
-      withExtension: "plist"
-    ) else {
-      throw IntegrationEnvironmentLoader.LoadError.invalidPropertyList
-    }
-    integration = try IntegrationEnvironmentLoader.load(
-      propertyListData: Data(contentsOf: integrationURL),
-      bundleIdentifier: Bundle.main.bundleIdentifier ?? ""
-    )
-    integrationRuntime = IntegrationRuntimeConfiguration(environment: integration)
-    let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing")
-    let defaults = testing
+    let testing = CoastTestMode.isEnabled
+    defaults = testing
       ? UserDefaults(suiteName: "com.coastwild.integration.ui-tests")!
       : UserDefaults.standard
     if testing && ProcessInfo.processInfo.arguments.contains("--reset-test-data") {
       defaults.removePersistentDomain(forName: "com.coastwild.integration.ui-tests")
     }
     deviceIdentity = DeviceIdentityStore(
-      bundleIdentifier: integration.bundleIdentifier,
+      bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.huankecontact.coastwild",
       defaults: defaults
     )
-    let deviceID = try deviceIdentity.resolve()
-    remoteSessions = RemoteSessionStore(defaults: defaults)
-    requestContext = RequestContextProvider(values: RequestContextValues(
-      deviceID: deviceID,
-      model: UIDevice.current.model,
-      language: "en",
-      appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
-      bundleIdentifier: integration.integrationPackageIdentifier,
-      timeZone: TimeZone.current.identifier,
-      country: Locale.current.region?.identifier ?? "",
-      platformVersion: UIDevice.current.systemVersion,
-      localeIdentifier: Locale.current.identifier
-    ))
-    if testing {
-      integrationAPI = UITestRemoteAuthenticationAPI()
-    } else {
-      let client = IntegrationAPIClient(
-        primaryHost: integration.primaryHost,
-        contextProvider: requestContext,
-        keyStore: IntegrationKeyStore(),
-        runtimeConfiguration: integrationRuntime
-      )
-      integrationAPI = client
+    deviceID = testing ? "ui-test-device" : try deviceIdentity.resolve()
+    if !testing, let value = try identityStorage.read(account: "state"), !value.isEmpty {
+      accountState = try JSONDecoder().decode(FirebaseAccountState.self, from: Data(value.utf8))
     }
-    remoteSessionCoordinator = RemoteSessionCoordinator(
-      api: integrationAPI,
-      deviceIdentity: deviceIdentity,
-      sessions: remoteSessions
-    )
     privacyConsent = PrivacyConsentStore(
       defaults: defaults,
       key: "com.coastwild.integration.privacy-consent",
@@ -387,26 +352,14 @@ final class CoastEnvironment {
     )
     directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(testing ? "CoastWildTests" : "CoastWild")
-    vault = try AccountVault(testing: testing)
     if testing && ProcessInfo.processInfo.arguments.contains("--reset-test-data") {
       if FileManager.default.fileExists(atPath: directory.path) {
         try FileManager.default.removeItem(at: directory)
       }
-      try vault.clearTestVault()
       privacyConsent.reset()
     }
     if testing && ProcessInfo.processInfo.arguments.contains("--accept-privacy") {
       privacyConsent.accept()
-    }
-    // 仅 UI 测试用：直接建好并登入一个测试账号。
-    // iOS 18 模拟器上，安全输入框配合密码自动填充只会收到第一个字符，
-    // 注册表单无法在自动化里可靠填写；业务界面的密码输入行为未因此改动。
-    if testing && ProcessInfo.processInfo.arguments.contains("--seed-account") {
-      if vault.current == nil {
-        try? vault.register(
-          name: "Gear Tester", email: "gear-test@example.test", password: "coast-test-2026")
-        try? vault.login(email: "gear-test@example.test", password: "coast-test-2026")
-      }
     }
     let existed = FileManager.default.fileExists(atPath: directory.path)
     store = try CoastStore(directory: directory)
@@ -496,7 +449,11 @@ final class CoastEnvironment {
     IQKeyboardToolbarManager.shared.toolbarConfiguration.doneBarButtonConfiguration =
       IQBarButtonItemConfiguration(title: t("Done", "完成"))
     if privacyConsent.isAccepted {
-      window?.rootViewController = StartupController(self)
+      if defaults.bool(forKey: "firebase.showWelcome") || accountState?.deletion != nil {
+        window?.rootViewController = navigation(RemoteLoginController(self))
+      } else {
+        window?.rootViewController = StartupController(self)
+      }
     } else {
       window?.rootViewController = PrivacyConsentController(self)
     }
@@ -551,62 +508,99 @@ final class CoastEnvironment {
     nav.navigationBar.prefersLargeTitles = false
     return nav
   }
-  @MainActor func remoteAuthenticated(session: RemoteSession) async throws {
-    let userID = session.userID
-    try store.activate(accountID: userID)
+  private func persistAccount(_ state: FirebaseAccountState?) throws {
+    if !CoastTestMode.isEnabled {
+      let value = try state.map { String(decoding: try JSONEncoder().encode($0), as: UTF8.self) } ?? ""
+      try identityStorage.write(value, account: "state", accessibility: .afterFirstUnlockThisDeviceOnly)
+    }
+    accountState = state
+  }
+
+  @MainActor func firebaseLogin() async throws {
+    guard privacyConsent.isAccepted, !deletingAccount, accountState?.deletion == nil else {
+      throw NSError(domain: "CoastWild.Auth", code: 2,
+        userInfo: [NSLocalizedDescriptionKey: "Account deletion is pending. Please retry deletion."])
+    }
+    if let authenticationTask { return try await authenticationTask.value }
+    let task = Task { @MainActor in try await self.activateFirebaseAccount() }
+    authenticationTask = task
+    defer { authenticationTask = nil }
+    try await task.value
+  }
+
+  @MainActor private func activateFirebaseAccount() async throws {
+    let testing = CoastTestMode.isEnabled
+    let uid: String
+    var legacy: String?
+    if testing {
+      uid = "firebase-ui-test-user"
+    } else {
+      let existing = Auth.auth().currentUser
+      // The alias is valid only when the original Firebase identity is still retained.
+      if existing != nil, accountState == nil,
+         let data = defaults.data(forKey: "LanlinLoginData"),
+         let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        legacy = value["userID"] as? String
+      }
+      if let state = accountState, existing?.uid != state.uid {
+        throw NSError(domain: "CoastWild.Auth", code: 3,
+          userInfo: [NSLocalizedDescriptionKey: "The saved account identity is unavailable. Your local data has been preserved. Contact support before resetting it."])
+      }
+      if let existing { uid = existing.uid }
+      else { uid = try await Auth.auth().signInAnonymously().user.uid }
+    }
+    let state = accountState ?? FirebaseAccountState(uid: uid, legacyAccount: legacy)
+    guard state.belongs(to: uid) else { throw CancellationError() }
+    try persistAccount(state)
+    defaults.removeObject(forKey: "LanlinLoginData")
+    defaults.removeObject(forKey: "logindKey")
+    try store.activate(accountID: state.account)
     var prefs = store.preferences
     prefs.onboardingDone = true
     try store.updatePreferences(prefs)
-    activeRemoteUserID = userID
+    defaults.set(false, forKey: "firebase.showWelcome")
+    if !testing { noteSync.resume() }
     showMainInterface()
   }
 
-  @MainActor func authenticated() throws {
-    guard let accountID = vault.current?.id else { return }
-    try store.activate(accountID: accountID)
-    showMainInterface()
-  }
   @MainActor func logout() async throws {
-    await remoteSessionCoordinator.logout()
-    activeRemoteUserID = nil
+    // Preserve the anonymous credential: Firebase signOut would orphan this account.
+    guard !deletingAccount else { return }
+    defaults.set(true, forKey: "firebase.showWelcome")
     try store.activate(accountID: nil)
-    showRoot()
+    window?.rootViewController = navigation(RemoteLoginController(self))
   }
   @MainActor func deleteAccount() async throws {
-    let shouldFail = ProcessInfo.processInfo.arguments.contains("--account-deletion-fails")
-    let photoFolder = photoURL("unused").deletingLastPathComponent()
-    let service = AccountDeletionService(
-      remoteDelete: {
-        try await Task.sleep(nanoseconds: 350_000_000)
-        if shouldFail { throw SimulatedAccountDeletionError.rejected }
-        if !ProcessInfo.processInfo.arguments.contains("--ui-testing") {
-          try await self.noteSync.deleteCurrentAccountNotes()
-        }
-      },
-      localDelete: { [store] in
-        try await MainActor.run {
-          if FileManager.default.fileExists(atPath: photoFolder.path) {
-            try FileManager.default.removeItem(at: photoFolder)
-          }
-          try store.deleteCurrentAccountData()
-        }
-      },
-      sessionDelete: { [remoteSessionCoordinator] in
-        await remoteSessionCoordinator.logout()
+    guard !deletingAccount, authenticationTask == nil else { throw AccountDeletionError.alreadyInProgress }
+    guard let state = accountState else { return }
+    deletingAccount = true
+    defer { deletingAccount = false }
+    let testing = CoastTestMode.isEnabled
+    try store.activate(accountID: state.account)
+    try await FirebaseDeletionWorkflow.run(state: state, save: { value in
+      try self.persistAccount(value)
+    }, cloud: {
+      #if DEBUG
+      if testing && ProcessInfo.processInfo.arguments.contains("--account-deletion-fails") {
+        throw URLError(.notConnectedToInternet)
       }
-    )
-    do {
-      try await service.deleteAccount()
-      if !ProcessInfo.processInfo.arguments.contains("--ui-testing") {
-        noteSync.resume()
+      #endif
+      if !testing {
+        guard Auth.auth().currentUser?.uid == state.uid else { throw CancellationError() }
+        try await self.noteSync.deleteCurrentAccountNotes()
       }
-    } catch {
-      if !ProcessInfo.processInfo.arguments.contains("--ui-testing") {
-        noteSync.resume()
+    }, identity: {
+      if !testing, let user = Auth.auth().currentUser {
+        guard user.uid == state.uid else { throw CancellationError() }
+        try await user.delete()
       }
-      throw error
-    }
-    showRoot()
+    }, local: {
+      let photos = self.directory.appendingPathComponent("Photos").appendingPathComponent(state.account)
+      if FileManager.default.fileExists(atPath: photos.path) { try FileManager.default.removeItem(at: photos) }
+      try self.store.deleteCurrentAccountData()
+      self.defaults.set(true, forKey: "firebase.showWelcome")
+    })
+    window?.rootViewController = navigation(RemoteLoginController(self))
   }
   func photoURL(_ filename: String) -> URL {
     directory.appendingPathComponent("Photos").appendingPathComponent(store.accountID ?? "none")
@@ -632,7 +626,6 @@ final class CoastEnvironment {
         "Check your email, name and password (at least 10 characters).", "请检查邮箱、昵称与密码（至少 10 个字符）。"
       ), "auth.duplicate": ("This email already has a local account.", "该邮箱已注册本地账号。"),
       "auth.expired": ("Recovery code expired. Request a new code.", "验证码已过期或尝试过多，请重新获取。"),
-      "account.deletion.simulated": ("The simulated request failed. Nothing was deleted. Try again.", "模拟请求失败，未删除任何数据，请重试。"),
       "auth.code": ("Incorrect recovery code.", "验证码不正确。"),
       "auth.storage": ("Could not save credentials. Try again.", "账号未能保存，请重试。"),
     ]
@@ -831,7 +824,6 @@ final class CoastNavigationController: UINavigationController,
     let root =
       viewController is ExploreController || viewController is LearnController
       || viewController is TripsController || viewController is JournalController
-      || viewController is WelcomeController
     setNavigationBarHidden(
       root, animated: animated && !UIAccessibility.isReduceMotionEnabled)
   }

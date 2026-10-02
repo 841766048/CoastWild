@@ -79,10 +79,13 @@ final class LegalWebController: UIViewController, WKNavigationDelegate, WKUIDele
 
   private func loadDocument() {
     spinner.startAnimating()
-    Task { [weak self] in
-      guard let self else { return }
-      let snapshot = await env.integrationRuntime.snapshot()
-      let remote = document == .privacy ? snapshot.privacyURL : snapshot.termsURL
+    if document == .terms {
+      loadBundledDocument(showOfflineBanner: false)
+    } else {
+      guard let remote = document.remoteURL(language: "en", configuration: LegalDocument.bundledConfiguration) else {
+        loadBundledDocument(showOfflineBanner: true)
+        return
+      }
       attemptedRemote = true
       remoteHost = remote.host?.lowercased()
       webView.load(URLRequest(url: remote, cachePolicy: .reloadRevalidatingCacheData, timeoutInterval: 12))

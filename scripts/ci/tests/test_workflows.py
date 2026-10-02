@@ -43,7 +43,7 @@ class WorkflowTests(unittest.TestCase):
         main = self.workflows["main-ipa"]
         self.assertNotIn("triggering", main)
         self.assertEqual(main["environment"]["ios_signing"], {"distribution_type": "app_store", "bundle_identifier": "com.huankecontact.coastwild"})
-        self.assertIn("test backend", main["name"])
+        self.assertIn("Firebase", main["name"])
 
     def test_steps_start_with_context_guard_and_have_tests(self):
         for key, workflow in self.workflows.items():

@@ -40,7 +40,13 @@ final class ProfileController: CoastController {
       ) { [weak self] in
         guard let self else { return }; self.push(RemindersController(self.env))
       },
-      privacy
+      privacy,
+      coastSettingRow("Support", icon: "info") {
+        if let value = LegalDocument.bundledConfiguration["CoastSupportURL"],
+           let url = URL(string: value), url.scheme == "https" {
+          UIApplication.shared.open(url)
+        }
+      }
     ], spacing: 0, inset: 0))
     add(coastNotice(env.t("Notes and compressed photos sync privately. Other records stay on this device.", "手记与压缩照片私有同步，其他记录保存在本机。")))
   }
@@ -54,8 +60,8 @@ final class AccountController: CoastController {
     accountType.addArrangedSubview(coastLabel(env.t("Account type", "账号类型"), size: 15)); accountType.addArrangedSubview(UIView())
     accountType.addArrangedSubview(coastLabel(env.t("Device account", "设备账号"), size: 12, color: CoastStyle.muted))
     add(coastPanel([accountType], spacing: 0, inset: 14))
-    note(env.t("Trips and journals remain on this device for this remote account after logout.", "退出后，当前远程账号的出游与手记仍保存在此设备。"))
-    let logout = coastButton(env.t("Log out", "退出登录"), secondary: true) { [weak self] in
+    note("Returning to the welcome screen keeps your device account and its data. Use Delete account to permanently remove it.")
+    let logout = coastButton("Return to welcome", secondary: true) { [weak self] in
       guard let self else { return }
       Task { try? await self.env.logout() }
     }
@@ -73,7 +79,7 @@ final class AccountController: CoastController {
     confirm(
       env.t("Delete account permanently?", "永久注销账号？"),
       env.t(
-        "This deletes accessible cloud notes and photo backups, then this account's local content. Network access is required. The separate business-server account deletion remains simulated.",
+        "This deletes this device account's accessible cloud notes and photo backups, its authentication account, and local content. Network access is required. This cannot be undone.",
         "这会先删除可访问的云端手记及照片备份，再删除此账号的本地内容，需要网络。独立业务服务端的账号注销仍为模拟流程。"
       )
     ) { [weak self] in self?.performDeletion() }
@@ -273,8 +279,8 @@ private func accountPortrait(_ env: CoastEnvironment, size: CGFloat) -> UIView {
   image.translatesAutoresizingMaskIntoConstraints = false; avatar.addSubview(image)
   NSLayoutConstraint.activate([image.widthAnchor.constraint(equalToConstant: 39), image.heightAnchor.constraint(equalToConstant: 39), image.centerXAnchor.constraint(equalTo: avatar.centerXAnchor), image.centerYAnchor.constraint(equalTo: avatar.centerYAnchor)])
   group.addArrangedSubview(avatar); group.setCustomSpacing(18, after: avatar)
-  let name = coastLabel(env.vault.current?.name ?? "Coast & Wild", size: size, weight: .bold); name.textAlignment = .center
+  let name = coastLabel("Coast & Wild", size: size, weight: .bold); name.textAlignment = .center
   group.addArrangedSubview(name)
-  let email = coastLabel(env.vault.current?.email ?? "", size: 16, color: CoastStyle.muted); email.textAlignment = .center; group.addArrangedSubview(email)
+  let account = coastLabel("Device account", size: 16, color: CoastStyle.muted); account.textAlignment = .center; group.addArrangedSubview(account)
   return group
 }

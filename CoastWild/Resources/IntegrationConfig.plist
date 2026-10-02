@@ -2,17 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CoastIntegrationMode</key>
-    <string>development</string>
+    <key>CoastAuthenticationProvider</key>
+    <string>firebase-anonymous</string>
     <key>CoastExpectedBundleIdentifier</key>
     <string>com.huankecontact.coastwild</string>
-    <key>CoastPrimaryHost</key>
-    <string>https://test-app.bigegg.work</string>
     <key>CoastPrivacyURL</key>
-    <string>https://h5.bigegg.work/privacyPolicy.html</string>
-    <key>CoastTermsURL</key>
-    <string>https://h5.bigegg.work/termConditions.html</string>
-    <key>CoastAppStoreID</key>
-    <string>6744892295</string>
+    <string>https://docs.google.com/document/d/1BONvGvpiAzvxY9HDlxbfqMkpn940XtMi6Fvn6d5VG6M/edit</string>
+    <key>CoastSupportURL</key>
+    <string>https://docs.google.com/document/d/10b0pTTc6ho_taVkYgpNDqt0qWmTvsllIY0iKA-5IrJU/edit</string>
+    <key>CoastTermsResource</key>
+    <string>terms-en</string>
 </dict>
 </plist>

@@ -67,26 +67,12 @@ final class StartupController: UIViewController {
     recoveryTask = Task { [weak self] in
       guard let self else { return }
       defer { recoveryTask = nil }
-      let args = ProcessInfo.processInfo.arguments
-      let state: RemoteLoginState
-      if args.contains("--ui-testing") && args.contains("--ui-testing-manual-login") {
-        state = .idle
-      } else if args.contains("--ui-testing") && args.contains("--seed-account") {
-        state = await env.remoteSessionCoordinator.manualLogin(riskInfo: nil)
-      } else {
-        state = await env.remoteSessionCoordinator.automaticLogin()
-      }
-      guard !Task.isCancelled, env.window?.rootViewController === self else { return }
-      switch StartupRoute(state: state) {
-      case .login:
+      if env.accountState?.deletion != nil || (CoastTestMode.isEnabled && ProcessInfo.processInfo.arguments.contains("--ui-testing-manual-login")) {
         env.window?.rootViewController = env.navigation(RemoteLoginController(env))
-      case .main:
-        guard case let .authenticated(session) = state else { return }
-        do { try await env.remoteAuthenticated(session: session) }
-        catch { showFailure() }
-      case .retry, .loading:
-        showFailure()
+        return
       }
+      do { try await env.firebaseLogin() }
+      catch { showFailure() }
     }
   }
 
@@ -98,6 +84,7 @@ final class StartupController: UIViewController {
 }
 
 final class RemoteLoginController: CoastController {
+  private enum Presentation { case loading, retryableFailure, offline, ready, authenticated }
   private let connectivity = ConnectivityMonitor()
   private var submit: UIButton!
   private let status = coastLabel("", size: 14, color: CoastStyle.red)
@@ -133,7 +120,7 @@ final class RemoteLoginController: CoastController {
     activity.hidesWhenStopped = true
     activity.accessibilityIdentifier = "auth.remote.loading"
     add(activity)
-    submit = coastButton(env.t("Continue", "快捷登录")) { [weak self] in
+    submit = coastButton(env.accountState?.deletion == nil ? "Continue" : "Retry account deletion") { [weak self] in
       self?.performLogin(automatic: false)
     }
     submit.accessibilityIdentifier = "auth.remote.submit"
@@ -154,25 +141,18 @@ final class RemoteLoginController: CoastController {
     render(.loading)
     Task { [weak self] in
       guard let self else { return }
-      let state = automatic
-        ? await env.remoteSessionCoordinator.automaticLogin()
-        : await env.remoteSessionCoordinator.manualLogin(riskInfo: nil)
-      await handle(state)
+      do {
+        if env.accountState?.deletion != nil { try await env.deleteAccount() }
+        else { try await env.firebaseLogin() }
+      } catch {
+        render(.retryableFailure)
+        status.text = error.localizedDescription
+        if !connectivity.isConnected { showOfflineAlert() }
+      }
     }
   }
 
-  private func handle(_ state: RemoteLoginState) async {
-    let presentation = RemoteLoginPresentation(state: state, isConnected: connectivity.isConnected)
-    render(presentation)
-    if case let .authenticated(session) = state {
-      do { try await env.remoteAuthenticated(session: session) }
-      catch { render(.retryableFailure) }
-    } else if presentation == .offline {
-      showOfflineAlert()
-    }
-  }
-
-  private func render(_ presentation: RemoteLoginPresentation) {
+  private func render(_ presentation: Presentation) {
     switch presentation {
     case .loading:
       submit.isEnabled = false

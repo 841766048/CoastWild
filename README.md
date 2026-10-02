@@ -24,7 +24,7 @@ swift test
 ./scripts/validate_release_config.sh /path/to/ReleaseIntegrationConfig.plist com.example.coastwild
 ```
 
-正式配置必须将 `CoastIntegrationMode` 设为 `production`，并用 `CoastExpectedBundleIdentifier` 声明预期 Bundle ID。扫描器会拒绝缺失或空值、非 HTTPS URL、`test-`／本地主机以及配置与构建 Bundle ID 不一致；任一错误都会返回非零退出码，必须阻止归档或发布。仓库内置的 `CoastWild/Resources/IntegrationConfig.plist` 是共享开发环境配置，按设计无法通过正式发布扫描。
+`main` 使用 Firebase 匿名认证，不再调用独立业务登录或配置接口。`IntegrationConfig.plist` 声明 `firebase-anonymous`、正式 Bundle ID、隐私与支持链接，以及本地用户协议资源。CI 拒绝旧业务后台配置键、缺失或非 HTTPS 链接、错误 Bundle ID；正式归档仍需匹配的签名配置。旧身份仅作为手记数据分区别名保留，不作为登录凭据。删除账号按云端手记/图片、Firebase 身份、本地数据顺序执行，失败后保留进度供重试。
 
 扫描器自身的契约测试命令：
 

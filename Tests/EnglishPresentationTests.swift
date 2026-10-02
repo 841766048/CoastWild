@@ -44,9 +44,9 @@ final class EnglishPresentationTests: XCTestCase {
         for document in LegalDocument.allCases {
             XCTAssertEqual(document.title(language: "zh-Hans"), document.title(language: "en"))
             XCTAssertEqual(document.localResource(language: "zh-Hans"), "Legal/\(document.rawValue)-en")
-            let key = "LEGAL_\(document.rawValue.uppercased())_URL_"
-            let configuration = [key + "EN": "https://example.com/en", key + "ZH_HANS": "https://example.com/zh"]
-            XCTAssertEqual(document.remoteURL(language: "zh-Hans", configuration: configuration)?.absoluteString, "https://example.com/en")
+            let configuration = ["CoastPrivacyURL": "https://example.com/en"]
+            XCTAssertEqual(document.remoteURL(language: "zh-Hans", configuration: configuration)?.absoluteString,
+                           document == .privacy ? "https://example.com/en" : nil)
         }
     }
 }

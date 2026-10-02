@@ -66,6 +66,8 @@ case "${1:-}" in
       --archive-flags='-disableAutomaticPackageResolution -clonedSourcePackagesDirPath .ci-cache/SourcePackages' \
       --archive-xcargs="CURRENT_PROJECT_VERSION=$COAST_BUILD_NUMBER" \
       2>&1 | tee build/codemagic/archive.log
+    # Check the actual archived Info.plist before the publishing phase can run.
+    COAST_ARCHIVE_ROOT=build/ios/xcarchive python3 scripts/ci/tests/test_native_capabilities.py
     ;;
   *) echo "usage: $0 dependencies|checks|simulator|archive" >&2; exit 64 ;;
 esac
