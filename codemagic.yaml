@@ -47,7 +47,7 @@ workflows:
       node: "22"
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.huankecontact.coastwild
+        bundle_identifier: com.huankecontact.coastwildapp
     cache:
       cache_paths:
         - $HOME/Library/Caches/CocoaPods

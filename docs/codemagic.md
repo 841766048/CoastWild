@@ -9,19 +9,19 @@
 | `dev-checks` | `codex/native-uikit` | Git push，或手动启动 | 测试日志、未签名模拟器 App |
 | `main-ipa` | `main` | 仅手动启动 | App Store 签名 IPA、dSYM、构建日志，并上传 App Store Connect |
 
-**main 现使用 Firebase 匿名认证，不再连接旧业务测试后端。** 正式 Bundle ID 为 `com.huankecontact.coastwild`。CI 验证 Firebase 配置、隐私与支持链接、本地用户协议及归档权限。手动启动 main-ipa 后上传 App Store Connect；不自动提交 TestFlight Beta 审核、App Store 审核或上架。在线协议仍需补全主体、联系信息等占位内容后才能正式提审。
+**main 现使用 Firebase 匿名认证，不再连接旧业务测试后端。** 正式 Bundle ID 为 `com.huankecontact.coastwildapp`。CI 验证 Firebase 配置、隐私与支持链接、本地用户协议及归档权限。手动启动 main-ipa 后上传 App Store Connect；不自动提交 TestFlight Beta 审核、App Store 审核或上架。在线协议仍需补全主体、联系信息等占位内容后才能正式提审。
 
 ## 上传授权
 
 `main-ipa.integrations.app_store_connect` 引用 Codemagic Developer Portal 中已保存的 `CoastWild-NewAccount`，使用 `publishing.app_store_connect.auth: integration` 上传。该名称是 API key name，不是 Key ID、证书或描述文件引用名。私钥仅保存在 Codemagic，不进入仓库。
 
-苹果后台需已有 `com.huankecontact.coastwild` 对应应用记录，API Key 需有 App Manager 权限。`submit_to_testflight: false` 与 `submit_to_app_store: false` 不阻止上传，只关闭自动提交审核。Apple 处理完成后到应用 TestFlight 页查看构建并手动配置测试。
+苹果后台需已有 `com.huankecontact.coastwildapp` 对应应用记录，API Key 需有 App Manager 权限。`submit_to_testflight: false` 与 `submit_to_app_store: false` 不阻止上传，只关闭自动提交审核。Apple 处理完成后到应用 TestFlight 页查看构建并手动配置测试。
 
 云端构建 `6abbaa50083ff0a9a53a61af`（提交 `65d2b42`）已成功导出签名 IPA；该次旧流程没有上传步骤。新增上传配置需推送后重新构建验证，不能将本地 YAML 检查当作上传成功。
 
 ## 正式 Bundle ID 迁移状态
 
-工程 Debug/Release、`project.yml`、`IntegrationConfig.plist`、Codemagic 签名匹配及 CI 校验统一使用 `com.huankecontact.coastwild`。工程与 CI 的 Team ID 已更新为 `T4VGJVH22P`。本地开发描述文件引用按用户要求暂时不变；Codemagic 必须应用新团队的 App Store 描述文件后才能归档。
+工程 Debug/Release、`project.yml`、`IntegrationConfig.plist`、Codemagic 签名匹配及 CI 校验统一使用 `com.huankecontact.coastwildapp`。Team ID 仍为 `T4VGJVH22P`。旧的本地开发描述文件绑定已清空，必须配置匹配新 Bundle ID 的描述文件。Firebase 已在原项目中注册新 Bundle ID，官方 plist 已替换并验证；Apple 新描述文件及应用记录仍需配置。Bundle ID 配置已同步至 main、native-uikit 和 native-coin-learning；各分支业务功能保持独立。
 
 已在原 Firebase 项目 `coast-wild-20260915` 注册正式 Bundle ID 对应的 iOS 应用，并从 Firebase CLI 获取完整 `GoogleService-Info.plist`。新 Firebase App ID 为 `1:396075139301:ios:33e5decb0b119794cdd40c`，与旧应用不同；项目、数据库和存储桶保持不变。Firebase 包名不匹配这一 CI 阻塞已解除，但不代表签名或云端首次打包已验证。
 
@@ -35,7 +35,7 @@
 
 1. **iOS certificates**：添加有效的 Apple Distribution 证书（`.p12`，包含私钥），填写导出密码。
 2. **iOS provisioning profiles**：添加在 Apple Developer 中手动创建的 **App Store** 类型 `.mobileprovision` 文件。本流程不使用 Xcode-managed 自动管理的描述文件。
-3. 两者必须匹配，并对应 Bundle ID **`com.huankecontact.coastwild`**、团队 **`T4VGJVH22P`**。CI 会拒绝旧团队签名。
+3. 两者必须匹配，并对应 Bundle ID **`com.huankecontact.coastwildapp`**、团队 **`T4VGJVH22P`**。CI 会拒绝旧团队签名。
 4. 确认 Codemagic 显示该描述文件具有匹配的证书。工作流按 Bundle ID 和 `app_store` 类型自动选择，不需要在 YAML 填证书文件名。
 
 也可以先在 Codemagic 配置 Apple Developer Portal / App Store Connect API 集成，再使用平台的获取/生成入口；选择获取手动创建的 App Store 描述文件，不选 Xcode-managed 文件。这里的自动匹配签名资源不等同于 Xcode 自动签名。已有外部证书仍需要对应私钥，不能只上传 `.cer`。本次没有创建、吊销或替换 Apple 证书，也没有写入任何 `.p8`、密码、API token。
