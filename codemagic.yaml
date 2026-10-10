@@ -11,7 +11,7 @@ workflows:
       cocoapods: "1.16.2"
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.huankecontact.coastwildapp
+        bundle_identifier: com.huankecontact.coastwild
     cache:
       cache_paths:
         - $HOME/Library/Caches/CocoaPods

@@ -19,13 +19,13 @@ class CISupportTests(unittest.TestCase):
         self.assertTrue(MODULE.exists(), "CI preflight implementation is missing")
         self.config = {
             "CoastIntegrationMode": "development",
-            "CoastExpectedBundleIdentifier": "com.huankecontact.coastwildapp",
+            "CoastExpectedBundleIdentifier": "com.huankecontact.coastwild",
             "CoastPrimaryHost": "https://test-app.bigegg.work",
             "CoastPrivacyURL": "https://h5.bigegg.work/privacyPolicy.html",
             "CoastTermsURL": "https://h5.bigegg.work/termConditions.html",
             "CoastAppStoreID": "6744892295",
         }
-        self.firebase = {"BUNDLE_ID": "com.huankecontact.coastwildapp"}
+        self.firebase = {"BUNDLE_ID": "com.huankecontact.coastwild"}
         self.env = {"CM_BRANCH": "codex/native-coin-learning", "CM_TRIGGER_SOURCE": "api", "PROJECT_BUILD_NUMBER": "7"}
 
     def test_old_firebase_config_is_rejected(self):
@@ -58,7 +58,7 @@ class CISupportTests(unittest.TestCase):
             self.support.validate_context("v2-ipa", self.env, self.config, {"BUNDLE_ID": "other.app"})
 
     def test_export_requires_matching_team_profile_and_distribution(self):
-        options = {"method": "app-store-connect", "teamID": "T4VGJVH22P", "provisioningProfiles": {"com.huankecontact.coastwildapp": "profile-id"}}
+        options = {"method": "app-store-connect", "teamID": "T4VGJVH22P", "provisioningProfiles": {"com.huankecontact.coastwild": "profile-id"}}
         self.support.validate_export(options)
         for key, value in (("method", "development"), ("teamID", "OTHER"), ("teamID", "8S59A5XCJ9"), ("provisioningProfiles", {})):
             with self.subTest(key=key), self.assertRaises(ValueError):
@@ -66,7 +66,7 @@ class CISupportTests(unittest.TestCase):
 
     def test_effective_device_signing_rejects_local_development_profile(self):
         settings = [{"target": "CoastWild", "buildSettings": {
-            "PRODUCT_BUNDLE_IDENTIFIER": "com.huankecontact.coastwildapp", "DEVELOPMENT_TEAM": "T4VGJVH22P",
+            "PRODUCT_BUNDLE_IDENTIFIER": "com.huankecontact.coastwild", "DEVELOPMENT_TEAM": "T4VGJVH22P",
             "CODE_SIGN_IDENTITY": "Apple Distribution: Coast", "PROVISIONING_PROFILE_SPECIFIER": "App Store profile",
         }}]
         self.support.validate_signing_settings(settings)

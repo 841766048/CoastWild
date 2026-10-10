@@ -18,7 +18,7 @@ class WorkflowTests(unittest.TestCase):
             "auth": "integration", "submit_to_testflight": False, "submit_to_app_store": False,
         }})
         self.assertEqual(workflow["environment"]["ios_signing"], {
-            "distribution_type": "app_store", "bundle_identifier": "com.huankecontact.coastwildapp",
+            "distribution_type": "app_store", "bundle_identifier": "com.huankecontact.coastwild",
         })
         scripts = [step["script"] for step in workflow["scripts"]]
         self.assertEqual(scripts[0], "python3 scripts/ci/ci_support.py preflight v2-ipa")

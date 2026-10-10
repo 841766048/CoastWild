@@ -16,7 +16,7 @@ targets:
     sources: [CoastWild]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.huankecontact.coastwildapp
+        PRODUCT_BUNDLE_IDENTIFIER: com.huankecontact.coastwild
         DEVELOPMENT_TEAM: T4VGJVH22P
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Coast & Wild

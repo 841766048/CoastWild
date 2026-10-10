@@ -6,7 +6,7 @@ import plistlib
 import sys
 from urllib.parse import urlparse
 
-BUNDLE_ID = "com.huankecontact.coastwildapp"
+BUNDLE_ID = "com.huankecontact.coastwild"
 TEAM_ID = "T4VGJVH22P"
 
 

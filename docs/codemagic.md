@@ -3,8 +3,8 @@
 本分支使用 `v2-ipa`，仅允许手动选择 `codex/native-coin-learning` 运行，不自动触发。第一版 main/native-uikit 仍使用各自已有配置；不能以覆盖业务代码的方式同步分支。
 
 - 上传授权：`CoastWild-NewAccount`，私钥只保存在 Codemagic。
-- Bundle ID：`com.huankecontact.coastwildapp`；Team ID：`T4VGJVH22P`。
-- 签名：App Store；须配置匹配新 Bundle ID 的描述文件，旧 Bundle ID 的描述文件不可复用。证书与 Team ID 保持不变。
+- Bundle ID：`com.huankecontact.coastwild`；Team ID：`T4VGJVH22P`。
+- 签名：App Store，复用云端已配置的匹配证书和描述文件。
 - 构建后上传 App Store Connect；不自动提交 Beta 审核、App Store 审核或发布。
 - 保留当前测试后端、内购、Web/JS、ATT/Adjust 等第二版功能，本次不改业务代码。
 - 按第二版 Podfile.lock 安装依赖，不引入第一版 Firebase SPM 或内容工具测试，也不重新生成工程。
