@@ -1,11 +1,21 @@
 # Firebase configuration for the production bundle identifier
 
+Updated: 2026-10-10.
+
 - Firebase project: `coast-wild-20260915` (existing project retained).
-- Registered iOS bundle identifier: `com.huankecontact.coastwild`.
-- Registered Firebase app ID: `1:396075139301:ios:33e5decb0b119794cdd40c`.
-- Configuration: `CoastWild/Resources/GoogleService-Info.plist`, retrieved from Firebase with `apps:sdkconfig IOS` for this app ID.
-- No database, authentication users, storage, security rules, backend environment, Apple Team ID or provisioning profiles were migrated or changed.
+- Registered iOS bundle identifier: `com.huankecontact.coastwildapp`.
+- Registered Firebase app ID: `1:396075139301:ios:b7f2da0f3663191ecdd40c`.
+- Configuration: `CoastWild/Resources/GoogleService-Info.plist`, downloaded with Firebase CLI `apps:sdkconfig IOS` for the new app ID and verified against the official download.
+- Firebase does not support changing an existing iOS registration's Bundle ID. A new iOS registration was created in the same project. The previous registrations remain intact.
+- No databases, Authentication users, storage files, security rules, Apple Team ID or provisioning profiles were changed.
 
-The configuration is shared across `main`, `codex/native-uikit` and `codex/native-coin-learning`. The first two already integrate Firebase and bundle this resource. The second-version branch currently has no Firebase SDK or initialization: its copy is configuration-only, not a new Firebase integration or a runtime cloud-sync feature. Adding the SDK and linking the resource there remains a separate task.
+The configuration is synchronized across the local working trees for `main`, `codex/native-uikit` and `codex/native-coin-learning`. The first two already integrate Firebase. The second-version branch's plist remains configuration-only: this change does not install the Firebase SDK, change its authentication implementation, or remove Web/JS, Adjust or purchase functionality.
 
-Changing the bundle identifier or signing team does not itself guarantee access to an old installation's Keychain identity. Recovery of existing private notes must be verified separately on a device; retaining the Firebase project does not guarantee identity continuity.
+Apple registration, provisioning profiles and the App Store Connect record must separately match the new Bundle ID. Firebase configuration validation passing does not prove device signing, App Store upload, or runtime authentication works.
+
+Changing Bundle ID creates a different app identity. Existing installation data and Keychain sessions do not automatically migrate. Keeping the same Firebase project retains backend data but does not guarantee the new installation can recover the old user's UID or private notes.
+
+## Previous registration (retained)
+
+- Bundle ID: `com.huankecontact.coastwild`.
+- Firebase app ID: `1:396075139301:ios:33e5decb0b119794cdd40c`.

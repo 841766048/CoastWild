@@ -49,13 +49,13 @@ targets:
           - ${PODS_ROOT}/Target Support Files/Pods-CoastWild/Pods-CoastWild-resources-${CONFIGURATION}-output-files.xcfilelist
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.huankecontact.coastwild
+        PRODUCT_BUNDLE_IDENTIFIER: com.huankecontact.coastwildapp
         OTHER_LDFLAGS: "$(inherited) -ObjC"
         CODE_SIGN_STYLE: Manual
         DEVELOPMENT_TEAM: ''
         'DEVELOPMENT_TEAM[sdk=iphoneos*]': T4VGJVH22P
         PROVISIONING_PROFILE_SPECIFIER: ''
-        'PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]': huankeProfileDev
+        'PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]': ''
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Coast & Wild
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen

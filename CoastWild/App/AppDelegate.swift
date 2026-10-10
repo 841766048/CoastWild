@@ -338,7 +338,7 @@ final class CoastEnvironment {
       defaults.removePersistentDomain(forName: "com.coastwild.integration.ui-tests")
     }
     deviceIdentity = DeviceIdentityStore(
-      bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.huankecontact.coastwild",
+      bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.huankecontact.coastwildapp",
       defaults: defaults
     )
     deviceID = testing ? "ui-test-device" : try deviceIdentity.resolve()
