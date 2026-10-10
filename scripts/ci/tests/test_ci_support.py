@@ -19,21 +19,17 @@ class CISupportTests(unittest.TestCase):
         self.assertTrue(MODULE.exists(), "CI preflight implementation is missing")
         self.config = {
             "CoastAuthenticationProvider": "firebase-anonymous",
-            "CoastExpectedBundleIdentifier": "com.huankecontact.coastwildapp",
+            "CoastExpectedBundleIdentifier": "com.huankecontact.coastwild",
             "CoastPrivacyURL": "https://docs.google.com/document/d/privacy/edit",
             "CoastSupportURL": "https://docs.google.com/document/d/support/edit",
             "CoastTermsResource": "terms-en",
         }
-        self.firebase = {"BUNDLE_ID": "com.huankecontact.coastwildapp"}
+        self.firebase = {"BUNDLE_ID": "com.huankecontact.coastwild"}
         self.env = {"CM_BRANCH": "main", "CM_TRIGGER_SOURCE": "api", "PROJECT_BUILD_NUMBER": "7"}
 
     def test_old_firebase_config_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "Firebase bundle ID mismatch"):
             self.support.validate_context("main-ipa", self.env, self.config, {"BUNDLE_ID": "com.huankecontact.test"})
-
-    def test_previous_production_firebase_config_is_rejected(self):
-        with self.assertRaisesRegex(ValueError, "Firebase bundle ID mismatch"):
-            self.support.validate_context("main-ipa", self.env, self.config, {"BUNDLE_ID": "com.huankecontact.coastwild"})
 
     def test_manual_main_build_gets_global_increment(self):
         self.assertEqual(self.support.validate_context("main-ipa", self.env, self.config, self.firebase), 1007)
@@ -64,7 +60,7 @@ class CISupportTests(unittest.TestCase):
             self.support.validate_context("main-ipa", self.env, self.config, {"BUNDLE_ID": "other.app"})
 
     def test_export_requires_matching_team_profile_and_distribution(self):
-        options = {"method": "app-store-connect", "teamID": "T4VGJVH22P", "provisioningProfiles": {"com.huankecontact.coastwildapp": "profile-id"}}
+        options = {"method": "app-store-connect", "teamID": "T4VGJVH22P", "provisioningProfiles": {"com.huankecontact.coastwild": "profile-id"}}
         self.support.validate_export(options)
         for key, value in (("method", "development"), ("teamID", "OTHER"), ("teamID", "8S59A5XCJ9"), ("provisioningProfiles", {})):
             with self.subTest(key=key), self.assertRaises(ValueError):
@@ -72,7 +68,7 @@ class CISupportTests(unittest.TestCase):
 
     def test_effective_device_signing_rejects_local_development_profile(self):
         settings = [{"target": "CoastWild", "buildSettings": {
-            "PRODUCT_BUNDLE_IDENTIFIER": "com.huankecontact.coastwildapp", "DEVELOPMENT_TEAM": "T4VGJVH22P",
+            "PRODUCT_BUNDLE_IDENTIFIER": "com.huankecontact.coastwild", "DEVELOPMENT_TEAM": "T4VGJVH22P",
             "CODE_SIGN_IDENTITY": "Apple Distribution: Coast", "PROVISIONING_PROFILE_SPECIFIER": "App Store profile",
         }}]
         self.support.validate_signing_settings(settings)

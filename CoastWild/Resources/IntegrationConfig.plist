@@ -5,7 +5,7 @@
     <key>CoastAuthenticationProvider</key>
     <string>firebase-anonymous</string>
     <key>CoastExpectedBundleIdentifier</key>
-    <string>com.huankecontact.coastwildapp</string>
+    <string>com.huankecontact.coastwild</string>
     <key>CoastPrivacyURL</key>
     <string>https://docs.google.com/document/d/1BONvGvpiAzvxY9HDlxbfqMkpn940XtMi6Fvn6d5VG6M/edit</string>
     <key>CoastSupportURL</key>

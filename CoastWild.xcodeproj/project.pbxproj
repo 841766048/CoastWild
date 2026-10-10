@@ -569,9 +569,9 @@
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = "$(inherited) -ObjC";
-				PRODUCT_BUNDLE_IDENTIFIER = com.huankecontact.coastwildapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.huankecontact.coastwild;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = huankeProfileDev;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -656,9 +656,9 @@
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = "$(inherited) -ObjC";
-				PRODUCT_BUNDLE_IDENTIFIER = com.huankecontact.coastwildapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.huankecontact.coastwild;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = huankeProfileDev;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
